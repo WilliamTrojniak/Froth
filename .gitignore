@@ -4,3 +4,7 @@
 **.vcxproj
 **.vcxproj.filters
 **.vcxproj.user
+
+# Project Binaries
+bin/**
+bin-int/**

@@ -18,6 +18,7 @@ workspace "Cream"
   filter { "platforms:Win64" }
     systemversion "latest"
     system "Windows"
+    defines {"CREAM_PLATFORM_WINDOWS"}
     architecture "x86_64"
 
   filter {}
@@ -72,6 +73,8 @@ project "Playground"
     staticruntime "on"
 
     targetdir ("bin/"..outputDirectory)
+    objdir ("bin-int/"..outputDirectory)
+
 
     files {
 		"%{prj.name}/_src/**.h",

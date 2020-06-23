@@ -43,7 +43,7 @@ project "Cream"
   }
 
   includedirs {
-    "%{prj.name}/src"
+    "%{prj.name}/_src"
   }
 
   links {
@@ -77,6 +77,10 @@ project "Playground"
 		"%{prj.name}/_src/**.h",
 		"%{prj.name}/_src/**.cpp"
     }
+
+    includedirs {
+      "Cream/_src"
+	  }
 
     links {
       "Cream"

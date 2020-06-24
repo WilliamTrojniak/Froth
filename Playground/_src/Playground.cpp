@@ -1,6 +1,16 @@
 #include "Cream/Core/Entrypoint.h"
+#include <iostream>
 
-void HelloWorld()
+class Playground : public Cream::Application
 {
-	std::cout << "Hello World!" << std::endl;
+public:
+	Playground()
+	{
+		std::cout << "Playground created!" << std::endl;
+	}
+};
+
+Cream::Ref<Cream::Application> Cream::CreateApplication()
+{
+	return Cream::CreateRef<Cream::Application>(Playground());
 }

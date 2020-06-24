@@ -1,8 +1,6 @@
-#include <iostream>
+#include "Cream/Core/Entrypoint.h"
 
-
-int main(int argc, char** argv)
+void HelloWorld()
 {
-	std::cout << "Hello World" << std::endl;
-
+	std::cout << "Hello World!" << std::endl;
 }

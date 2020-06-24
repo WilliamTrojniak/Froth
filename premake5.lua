@@ -50,7 +50,8 @@ project "Cream"
 
   includedirs {
     "%{prj.name}/_src",
-    "Cream/dependencies/Logger/include"
+    "Cream/dependencies/Logger/include",
+    "Cream/dependencies/vendor/spdlog/include"
   }
 
   links {
@@ -89,7 +90,8 @@ project "Playground"
 
     includedirs {
       "Cream/_src",
-      "Cream/dependencies/Logger/include"
+      "Cream/dependencies/Logger/include",
+      "Cream/dependencies/vendor/spdlog/include"
 	  }
 
     links {

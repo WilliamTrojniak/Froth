@@ -1,0 +1,3 @@
+[submodule "Cream/dependencies/vendor/spdlog"]
+	path = Cream/dependencies/vendor/spdlog
+	url = https://github.com/gabime/spdlog.git

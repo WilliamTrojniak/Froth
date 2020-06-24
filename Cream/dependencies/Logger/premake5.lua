@@ -11,7 +11,7 @@ project "Logger"
     {
         "_src/**.h",
         "_src/**.cpp",
-        "include/**.h"
+        "include/Logger/**.h"
     }
 
     filter "system:windows"

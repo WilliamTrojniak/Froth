@@ -6,5 +6,5 @@
 **.vcxproj.user
 
 # Project Binaries
-bin/**
-bin-int/**
+**/bin/**
+**/bin-int/**

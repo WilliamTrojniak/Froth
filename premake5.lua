@@ -28,6 +28,7 @@ outputDirectory = "%{cfg.system}%{cfg.buildcfg}-%{cfg.architecture}/%{prj.name}"
 
 group "Dependencies"
   include "Cream/dependencies/Logger"
+  include "Cream/dependencies/vendor/GLFW"
 group ""
 
 project "Cream"
@@ -57,8 +58,13 @@ project "Cream"
     "C:/VulkanSDK/1.2.141.2/Include"
   }
 
+  libdirs {
+    "C:/VulkanSDK/1.2.141.2/Lib"
+  }
+
   links {
-    
+    "GLFW",
+    "vulkan-1.lib"
   }
 
   filter "configurations:Debug"

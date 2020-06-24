@@ -51,7 +51,10 @@ project "Cream"
   includedirs {
     "%{prj.name}/_src",
     "Cream/dependencies/Logger/include",
-    "Cream/dependencies/vendor/spdlog/include"
+    "Cream/dependencies/vendor/spdlog/include",
+    "Cream/dependencies/vendor/GLFW/include",
+    "Cream/dependencies/vendor/glm/",
+    "C:/VulkanSDK/1.2.141.2/Include"
   }
 
   links {
@@ -91,7 +94,10 @@ project "Playground"
     includedirs {
       "Cream/_src",
       "Cream/dependencies/Logger/include",
-      "Cream/dependencies/vendor/spdlog/include"
+      "Cream/dependencies/vendor/spdlog/include",
+      "Cream/dependencies/vendor/GLFW/include",
+      "Cream/dependencies/vendor/glm/",
+      "C:/VulkanSDK/1.2.141.2/Include"
 	  }
 
     links {

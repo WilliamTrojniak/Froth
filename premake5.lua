@@ -2,6 +2,7 @@
 workspace "Cream"
     configurations { "Debug", "Release", "Distribution"}
     platforms { "Win64" }
+    startproject "Playground"
 
   filter "configurations:Debug"
 		defines {"CREAM_DEBUG"}
@@ -25,6 +26,10 @@ workspace "Cream"
 
 outputDirectory = "%{cfg.system}%{cfg.buildcfg}-%{cfg.architecture}/%{prj.name}"
 
+group "Dependencies"
+  include "Cream/dependencies/Logger"
+group ""
+
 project "Cream"
   location "Cream"
   kind "StaticLib"
@@ -44,11 +49,12 @@ project "Cream"
   }
 
   includedirs {
-    "%{prj.name}/_src"
+    "%{prj.name}/_src",
+    "Cream/dependencies/Logger/include"
   }
 
   links {
-
+    
   }
 
   filter "configurations:Debug"
@@ -82,7 +88,8 @@ project "Playground"
     }
 
     includedirs {
-      "Cream/_src"
+      "Cream/_src",
+      "Cream/dependencies/Logger/include"
 	  }
 
     links {

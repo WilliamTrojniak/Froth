@@ -8,3 +8,5 @@
 # Project Binaries
 **/bin/**
 **/bin-int/**
+
+Cream/dependencies/vendor/**

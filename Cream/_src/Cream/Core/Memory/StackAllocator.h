@@ -3,6 +3,8 @@
 
 namespace Cream
 {
+
+	// For dynamic memory allocations in a LIFO manner
 	class StackAllocator
 	{
 	public:

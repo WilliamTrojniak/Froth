@@ -23,7 +23,7 @@ namespace Cream
 		Marker getMarker();
 
 		// Rolls the stack back to a previous marker
-		void freeToMarker(Marker marker);
+		bool freeToMarker(Marker marker);
 
 		// Clears entire stack (Rolls back to zero)
 		void clear();
@@ -37,7 +37,7 @@ namespace Cream
 		// Returns total memory in bytes allocated by the Stack Allocator
 		U32 getTotalBytes();
 
-	protected:
+	private:
 		U32 m_StackSizeBytes;
 		Marker m_Marker;
 		intptr_t m_Pointer;

@@ -7,6 +7,7 @@ namespace Cream
 		: m_StackSizeBytes(stackSizeBytes), m_Marker(0)
 	{
 		m_Pointer = reinterpret_cast<intptr_t>(malloc(m_StackSizeBytes));
+		CREAM_ASSERT(m_Pointer); // Failed to allocate memory
 	}
 
 	StackAllocator::~StackAllocator()
@@ -26,7 +27,7 @@ namespace Cream
 		const U32 effectiveSize = (offset == 0) ? sizeBytes : sizeBytes + alignment - offset;
 		if (m_Marker + effectiveSize > m_StackSizeBytes)
 		{
-			CREAM_ASSERT(m_Marker + effectiveSize <= m_StackSizeBytes);
+			CREAM_ASSERT(m_Marker + effectiveSize <= m_StackSizeBytes); // Insufficient memory available for requested allocation.
 			return nullptr;
 		}	
 
@@ -40,9 +41,14 @@ namespace Cream
 		return m_Marker;
 	}
 
-	void StackAllocator::freeToMarker(Marker marker)
+	bool StackAllocator::freeToMarker(Marker marker)
 	{
-		m_Marker = (marker >= 0 && marker <= m_StackSizeBytes) ? marker : m_Marker;
+		if (marker >= 0 && marker <= m_StackSizeBytes)
+		{
+			m_Marker = marker;
+			return true;
+		}
+		return false;
 	}
 
 	void StackAllocator::clear()

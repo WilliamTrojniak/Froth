@@ -1,5 +1,5 @@
 #pragma once
-#include "Cream/Utility/Utility.h"
+#include "Base.h"
 
 namespace Cream
 {

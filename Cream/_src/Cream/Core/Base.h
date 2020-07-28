@@ -1,6 +1,7 @@
 #pragma once
 // Platform Independent Includes
 #include "Cream/Platform Dependent/BuildDefines.h"
+#include "Cream/Platform Dependent/PointerTypes.h"
 #include "Cream/Platform Dependent/PrimitiveTypes.h"
 #include "Cream/Platform Dependent/Collections/ListSingleLink.h"
 

@@ -2,10 +2,6 @@
 
 namespace Cream
 {
-	
-
-
-
 	// The Pool Allocator class.
 	// Features:
 	//	- Parameterized by number of chunks per block
@@ -29,12 +25,15 @@ namespace Cream
 		};
 
 	public:
+		// Create a pool allocator with given chunks per block of the pool
 		PoolAllocator(size_t chunksPerBlock) :
 			m_ChunksPerBlock(chunksPerBlock)
 		{
 		}
 
+		// Allocates a chunk of size 'sizeBytes' by removing its pointer from the list of free chunks
 		void* allocate(size_t sizeBytes);
+
 		// Puts the deallocated chunk at the front of the free chunks list
 		void deallocate(void* chunk, size_t sizeBytes);
 

@@ -2,9 +2,6 @@
 
 namespace Cream
 {
-
-	
-
 	template <typename T>
 	class List
 	{

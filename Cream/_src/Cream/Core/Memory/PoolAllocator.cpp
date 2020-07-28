@@ -1,6 +1,5 @@
 #include "creampch.h"
 #include "PoolAllocator.h"
-#include "Cream/Core/Assertions.h"
 
 namespace Cream
 {
@@ -45,7 +44,7 @@ namespace Cream
 		Chunk* blockBegin = reinterpret_cast<Chunk*>(malloc(effectiveSize));
 
 		// Align the first chunk of the allocated block
-		U32 offset = (reinterpret_cast<uintptr_t>(blockBegin)) % chunkSizeBytes;
+		size_t offset = (reinterpret_cast<uintptr_t>(blockBegin)) % chunkSizeBytes;
 		Chunk* alignedBlock = reinterpret_cast<Chunk*>(reinterpret_cast<uintptr_t>(blockBegin) + chunkSizeBytes - offset);
 		
 		// Link all the new free chunks together

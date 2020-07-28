@@ -59,7 +59,7 @@ namespace Cream
 		}
 
 		// Inserts node with data of type 'T' after specified node
-		void pushAfter(const T& value, Iterator& index)
+		void pushAfter(const T& value, const Iterator& index)
 		{
 			Node* newNode = new Node(value);
 			newNode->setNext(index.getCurrentNode()->getNext());
@@ -106,7 +106,7 @@ namespace Cream
 
 		// Delete at a given node index
 		// CAUTION: Runtime of O(n) due to search for node that preceeds node requesting deletion
-		void popAt(Iterator& index)
+		void popAt(const Iterator& index)
 		{
 			if (index.getCurrentNode() == nullptr)
 				return;
@@ -136,21 +136,66 @@ namespace Cream
 			}
 		}
 
+		// Removes the first node found with a given value
+		// CAUTION: Runtime of O(n) needed to loop through all values and find previous node
+		void remove(const T& value)
+		{
+			if (this->isEmpty())
+				return;
+
+			Node* prevNode = this->begin().getCurrentNode();
+			for (Iterator i = this->begin(); i != this->end(); i++)
+			{
+				if (i.getCurrentNode()->getData() == value)
+				{
+					if (i == this->begin())
+					{
+						return this->popFront();
+					}
+
+					if (i.getCurrentNode() == m_Tail)
+					{
+						return this->popBack();
+					}
+
+					prevNode->setNext(i.getCurrentNode()->getNext());
+					free(i.getCurrentNode());
+					return;
+				}
+				prevNode = i.getCurrentNode();
+			}
+		}
+
+		// Returns the first index of the given value within the list
+		// CAUTION: Runtime of O(n)
+		Iterator search(const T& value)
+		{
+
+			for (Iterator i = this->begin(); i != this->end(); i++)
+			{
+				if (i.getCurrentNode()->getData() == value)
+				{
+					return i;
+				}
+			}
+			return this->end();
+		}
+
 		// Checks if the list has no linked nodes
-		bool isEmpty()
+		bool isEmpty() const
 		{
 			return m_Head == nullptr;
 		}
 
 		
 		// Returns the address of the first node of the list
-		Iterator begin()
+		Iterator begin() const
 		{
 			return Iterator(m_Head);
 		}
 
 		// 'nullptr' indicates the end of the list as it is the 'next' value of the last node
-		Iterator end()
+		Iterator end() const
 		{
 			return Iterator(nullptr);
 		}
@@ -178,7 +223,7 @@ namespace Cream
 			}
 
 			// Returns the node that the iterator currently points to
-			Node* getCurrentNode()
+			Node* getCurrentNode() const
 			{
 				return m_CurrentNode;
 			}
@@ -207,12 +252,12 @@ namespace Cream
 			}
 
 			// Overwrites the '!=' operator
-			bool operator!=(const Iterator& iterator)
+			bool operator!=(const Iterator& iterator) const
 			{
 				return m_CurrentNode != iterator.m_CurrentNode;
 			}
 
-			bool operator==(const Iterator& iterator)
+			bool operator==(const Iterator& iterator) const
 			{
 				return m_CurrentNode == iterator.m_CurrentNode;
 			}
@@ -249,10 +294,9 @@ namespace Cream
 		{
 		public:
 			Node(const T& value) : data(value), next(nullptr) {};
-			Node* getNext() { return next; }
+			Node* getNext() const { return next; }
 			void setNext(Node* addr) { next = addr; }
 			T& getData() { return data; }
-			void setData(T value) { data = value; }
 		private:
 			Node* next;
 			T data;

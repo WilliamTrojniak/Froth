@@ -61,6 +61,8 @@ namespace Cream
 			Node* newNode = new Node(value);
 			newNode->setNext(index.getCurrentNode()->getNext());
 			index.getCurrentNode()->setNext(newNode);
+			if (index.getCurrentNode() == m_Tail)
+				m_Tail = newNode;
 			
 		}
 
@@ -198,7 +200,7 @@ namespace Cream
 		}
 
 		// Allows for 'List[i]' format for accessing data by calling the '*' operator on the iterator which returns the data value
-		T& operator[](Iterator& i)
+		T& operator[](const Iterator& i)
 		{
 			return *i;
 		}
@@ -260,7 +262,7 @@ namespace Cream
 			}
 
 			// Overwrites the '*' operator to return the value data
-			T& operator*()
+			T& operator*() const
 			{
 				return m_CurrentNode->getData();
 			}

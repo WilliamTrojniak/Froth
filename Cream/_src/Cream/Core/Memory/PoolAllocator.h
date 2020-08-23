@@ -1,4 +1,6 @@
 #pragma once
+#include "Cream/Platform Dependent/Collections/ListSingleLink.h"
+#include "Cream/Core/Assertions.h"
 
 namespace Cream
 {
@@ -26,24 +28,38 @@ namespace Cream
 
 	public:
 		// Create a pool allocator with given chunks per block of the pool
-		PoolAllocator(size_t chunksPerBlock) :
-			m_ChunksPerBlock(chunksPerBlock)
+		PoolAllocator(size_t bytesPerChunk, size_t chunksPerBlock) :
+			m_BytesPerChunk(bytesPerChunk), m_ChunksPerBlock(chunksPerBlock)
 		{
+			CREAM_ASSERT(m_BytesPerChunk >= sizeof(void*)); // Chunk sizes must be at least the size of a pointer to allow for pointer storage
+		}
+
+		// Frees all of the memory allocated by the pool allocator back to the OS
+		~PoolAllocator()
+		{
+			freeAllBlocks();
 		}
 
 		// Allocates a chunk of size 'sizeBytes' by removing its pointer from the list of free chunks
-		void* allocate(size_t sizeBytes);
+		void* allocate();
 
 		// Puts the deallocated chunk at the front of the free chunks list
-		void deallocate(void* chunk, size_t sizeBytes);
+		void deallocate(void* chunk);
 
 	private:
 		// Allocates a larger block for chunks
-		Chunk* allocateBlock(size_t chunkSizeBytes);
+		Chunk* allocateBlock();
 
+		void freeAllBlocks();
+
+		// Size of each chunk in bytes
+		size_t m_BytesPerChunk;
 		// Number of chunks to allocate in each block of the pool
 		size_t m_ChunksPerBlock;
 		// Allocation pointer
 		Chunk* m_Alloc = nullptr;
+
+		// Pointer to each block
+		Cream::List<Chunk*> m_Blocks;
 	};
 }

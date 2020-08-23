@@ -3,14 +3,14 @@
 
 namespace Cream
 {
-	void* PoolAllocator::allocate(size_t sizeBytes)
+	void* PoolAllocator::allocate()
 	{
 		// No chunks left in the current block,
 		// or no block in existence.
 		// Allocate a new one
 		if (m_Alloc == nullptr)
 		{
-			m_Alloc = allocateBlock(sizeBytes);
+			m_Alloc = allocateBlock();
 		}
 
 		// Return the chunk that is being allocated
@@ -22,7 +22,7 @@ namespace Cream
 		return freeChunk;
 	}
 
-	void PoolAllocator::deallocate(void* chunk, size_t sizeBytes)
+	void PoolAllocator::deallocate(void* chunk)
 	{
 		// The freed chunk's 'next' pointer points to 
 		// the current allocation pointer
@@ -32,30 +32,37 @@ namespace Cream
 		m_Alloc = reinterpret_cast<Chunk*>(chunk);
 	}
 
-	PoolAllocator::Chunk* PoolAllocator::allocateBlock(size_t chunkSizeBytes)
+	PoolAllocator::Chunk* PoolAllocator::allocateBlock()
 	{
-		CREAM_ASSERT(chunkSizeBytes >= sizeof(void*)); // Chunk sizes must be at least the size of a pointer to allow for pointer storage
-
 		// Calculate the size in bytes of the block
-		size_t blockSize = m_ChunksPerBlock * chunkSizeBytes;
+		size_t blockSize = m_ChunksPerBlock * m_BytesPerChunk;
 
 		// Allocate the block with a pointer to its beginning
-		size_t effectiveSize = blockSize + chunkSizeBytes;
-		Chunk* blockBegin = reinterpret_cast<Chunk*>(malloc(effectiveSize));
+		size_t effectiveSize = blockSize + m_BytesPerChunk;
+		Chunk* blockBegin = reinterpret_cast<Chunk*>(::operator new(effectiveSize));
+		// old - Chunk* blockBegin = reinterpret_cast<Chunk*>(malloc(effectiveSize));
+		m_Blocks.pushBack(blockBegin);
 
 		// Align the first chunk of the allocated block
-		size_t offset = (reinterpret_cast<uintptr_t>(blockBegin)) % chunkSizeBytes;
-		Chunk* alignedBlock = reinterpret_cast<Chunk*>(reinterpret_cast<uintptr_t>(blockBegin) + chunkSizeBytes - offset);
+		size_t offset = (reinterpret_cast<uintptr_t>(blockBegin)) % m_BytesPerChunk;
+		Chunk* alignedBlock = reinterpret_cast<Chunk*>(reinterpret_cast<uintptr_t>(blockBegin) + m_BytesPerChunk - offset);
 		
 		// Link all the new free chunks together
 		Chunk* chunk = alignedBlock;
 		for (size_t i = 0; i < m_ChunksPerBlock - 1; i++)
 		{
-			chunk->next = reinterpret_cast<Chunk*>(reinterpret_cast<intptr_t>(chunk) + chunkSizeBytes);
+			chunk->next = reinterpret_cast<Chunk*>(reinterpret_cast<intptr_t>(chunk) + m_BytesPerChunk);
 			chunk = chunk->next;
 		}
 		chunk->next = nullptr;
 
 		return alignedBlock;
+	}
+	void PoolAllocator::freeAllBlocks()
+	{
+		for (Chunk* block : m_Blocks)
+		{
+			::operator delete(block, m_ChunksPerBlock * m_BytesPerChunk + m_BytesPerChunk);
+		}
 	}
 }

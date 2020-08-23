@@ -1,5 +1,5 @@
 #pragma once
-#include "Cream/Platform Dependent/PrimitiveTypes.h"
+#include "Cream/Platform Independence Layer/PrimitiveTypes.h"
 
 namespace Cream
 {

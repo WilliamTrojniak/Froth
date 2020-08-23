@@ -1,6 +1,6 @@
 #pragma once
-#include "Cream/Platform Dependent/Collections/ListSingleLink.h"
-#include "Cream/Core/Assertions.h"
+#include "Cream/Platform Independence Layer/Collections/ListSingleLink.h"
+#include "Cream/Core Layer/Assertions.h"
 
 namespace Cream
 {

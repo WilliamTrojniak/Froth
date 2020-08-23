@@ -1,5 +1,5 @@
 #pragma once
-#include "Cream/Platform Dependent/BuildDefines.h"
+#include "Cream/Platform Independence Layer/BuildDefines.h"
 
 #if defined(CREAM_ENABLE_ASSERTIONS)
 #ifndef CREAM_DEBUGBREAK

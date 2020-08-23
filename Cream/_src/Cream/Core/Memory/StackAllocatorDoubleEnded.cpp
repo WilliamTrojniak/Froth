@@ -6,13 +6,15 @@ namespace Cream
 	StackAllocatorDoubleEnded::StackAllocatorDoubleEnded(U32 sizeBytes)
 		: m_StackSizeBytes(sizeBytes), m_MarkerTop(0), m_MarkerBottom(0)
 	{
-		m_Pointer = reinterpret_cast<intptr_t>(malloc(m_StackSizeBytes));
+		m_Pointer = reinterpret_cast<intptr_t>(::operator new(m_StackSizeBytes));
+		// old - m_Pointer = reinterpret_cast<intptr_t>(malloc(m_StackSizeBytes));
 		CREAM_ASSERT(m_Pointer); // Failed to allocate memory
 	}
 
 	StackAllocatorDoubleEnded::~StackAllocatorDoubleEnded()
 	{
-		free(reinterpret_cast<void*>(m_Pointer));
+		::operator delete(reinterpret_cast<void*>(m_Pointer), m_StackSizeBytes);
+		// old - free(reinterpret_cast<void*>(m_Pointer));
 	}
 
 	void* StackAllocatorDoubleEnded::allocTop(U32 sizeBytes)

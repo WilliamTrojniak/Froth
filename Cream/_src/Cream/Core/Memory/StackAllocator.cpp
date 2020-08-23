@@ -6,13 +6,15 @@ namespace Cream
 	StackAllocator::StackAllocator(U32 stackSizeBytes)
 		: m_StackSizeBytes(stackSizeBytes), m_Marker(0)
 	{
-		m_Pointer = reinterpret_cast<intptr_t>(malloc(m_StackSizeBytes));
+		m_Pointer = reinterpret_cast<intptr_t>(::operator new(m_StackSizeBytes));
+		// old - m_Pointer = reinterpret_cast<intptr_t>(malloc(m_StackSizeBytes));
 		CREAM_ASSERT(m_Pointer); // Failed to allocate memory
 	}
 
 	StackAllocator::~StackAllocator()
 	{
-		free(reinterpret_cast<void*>(m_Pointer));
+		::operator delete(reinterpret_cast<void*>(m_Pointer), m_StackSizeBytes);
+		// old - free(reinterpret_cast<void*>(m_Pointer));
 	}
 
 	void* StackAllocator::alloc(U32 sizeBytes)

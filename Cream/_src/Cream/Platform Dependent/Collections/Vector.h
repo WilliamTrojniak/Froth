@@ -206,7 +206,7 @@ namespace Cream
 	private:
 		void realloc(size_t newCapacity)
 		{
-			T* newBlock = (T*)::operator new(newCapacity * sizeof(T));
+			T* newBlock = reinterpret_cast<T*>(::operator new(newCapacity * sizeof(T)));
 
 			if (newCapacity < m_Size)
 				m_Size = newCapacity;

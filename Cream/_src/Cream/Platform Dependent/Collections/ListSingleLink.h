@@ -20,7 +20,7 @@ namespace Cream
 		}
 		~List()
 		{
-			deleteList();
+			clear();
 		}
 
 
@@ -28,6 +28,33 @@ namespace Cream
 		void pushFront(const T& value)
 		{
 			Node* newNode = new Node(value);
+			newNode->setNext(m_Head);
+
+			if (m_Head == nullptr)
+			{
+				m_Tail = newNode;
+			}
+
+			m_Head = newNode;
+		}
+
+		void pushFront(T&& value)
+		{
+			Node* newNode = new Node(std::move(value));
+			newNode->setNext(m_Head);
+
+			if (m_Head == nullptr)
+			{
+				m_Tail = newNode;
+			}
+
+			m_Head = newNode;
+		}
+
+		template<typename...Args>
+		void emplaceFront(Args&&... args)
+		{
+			Node* newNode = new Node(std::forward<Args>(args)...);
 			newNode->setNext(m_Head);
 
 			if (m_Head == nullptr)
@@ -55,6 +82,39 @@ namespace Cream
 			m_Tail = newNode;
 		}
 
+		void pushBack(T&& value)
+		{
+			Node* newNode = new Node(std::move(value));
+
+			if (m_Head == nullptr)
+			{
+				m_Head = newNode;
+			}
+			else
+			{
+				m_Tail->setNext(newNode);
+			}
+
+			m_Tail = newNode;
+		}
+
+		template<typename...Args>
+		void emplaceBack(Args&&... args)
+		{
+			Node* newNode = new Node(std::forward<Args>(args)...);
+
+			if (m_Head == nullptr)
+			{
+				m_Head = newNode;
+			}
+			else
+			{
+				m_Tail->setNext(newNode);
+			}
+
+			m_Tail = newNode;
+		}
+
 		// Inserts node with data of type 'T' after specified node
 		void pushAfter(const T& value, const Iterator& index)
 		{
@@ -66,13 +126,33 @@ namespace Cream
 			
 		}
 
+		void pushAfter(T&& value, const Iterator& index)
+		{
+			Node* newNode = new Node(std::move(value));
+			newNode->setNext(index.getCurrentNode()->getNext());
+			index.getCurrentNode()->setNext(newNode);
+			if (index.getCurrentNode() == m_Tail)
+				m_Tail = newNode;
+
+		}
+
+		template<typename...Args>
+		void emplaceAfter(const Iterator& index, Args&&... args)
+		{
+			Node* newNode = new Node(std::forward<Args>(args)...);
+			newNode->setNext(index.getCurrentNode()->getNext());
+			index.getCurrentNode()->setNext(newNode);
+			if (index.getCurrentNode() == m_Tail)
+				m_Tail = newNode;
+		}
+
 		// Deletes the node at the front of the list
 		void popFront()
 		{
 			if (m_Head != nullptr)
 			{
 				Node* newHead = m_Head->getNext();
-				free(m_Head);
+				delete m_Head;
 				m_Head = newHead;
 			}
 		}
@@ -94,7 +174,7 @@ namespace Cream
 			{
 				if (i.getCurrentNode() == this->m_Tail)
 				{
-					free(m_Tail);
+					delete m_Tail;
 					prevNode->setNext(nullptr);
 					m_Tail = prevNode;
 					return;
@@ -128,11 +208,26 @@ namespace Cream
 				if (i.getCurrentNode() == index.getCurrentNode())
 				{
 					prevNode->setNext(i.getCurrentNode()->getNext());
-					free(i.getCurrentNode());
+					delete i.getCurrentNode();
 					return;
 				}
 				prevNode = i.getCurrentNode();
 			}
+		}
+
+		// Frees all the memory allocated by the nodes that make up the list
+		void clear()
+		{
+			Node* nextNode = m_Head;
+			Node* currentNode = m_Head;
+			while (nextNode)
+			{
+				currentNode = nextNode;
+				nextNode = currentNode->getNext();
+				delete currentNode;
+			}
+			m_Head = nullptr;
+			m_Tail = nullptr;
 		}
 
 		// Removes the first node found with a given value
@@ -158,7 +253,7 @@ namespace Cream
 					}
 
 					prevNode->setNext(i.getCurrentNode()->getNext());
-					free(i.getCurrentNode());
+					delete i.getCurrentNode();
 					return;
 				}
 				prevNode = i.getCurrentNode();
@@ -272,33 +367,23 @@ namespace Cream
 		};
 
 	private:
-		// Frees all the memory allocated by the nodes that make up the list
-		void deleteList()
-		{
-			Node* current = m_Head;
-			Node* next;
-
-			while (current != nullptr)
-			{
-				next = current->getNext();
-				free(current);
-				current = next;
-			}
-			m_Head = nullptr;
-			m_Tail = nullptr;
-		}
 
 		// Each represents one element of the list
 		class Node
 		{
 		public:
-			Node(const T& value) : data(value), next(nullptr) {};
-			Node* getNext() const { return next; }
-			void setNext(Node* addr) { next = addr; }
-			T& getData() { return data; }
+			Node(const T& value) : m_Data(value), m_Next(nullptr) {}
+			Node(T&& value) : m_Data(std::move(value)), m_Next(nullptr) {}
+
+			template<typename...Args>
+			Node(Args&&...args) : m_Data(T(std::forward<Args>(args)...)), m_Next(nullptr) {}
+
+			Node* getNext() const { return m_Next; }
+			void setNext(Node* addr) { m_Next = addr; }
+			T& getData() { return m_Data; }
 		private:
-			Node* next;
-			T data;
+			Node* m_Next;
+			T m_Data;
 		};
 
 		Node* m_Head;

@@ -12,7 +12,7 @@ namespace Cream
 		Vector()
 		{
 			// Allocate 2 elements
-			realloc(2);
+			realloc(10);
 		}
 
 		~Vector()
@@ -70,9 +70,11 @@ namespace Cream
 		void popAt(const size_t& index)
 		{
 			CREAM_ASSERT(index >= 0 && index < m_Size);
+			m_Data[i].~T();
 			for (size_t i = index; i < m_Size - 1; i++)
 			{
 				m_Data[i] = std::move(m_Data[i + 1]);
+				m_Data[i+1].~T();
 			}
 			m_Size--;
 		}
@@ -85,9 +87,15 @@ namespace Cream
 		void popAt(const size_t& first, const size_t& last)
 		{
 			CREAM_ASSERT(first >= 0 && first <= last && last < m_Size);
+			for (size_t i = first; i <= last; i++)
+			{
+				m_Data[i].~T();
+			}
+
 			for (size_t i = 0; i < m_Size - last - 1; i++)
 			{
 				m_Data[first + i] = std::move(m_Data[last + i + 1]);
+				m_Data[last + i + 1].~T();
 			}
 			m_Size -= last - first + 1;
 		}

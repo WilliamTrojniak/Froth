@@ -16,6 +16,11 @@ namespace Cream
 		{
 		}
 
+		~ListDouble()
+		{
+			clear();
+		}
+
 		void pushFront(const T& value)
 		{
 			Node* newNode = new Node(value, nullptr, m_Head);
@@ -28,12 +33,69 @@ namespace Cream
 				m_Head->setPrev(newNode);
 			}
 			m_Head = newNode;
+		}
 
+		void pushFront(T&& value)
+		{
+			Node* newNode = new Node(std::move(value), nullptr, m_Head);
+			if (m_Head == nullptr)
+			{
+				m_Tail = newNode;
+			}
+			else
+			{
+				m_Head->setPrev(newNode);
+			}
+			m_Head = newNode;
+		}
+
+		template<typename... Args>
+		void emplaceFront(Args&&... args)
+		{
+			Node* newNode = new Node(nullptr, m_Head, std::forward<Args>(args)...);
+			if (m_Head == nullptr)
+			{
+				m_Tail = newNode;
+			}
+			else
+			{
+				m_Head->setPrev(newNode);
+			}
+			m_Head = newNode;
 		}
 
 		void pushBack(const T& value)
 		{
 			Node* newNode = new Node(value, m_Tail, nullptr);
+			if (m_Head == nullptr)
+			{
+				m_Head = newNode;
+			}
+			else
+			{
+				m_Tail->setNext(newNode);
+			}
+			m_Tail = newNode;
+		}
+
+		void pushBack(T&& value)
+		{
+			Node* newNode = new Node(std::move(value), m_Tail, nullptr);
+			if (m_Head == nullptr)
+			{
+				m_Head = newNode;
+			}
+			else
+			{
+				m_Tail->setNext(newNode);
+			}
+			m_Tail = newNode;
+		}
+
+		template<typename... Args>
+		void emplaceBack(Args&&... args)
+		{
+			Node* newNode = new Node(m_Tail, nullptr, std::forward<Args>(args)...);
 			if (m_Head == nullptr)
 			{
 				m_Head = newNode;
@@ -56,6 +118,27 @@ namespace Cream
 				m_Tail = newNode;
 		}
 
+		void pushAfter(T&& value, const Iterator& index)
+		{
+			Node* newNode = new Node(std::move(value), index.getCurrentNode(), index.getCurrentNode()->getNext());
+			if (index.getCurrentNode()->getNext())
+				index.getCurrentNode()->getNext()->setPrev(newNode);
+			index.getCurrentNode()->setNext(newNode);
+			if (index.getCurrentNode() == m_Tail)
+				m_Tail = newNode;
+		}
+
+		template<typename...Args>
+		void emplaceAfter(const Iterator& index, Args&&... args)
+		{
+			Node* newNode = new Node(index.getCurrentNode(), index.getCurrentNode()->getNext(), std::forward<Args>(args)...);
+			if (index.getCurrentNode()->getNext())
+				index.getCurrentNode()->getNext()->setPrev(newNode);
+			index.getCurrentNode()->setNext(newNode);
+			if (index.getCurrentNode() == m_Tail)
+				m_Tail = newNode;
+		}
+
 		// Assumes list is of a size greater than or equal to 1
 		void pushBefore(const T& value, const Iterator& index)
 		{
@@ -67,6 +150,41 @@ namespace Cream
 				m_Head = newNode;
 		}
 
+		void pushBefore(T&& value, const Iterator& index)
+		{
+			Node* newNode = new Node(std::move(value), index.getCurrentNode()->getPrev(), index.getCurrentNode());
+			if (index.getCurrentNode()->getPrev())
+				index.getCurrentNode()->getPrev()->setNext(newNode);
+			index.getCurrentNode()->setPrev(newNode);
+			if (index.getCurrentNode() == m_Head)
+				m_Head = newNode;
+		}
+
+		template<typename...Args>
+		void emplaceBefore(const Iterator& index, Args&&... args)
+		{
+			Node* newNode = new Node(index.getCurrentNode()->getPrev(), index.getCurrentNode(), std::forward<Args>(args)...);
+			if (index.getCurrentNode()->getPrev())
+				index.getCurrentNode()->getPrev()->setNext(newNode);
+			index.getCurrentNode()->setPrev(newNode);
+			if (index.getCurrentNode() == m_Head)
+				m_Head = newNode;
+		}
+		
+		void clear()
+		{
+			Node* nextNode = m_Head;
+			Node* currentNode = m_Head;
+			while (nextNode)
+			{
+				currentNode = nextNode;
+				nextNode = currentNode->getNext();
+				delete currentNode;
+			}
+			m_Head = nullptr;
+			m_Tail = nullptr;
+		}
+
 		void popFront()
 		{
 			if (m_Head)
@@ -74,12 +192,12 @@ namespace Cream
 				if (m_Head->getNext())
 				{
 					m_Head = m_Head->getNext();
-					free(m_Head->getPrev());
+					delete m_Head->getPrev();
 					m_Head->setPrev(nullptr);
 					return;
 				}
 
-				free(m_Head);
+				delete m_Head;
 				m_Head = nullptr;
 				m_Tail = nullptr;
 			}
@@ -92,11 +210,11 @@ namespace Cream
 				if (m_Tail->getPrev())
 				{
 					m_Tail = m_Tail->getPrev();
-					free(m_Tail->getNext());
+					delete m_Tail->getNext();
 					m_Tail->setNext(nullptr);
 					return;
 				}
-				free(m_Tail);
+				delete m_Tail;
 				m_Head = nullptr;
 				m_Tail = nullptr;
 			}
@@ -121,7 +239,7 @@ namespace Cream
 			{
 				m_Tail = index.getCurrentNode()->getPrev();
 			}
-			free(index.getCurrentNode());
+			delete index.getCurrentNode();
 		}
 
 		void remove(const T& value)
@@ -133,7 +251,7 @@ namespace Cream
 			}
 		}
 
-		Iterator search(const T& value) const
+		Iterator& search(const T& value) const
 		{
 			for (Iterator i = begin(); i != end(); i++)
 			{
@@ -148,27 +266,52 @@ namespace Cream
 			return m_Head == nullptr;
 		}
 
-		Iterator begin() const
+		Iterator& begin()
 		{
 			return Iterator(m_Head);
 		}
 
-		Iterator end() const
+		const Iterator& begin() const
+		{
+			return Iterator(m_Head);
+		}
+
+		Iterator& end()
 		{
 			return Iterator(nullptr);
 		}
 
-		Iterator rbegin() const
+		const Iterator& end() const
+		{
+			return Iterator(nullptr);
+		}
+
+		Iterator& rbegin() 
 		{
 			return Iterator(m_Tail);
 		}
 
-		Iterator rend() const
+		const Iterator& rbegin() const
+		{
+			return Iterator(m_Tail);
+		}
+
+		const Iterator& rend() const
 		{
 			return Iterator(nullptr);
 		}
 
-		T& operator[](const Iterator iterator)
+		Iterator& rend()
+		{
+			return Iterator(nullptr);
+		}
+
+		T& operator[](const Iterator& iterator)
+		{
+			return *iterator;
+		}
+
+		const T& operator[](const Iterator& iterator) const
 		{
 			return *iterator;
 		}
@@ -230,7 +373,12 @@ namespace Cream
 				return m_CurrentNode == iterator.m_CurrentNode;
 			}
 
-			T& operator*() const
+			const T& operator*() const
+			{
+				return m_CurrentNode->getData();
+			}
+
+			T& operator*()
 			{
 				return m_CurrentNode->getData();
 			}
@@ -251,7 +399,23 @@ namespace Cream
 			{
 			}
 
+			Node(T&& data, Node* prevNode, Node* nextNode)
+				: m_Data(std::move(data)), m_PrevNode(prevNode), m_NextNode(nextNode)
+			{
+			}
+
+			template<typename... Args>
+			Node(Node* prevNode, Node* nextNode, Args&&... args)
+				: m_PrevNode(prevNode), m_NextNode(nextNode), m_Data(T(std::forward<Args>(args)...))
+			{
+			}
+
 			T& getData()
+			{
+				return m_Data;
+			}
+
+			const T& getData() const
 			{
 				return m_Data;
 			}

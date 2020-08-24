@@ -3,6 +3,7 @@
 #include "Cream/Platform Independence Layer/BuildDefines.h"
 #include "Cream/Platform Independence Layer/PointerTypes.h"
 #include "Cream/Platform Independence Layer/PrimitiveTypes.h"
+#include "Cream/Platform Independence Layer/String.h"
 #include "Cream/Platform Independence Layer/Collections/ListSingleLink.h"
 #include "Cream/Platform Independence Layer/Collections/ListDoubleLink.h"
 #include "Cream/Platform Independence Layer/Collections/Vector.h"

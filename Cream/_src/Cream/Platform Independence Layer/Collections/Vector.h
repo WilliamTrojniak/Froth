@@ -12,7 +12,7 @@ namespace Cream
 		Vector()
 		{
 			// Allocate 2 elements
-			realloc(10);
+			realloc(2);
 		}
 
 		~Vector()
@@ -28,7 +28,7 @@ namespace Cream
 				realloc(m_Capacity + m_Capacity / 2);
 			}
 
-			m_Data[m_Size] = value;
+			new(&m_Data[m_Size]) T(std::move(value));
 			m_Size++;
 		}
 
@@ -39,7 +39,7 @@ namespace Cream
 				realloc(m_Capacity + m_Capacity / 2);
 			}
 
-			m_Data[m_Size] = std::move(value);
+			new(&m_Data[m_Size]) T(std::move(value));
 			m_Size++;
 		}
 
@@ -212,7 +212,7 @@ namespace Cream
 				m_Size = newCapacity;
 
 			for (size_t i = 0; i < m_Size; i++)
-				newBlock[i] = std::move(m_Data[i]);
+				new(&newBlock[i]) T(std::move(m_Data[i]));
 
 			for (size_t i = 0; i < m_Size; i++)
 				m_Data[i].~T();

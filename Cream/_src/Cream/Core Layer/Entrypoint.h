@@ -91,23 +91,6 @@ int main(int argc, char** argv)
 	
 	Cream::CreateApplication();
 
-	/*
-	std::string s;
-	Cream::String s1 = Cream::String("HeyHelloThere");
-	Cream::String s2 = Cream::String("Buzz", 12);
-	Cream::String s3 = Cream::String("adbcdef");
-
-	std::cout << s1.data() << std::endl;
-	s1.replace("Hello", "");
-	std::cout << s1.data() << std::endl;
-
-	for (Cream::String::Iterator i = s1.rbegin(); i != s1.rend(); i--)
-	{
-		std::cout << *i << std::endl;
-	}
-
-	std::cout << s1.data() << ", " << s2.data() << ", " << s3.data() << std::endl;
-	*/
 	
 	return 0;
 } 

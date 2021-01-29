@@ -1,6 +1,6 @@
 #pragma once
-#include "Cream/Platform Independence Layer/Collections/ListSingleLink.h"
 #include "Cream/Core Layer/Assertions.h"
+#include <list>
 
 namespace Cream
 {
@@ -60,6 +60,6 @@ namespace Cream
 		Chunk* m_Alloc = nullptr;
 
 		// Pointer to each block
-		Cream::List<Chunk*> m_Blocks;
+		std::list<Chunk*> m_Blocks;
 	};
 }

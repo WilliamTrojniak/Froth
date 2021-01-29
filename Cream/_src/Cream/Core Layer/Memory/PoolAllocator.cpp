@@ -41,7 +41,7 @@ namespace Cream
 		size_t effectiveSize = blockSize + m_BytesPerChunk;
 		Chunk* blockBegin = reinterpret_cast<Chunk*>(::operator new(effectiveSize));
 		// old - Chunk* blockBegin = reinterpret_cast<Chunk*>(malloc(effectiveSize));
-		m_Blocks.pushBack(blockBegin);
+		m_Blocks.push_back(blockBegin);
 
 		// Align the first chunk of the allocated block
 		size_t offset = (reinterpret_cast<uintptr_t>(blockBegin)) % m_BytesPerChunk;

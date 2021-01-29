@@ -1,6 +1,6 @@
 #pragma once
 #include <memory>
-namespace Cream
+namespace Froth
 {
 	template<typename T>
 	using Scope = std::unique_ptr<T>;

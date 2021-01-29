@@ -1,4 +1,4 @@
-#include "Cream/Core Layer/Entrypoint.h"
+#include "Froth/Core Layer/Entrypoint.h"
 #include <iostream>
 
 //Temporary
@@ -25,7 +25,7 @@ const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
-#ifndef CREAM_DEBUG
+#ifndef FROTH_DEBUG
 const bool enableValidationLayers = false;
 #else
 const bool enableValidationLayers = true;
@@ -1041,7 +1041,7 @@ private:
 
 
 
-class Playground : public Cream::Application
+class Playground : public Froth::Application
 {
 public:
 	Playground()
@@ -1058,7 +1058,7 @@ public:
 	}
 };
 
-Cream::Ref<Cream::Application> Cream::CreateApplication()
+Froth::Ref<Froth::Application> Froth::CreateApplication()
 {
-	return Cream::CreateRef<Cream::Application>(Playground());
+	return Froth::CreateRef<Froth::Application>(Playground());
 }

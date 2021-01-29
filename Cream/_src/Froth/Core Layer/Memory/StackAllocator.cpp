@@ -1,14 +1,14 @@
-#include "creampch.h"
+#include "frothpch.h"
 #include "StackAllocator.h"
 
-namespace Cream
+namespace Froth
 {
 	StackAllocator::StackAllocator(U32 stackSizeBytes)
 		: m_StackSizeBytes(stackSizeBytes), m_Marker(0)
 	{
 		m_Pointer = reinterpret_cast<intptr_t>(::operator new(m_StackSizeBytes));
 		// old - m_Pointer = reinterpret_cast<intptr_t>(malloc(m_StackSizeBytes));
-		CREAM_ASSERT(m_Pointer); // Failed to allocate memory
+		FROTH_ASSERT(m_Pointer); // Failed to allocate memory
 	}
 
 	StackAllocator::~StackAllocator()
@@ -29,7 +29,7 @@ namespace Cream
 		const U32 effectiveSize = (offset == 0) ? sizeBytes : sizeBytes + alignment - offset;
 		if (m_Marker + effectiveSize > m_StackSizeBytes)
 		{
-			CREAM_ASSERT(m_Marker + effectiveSize <= m_StackSizeBytes); // Insufficient memory available for requested allocation.
+			FROTH_ASSERT(m_Marker + effectiveSize <= m_StackSizeBytes); // Insufficient memory available for requested allocation.
 			return nullptr;
 		}	
 

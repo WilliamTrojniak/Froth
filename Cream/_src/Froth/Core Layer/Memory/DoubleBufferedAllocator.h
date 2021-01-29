@@ -1,7 +1,7 @@
 #pragma once
-#include "Cream/Core Layer/Memory/StackAllocator.h"
+#include "Froth/Core Layer/Memory/StackAllocator.h"
 
-namespace Cream
+namespace Froth
 {
 	class DoubleBufferedAllocator
 	{

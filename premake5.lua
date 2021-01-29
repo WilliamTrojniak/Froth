@@ -1,25 +1,25 @@
 -- premake5.lua
-workspace "Cream"
+workspace "Froth"
     configurations { "Debug", "Release", "Distribution"}
     platforms { "Win64" }
     startproject "Playground"
 
   filter "configurations:Debug"
-		defines {"CREAM_DEBUG"}
+		defines {"FROTH_DEBUG"}
 		symbols "on"
 
 	filter "configurations:Release"
-    defines {"CREAM_RELEASE"}
+    defines {"FROTH_RELEASE"}
 		optimize "on"
 
 	filter "configurations:Distribution"
-    defines {"CREAM_DISTRIBUTION"}
+    defines {"FROTH_DISTRIBUTION"}
     optimize "on"
     
   filter { "platforms:Win64" }
     systemversion "latest"
     system "Windows"
-    defines {"CREAM_PLATFORM_WINDOWS"}
+    defines {"FROTH_PLATFORM_WINDOWS"}
     architecture "x86_64"
 
   filter {}
@@ -27,12 +27,12 @@ workspace "Cream"
 outputDirectory = "%{cfg.system}%{cfg.buildcfg}-%{cfg.architecture}/%{prj.name}"
 
 group "Dependencies"
-  include "Cream/dependencies/Logger"
-  include "Cream/dependencies/vendor/GLFW"
+  include "Froth/dependencies/Logger"
+  include "Froth/dependencies/vendor/GLFW"
 group ""
 
-project "Cream"
-  location "Cream"
+project "Froth"
+  location "Froth"
   kind "StaticLib"
   language "C++"
   cppdialect "C++17"
@@ -41,8 +41,8 @@ project "Cream"
   targetdir ("bin/"..outputDirectory)
   objdir ("bin-int/"..outputDirectory)
 
-  pchheader "creampch.h"
-  pchsource "Cream/_src/creampch.cpp"
+  pchheader "frothpch.h"
+  pchsource "Froth/_src/frothpch.cpp"
 
   files {
 		"%{prj.name}/_src/**.h",
@@ -51,10 +51,10 @@ project "Cream"
 
   includedirs {
     "%{prj.name}/_src",
-    "Cream/dependencies/Logger/include",
-    "Cream/dependencies/vendor/spdlog/include",
-    "Cream/dependencies/vendor/GLFW/include",
-    "Cream/dependencies/vendor/glm/",
+    "Froth/dependencies/Logger/include",
+    "Froth/dependencies/vendor/spdlog/include",
+    "Froth/dependencies/vendor/GLFW/include",
+    "Froth/dependencies/vendor/glm/",
     "C:/VulkanSDK/1.2.141.2/Include"
   }
 
@@ -98,16 +98,16 @@ project "Playground"
     }
 
     includedirs {
-      "Cream/_src",
-      "Cream/dependencies/Logger/include",
-      "Cream/dependencies/vendor/spdlog/include",
-      "Cream/dependencies/vendor/GLFW/include",
-      "Cream/dependencies/vendor/glm/",
+      "Froth/_src",
+      "Froth/dependencies/Logger/include",
+      "Froth/dependencies/vendor/spdlog/include",
+      "Froth/dependencies/vendor/GLFW/include",
+      "Froth/dependencies/vendor/glm/",
       "C:/VulkanSDK/1.2.141.2/Include"
 	  }
 
     links {
-      "Cream"
+      "Froth"
     }
     
   filter "configurations:Debug"

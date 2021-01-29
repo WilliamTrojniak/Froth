@@ -1,7 +1,7 @@
-#include "creampch.h"
+#include "frothpch.h"
 #include "PoolAllocator.h"
 
-namespace Cream
+namespace Froth
 {
 	void* PoolAllocator::allocate()
 	{

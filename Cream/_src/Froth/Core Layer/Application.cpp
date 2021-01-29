@@ -1,7 +1,7 @@
-#include "creampch.h"
+#include "frothpch.h"
 #include "Application.h"
 
-namespace Cream
+namespace Froth
 {
 	Application::Application()
 	{

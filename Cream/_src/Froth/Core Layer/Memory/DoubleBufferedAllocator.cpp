@@ -1,7 +1,7 @@
-#include "creampch.h"
+#include "frothpch.h"
 #include "DoubleBufferedAllocator.h"
 
-namespace Cream
+namespace Froth
 {
 	DoubleBufferedAllocator::DoubleBufferedAllocator(U32 stackSizeBytes)
 		: m_StackSizeBytes(stackSizeBytes)

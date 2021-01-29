@@ -1,5 +1,5 @@
 #pragma once
-#include "Cream/Core Layer/Application.h"
+#include "Froth/Core Layer/Application.h"
 
 // Temp
 #include <iostream>
@@ -85,11 +85,11 @@ struct Vector3
 	}
 };
 
-extern Cream::Ref<Cream::Application> Cream::CreateApplication();
+extern Froth::Ref<Froth::Application> Froth::CreateApplication();
 int main(int argc, char** argv)
 {
 	
-	Cream::CreateApplication();
+	Froth::CreateApplication();
 
 	
 	return 0;

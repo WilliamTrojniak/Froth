@@ -1,7 +1,7 @@
 #pragma once
-#include "Cream/Platform Independence Layer/PrimitiveTypes.h"
+#include "Froth/Platform Independence Layer/PrimitiveTypes.h"
 
-namespace Cream
+namespace Froth
 {
 
 	// For dynamic memory allocations in a LIFO manner

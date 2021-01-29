@@ -1,14 +1,14 @@
-#include "creampch.h"
+#include "frothpch.h"
 #include "StackAllocatorDoubleEnded.h"
 
-namespace Cream
+namespace Froth
 {
 	StackAllocatorDoubleEnded::StackAllocatorDoubleEnded(U32 sizeBytes)
 		: m_StackSizeBytes(sizeBytes), m_MarkerTop(0), m_MarkerBottom(0)
 	{
 		m_Pointer = reinterpret_cast<intptr_t>(::operator new(m_StackSizeBytes));
 		// old - m_Pointer = reinterpret_cast<intptr_t>(malloc(m_StackSizeBytes));
-		CREAM_ASSERT(m_Pointer); // Failed to allocate memory
+		FROTH_ASSERT(m_Pointer); // Failed to allocate memory
 	}
 
 	StackAllocatorDoubleEnded::~StackAllocatorDoubleEnded()
@@ -29,7 +29,7 @@ namespace Cream
 		const U32 effectiveSize = (offset == 0) ? sizeBytes : sizeBytes + alignment - offset;
 		if (m_MarkerTop + effectiveSize > m_StackSizeBytes - m_MarkerBottom)
 		{
-			CREAM_ASSERT(m_MarkerTop + effectiveSize <= m_StackSizeBytes - m_MarkerBottom); // Insufficient memory available for requested allocation.
+			FROTH_ASSERT(m_MarkerTop + effectiveSize <= m_StackSizeBytes - m_MarkerBottom); // Insufficient memory available for requested allocation.
 			return nullptr;
 		}
 
@@ -50,7 +50,7 @@ namespace Cream
 		const U32 effectiveSize = sizeBytes + offset;
 		if (m_MarkerBottom + effectiveSize > m_StackSizeBytes - m_MarkerTop)
 		{
-			CREAM_ASSERT(m_MarkerBottom + effectiveSize <= m_StackSizeBytes - m_MarkerTop);
+			FROTH_ASSERT(m_MarkerBottom + effectiveSize <= m_StackSizeBytes - m_MarkerTop);
 			return nullptr;
 		}
 

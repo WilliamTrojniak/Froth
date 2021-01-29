@@ -1,7 +1,7 @@
 #pragma once
 #include "Base.h"
 
-namespace Cream
+namespace Froth
 {
 	class Application
 	{

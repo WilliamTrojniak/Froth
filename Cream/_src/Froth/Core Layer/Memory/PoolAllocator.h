@@ -1,8 +1,8 @@
 #pragma once
-#include "Cream/Core Layer/Assertions.h"
+#include "Froth/Core Layer/Assertions.h"
 #include <list>
 
-namespace Cream
+namespace Froth
 {
 	// The Pool Allocator class.
 	// Features:
@@ -31,7 +31,7 @@ namespace Cream
 		PoolAllocator(size_t bytesPerChunk, size_t chunksPerBlock) :
 			m_BytesPerChunk(bytesPerChunk), m_ChunksPerBlock(chunksPerBlock)
 		{
-			CREAM_ASSERT(m_BytesPerChunk >= sizeof(void*)); // Chunk sizes must be at least the size of a pointer to allow for pointer storage
+			FROTH_ASSERT(m_BytesPerChunk >= sizeof(void*)); // Chunk sizes must be at least the size of a pointer to allow for pointer storage
 		}
 
 		// Frees all of the memory allocated by the pool allocator back to the OS

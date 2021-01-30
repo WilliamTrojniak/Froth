@@ -1,28 +1,28 @@
 #pragma once
 
 // Unsigned Integers
-typedef unsigned char      U8;
-typedef unsigned short     U16;
-typedef unsigned int       U32;
-typedef unsigned long long U64;
+using	U8	= unsigned char;
+using	U16	= unsigned short;
+using	U32 = unsigned int;
+using	U64 = unsigned long long;
 
 // Integers
-typedef signed char        I8;
-typedef short              I16;
-typedef int                I32;
-typedef long long          I64;
+using I8  = signed char;
+using I16 = short;
+using I32 = int;
+using I64 = long long;
 
 // Fast Unsigned Integers
-typedef unsigned char      U8F;
-typedef unsigned int       U16F;
-typedef unsigned int       U32F;
-typedef unsigned long long U64F;
+using U8F  = unsigned char;
+using U16F = unsigned int;
+using U32F = unsigned int;
+using U64F = unsigned long long;
 
 // Fast Integers
-typedef signed char        I8F;
-typedef int                I16F;
-typedef int                I32F;
-typedef long long          I64F;
+using I8F  = signed char;
+using I16F = int;
+using I32F = int;
+using I64F = long long;
 
 // Floats
-typedef float F32;
+using F32 = float;

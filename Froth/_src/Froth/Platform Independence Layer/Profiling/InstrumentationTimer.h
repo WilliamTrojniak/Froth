@@ -1,18 +1,19 @@
 #pragma once
 #include <frothpch.h>
+#include "Instrumentor.h"
 
 namespace Froth
 {
-	class Timer
+	class InstrumentationTimer
 	{
 	public:
-		Timer(const char* name)
+		InstrumentationTimer(const char* name)
 			: m_Name(name), m_Stopped(false)
 		{
 			m_StartTimepoint = std::chrono::high_resolution_clock::now();
 		}
 
-		~Timer()
+		~InstrumentationTimer()
 		{
 			if (!m_Stopped)
 				stop();
@@ -25,9 +26,11 @@ namespace Froth
 			U64 start = std::chrono::time_point_cast<std::chrono::microseconds>(m_StartTimepoint).time_since_epoch().count();
 			U64 end = std::chrono::time_point_cast<std::chrono::microseconds>(endTimepoint).time_since_epoch().count();
 
-			m_Stopped = true;
 			F32 duration = (end - start) * 0.001f;
-			std::cout << m_Name << ": " << duration << "ms" << std::endl;
+			
+			Instrumentor::get().writeProfile({ m_Name, start, end });
+
+			m_Stopped = true;
 		}
 
 	private:

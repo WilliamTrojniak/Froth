@@ -15,12 +15,14 @@ namespace Froth
 		
 		bool is_open();
 
-		void open();
+		void open(I32 flags = std::ios::in | std::ios::out);
 		void close();
 
 		std::streampos size();
 
 		std::string read();
+
+		void write(const char* buffer, const size_t& sizeBytes);
 
 	private:
 		FilePath m_Path;

@@ -22,9 +22,9 @@ namespace Froth
 		return m_Stream.is_open();
 	}
 
-	void File::open()
+	void File::open(I32 flags)
 	{
-		m_Stream.open(m_Path.string(), std::ios::in | std::ios::binary);
+		m_Stream.open(m_Path.string(), flags);
 	}
 
 	void File::close()
@@ -54,6 +54,11 @@ namespace Froth
 			return outStr;
 		}
 		return "";
+	}
+	void File::write(const char* buffer, const size_t& sizeBytes)
+	{
+		m_Stream.write(buffer, sizeBytes);
+
 	}
 }
 

@@ -3,6 +3,10 @@
 
 namespace Froth
 {
+	File::File()
+		: m_Path("")
+	{
+	}
 	File::File(const FilePath& path)
 		: m_Path(std::forward<const FilePath&>(path)), m_Stream()
 	{
@@ -17,6 +21,16 @@ namespace Froth
 		return m_Path;
 	}
 
+	void File::setPath(const FilePath& path)
+	{
+		m_Path = path;
+	}
+
+	void File::setPath(const char* path)
+	{
+		m_Path = path;
+	}
+
 	bool File::is_open()
 	{
 		return m_Stream.is_open();
@@ -25,6 +39,11 @@ namespace Froth
 	void File::open(I32 flags)
 	{
 		m_Stream.open(m_Path.string(), flags);
+	}
+
+	void File::flush()
+	{
+		m_Stream.flush();
 	}
 
 	void File::close()

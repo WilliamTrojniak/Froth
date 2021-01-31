@@ -22,6 +22,10 @@ namespace Froth
 
 		friend std::ostream& operator<<(std::ostream& os, const Froth::FilePath& filePath);
 
+		operator std::string() const { return string(); }
+
+		operator char* () const { return string().data(); }
+
 	private:
 		std::filesystem::path m_Path;
 

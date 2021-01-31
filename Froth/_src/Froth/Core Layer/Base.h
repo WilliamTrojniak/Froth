@@ -4,6 +4,7 @@
 #include "Froth/Platform Independence Layer/PointerTypes.h"
 #include "Froth/Platform Independence Layer/PrimitiveTypes.h"
 #include "Froth/Platform Independence Layer/Timer.h"
+#include "Froth/Platform Independence Layer/File System/File.h"
 
 // Core Systems
 #include "Froth/Core Layer/Assertions.h"

@@ -28,6 +28,7 @@ outputDirectory = "%{cfg.system}%{cfg.buildcfg}-%{cfg.architecture}/%{prj.name}"
 
 group "Dependencies"
   include "Froth/dependencies/Logger"
+  include "Froth/dependencies/FMath"
   include "Froth/dependencies/vendor/GLFW"
 group ""
 
@@ -52,6 +53,7 @@ project "Froth"
   includedirs {
     "%{prj.name}/_src",
     "Froth/dependencies/Logger/include",
+    "Froth/dependencies/FMath/include",
     "Froth/dependencies/vendor/spdlog/include",
     "Froth/dependencies/vendor/GLFW/include",
     "Froth/dependencies/vendor/glm/",
@@ -100,6 +102,7 @@ project "Playground"
     includedirs {
       "Froth/_src",
       "Froth/dependencies/Logger/include",
+      "Froth/dependencies/FMath/include",
       "Froth/dependencies/vendor/spdlog/include",
       "Froth/dependencies/vendor/GLFW/include",
       "Froth/dependencies/vendor/glm/",

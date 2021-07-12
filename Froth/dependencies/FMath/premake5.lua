@@ -4,11 +4,10 @@ project "FMath"
     cppdialect "C++17"
     staticruntime "on"
 
-    targetdir ("bin/" .. outputDirectory .. "/%{prj.name}")
-    objdir ("bin-int/" .. outputDirectory .. "/%{prj.name}")
+    targetdir ("bin/" .. outputDirectory)
+    objdir ("bin-int/" .. outputDirectory)
 
-    files
-    {
+    files {
         "_src/**.h",
         "_src/**.cpp",
         "include/FMath/**.h"

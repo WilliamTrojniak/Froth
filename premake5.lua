@@ -43,7 +43,7 @@ project "Froth"
   objdir ("bin-int/"..outputDirectory)
 
   pchheader "frothpch.h"
-  pchsource "Froth/_src/frothpch.cpp"
+  pchsource "%{prj.name}/_src/frothpch.cpp"
 
   files {
 		"%{prj.name}/_src/**.h",
@@ -52,11 +52,11 @@ project "Froth"
 
   includedirs {
     "%{prj.name}/_src",
-    "Froth/dependencies/Logger/include",
-    "Froth/dependencies/FMath/include",
-    "Froth/dependencies/vendor/spdlog/include",
-    "Froth/dependencies/vendor/GLFW/include",
-    "Froth/dependencies/vendor/glm/",
+    "%{prj.name}/dependencies/Logger/include",
+    "%{prj.name}/dependencies/FMath/include",
+    "%{prj.name}/dependencies/vendor/spdlog/include",
+    "%{prj.name}/dependencies/vendor/GLFW/include",
+    "%{prj.name}/dependencies/vendor/glm",
     "C:/VulkanSDK/1.2.141.2/Include"
   }
 
@@ -66,6 +66,7 @@ project "Froth"
 
   links {
     "GLFW",
+    "FMath",
     "vulkan-1.lib"
   }
 

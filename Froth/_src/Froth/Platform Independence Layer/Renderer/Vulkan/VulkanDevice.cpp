@@ -138,7 +138,7 @@ namespace Froth
 		VkSurfaceCapabilitiesKHR surfaceCapabilites;
 		vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_PhysicalDevice, surface.getSurface(), &surfaceCapabilites);
 
-		return std::move(surfaceCapabilites);
+		return surfaceCapabilites;
 	}
 
 	std::vector<VkSurfaceFormatKHR> VulkanDevice::getSurfaceFormats(const VulkanSurface& surface) const
@@ -147,7 +147,7 @@ namespace Froth
 		vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevice, surface.getSurface(), &surfaceFormatCount, nullptr);
 		std::vector<VkSurfaceFormatKHR> surfaceFormats(surfaceFormatCount);
 		vkGetPhysicalDeviceSurfaceFormatsKHR(m_PhysicalDevice, surface.getSurface(), &surfaceFormatCount, surfaceFormats.data());
-		return std::move(surfaceFormats);
+		return surfaceFormats;
 	}
 
 	VulkanDevice::QueueTypeIndices VulkanDevice::getQueueTypeIndices(const VulkanSurface& surface) const

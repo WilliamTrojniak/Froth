@@ -55,6 +55,11 @@ namespace Froth
 
 	VulkanGraphicsPipeline::~VulkanGraphicsPipeline()
 	{
+		destroyGraphicsPipeline();
+	}
+
+	void VulkanGraphicsPipeline::destroyGraphicsPipeline()
+	{
 		if (m_Pipeline != nullptr)
 		{
 			std::cout << "Pipeline destroyed" << std::endl;

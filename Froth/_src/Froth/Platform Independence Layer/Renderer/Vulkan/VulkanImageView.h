@@ -13,6 +13,7 @@ namespace Froth
 		VulkanImageView(VulkanImageView& other) = delete;
 		VulkanImageView(VulkanImageView&& other);
 		~VulkanImageView();
+		void destroyImageView();
 
 		VulkanImageView& operator=(VulkanImageView&& other);
 

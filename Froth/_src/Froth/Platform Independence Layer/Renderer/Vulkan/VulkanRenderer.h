@@ -67,7 +67,14 @@ namespace Froth
 	private:
 		VkPhysicalDevice selectPhysicalDevice();
 		bool checkDeviceExtensionsSupport(const VkPhysicalDevice& device, const std::vector<const char*>& extensions);
-		
+		void createRenderPass();
+		void createFrameBuffers();
+		void createUniformBuffers();
+		void createDescriptorPool();
+		void createGraphicsPipeline();
+		void recreateSwapChain();
+		void recordCommandBuffer(const VulkanCommandBuffer& commandBuffer, U32 imageIndex);
+
 	};
 
 }

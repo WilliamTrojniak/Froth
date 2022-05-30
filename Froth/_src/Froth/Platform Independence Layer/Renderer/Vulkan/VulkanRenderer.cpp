@@ -9,6 +9,25 @@ namespace Froth
 		alignas(16) Froth::Math::Matrix4D view;
 		alignas(16) Froth::Math::Matrix4D projection;
 	};
+	struct Vertex
+	{
+		Froth::Math::Vector3D position;
+		Froth::Math::Vector3D color;
+	};
+	std::vector<U16> indices = {
+			1, 2, 3,
+			4, 7, 6,
+			4, 5, 1,
+			1, 5, 6,
+			6, 7, 3,
+			4, 0, 3,
+			0, 1, 3,
+			5, 4, 6,
+			0, 4, 6,
+			2, 1, 6,
+			2, 6, 3,
+			7, 4, 3
+	};
 	
 	VulkanRenderer::VulkanRenderer(Window* pWindow)
 	{
@@ -22,48 +41,19 @@ namespace Froth
 
 
 		// Render pass
-		std::vector<VkAttachmentDescription> renderPassAttachments;
-		renderPassAttachments.push_back(VulkanRenderPass::createAttachmentDesc(m_SwapChain.getFormat()));
+		createRenderPass();
 
-		std::vector<VkAttachmentReference> renderPassReferences;
-		renderPassReferences.push_back(VulkanRenderPass::createAttachmentRef(0));
-	
-		std::vector<VkSubpassDescription> renderPassSubpasses;
-		renderPassSubpasses.push_back(VulkanRenderPass::createSubpass(0, nullptr, renderPassReferences.size(), renderPassReferences.data()));
-
-		std::vector<VkSubpassDependency> renderPassDependencies;
-		renderPassDependencies.push_back(VulkanRenderPass::createDependency());
-
-		m_RenderPass = VulkanRenderPass(m_Device, renderPassAttachments.size(), renderPassAttachments.data(), renderPassSubpasses.size(), renderPassSubpasses.data(), renderPassDependencies.size(), renderPassDependencies.data());
-
-
-		// Framebuffers
-		m_Framebuffers.resize(m_SwapChain.getImageCount());
-		for (U32 i = 0; i < m_Framebuffers.size(); i++)
-		{
-			m_Framebuffers[i] = VulkanFramebuffer(m_Device, m_SwapChain.getImageViews()[i], m_SwapChain.getExtent().width, m_SwapChain.getExtent().height, m_RenderPass);
-		}
-
+		// Frame buffers
+		createFrameBuffers();
 
 		// Uniform buffer
-		m_UniformBuffers.resize(m_SwapChain.getImageCount());
-		for (U32 i = 0; i < m_UniformBuffers.size(); i++)
-		{
-			m_UniformBuffers[i] = VulkanUniformBuffer(m_Device, sizeof(UniformBufferObject));
-		}
-
+		createUniformBuffers();
 
 		// Descriptor pool
-		VkDescriptorPoolSize uniformBufferDescriptorPoolSize{ 
-			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			m_SwapChain.getImageCount()
-		};
-		m_DescriptorPool = VulkanDescriptorPool(m_Device, m_SwapChain.getImageCount(), 1, &uniformBufferDescriptorPoolSize);
-
-
+		createDescriptorPool();
+		
 		// Descriptor set layout binding
 		VkDescriptorSetLayoutBinding uniformDesc = VulkanDescriptorSetLayout::createDescriptorSetLayoutBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT);
-		
 		
 		// Descriptor set layout
 		m_DescriptorSetLayout = VulkanDescriptorSetLayout(m_Device, 1, &uniformDesc);
@@ -101,11 +91,11 @@ namespace Froth
 
 
 		// Vertex buffer
-		struct Vertex
-		{
-			Froth::Math::Vector3D position;
-			Froth::Math::Vector3D color;
-		};
+// 		struct Vertex
+// 		{
+// 			Froth::Math::Vector3D position;
+// 			Froth::Math::Vector3D color;
+// 		};
 		std::vector<Vertex> vertices = {
 			{{0.5f, -0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
 			{{0.5f, -0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
@@ -120,32 +110,32 @@ namespace Froth
 		m_VertexBuffer.updateData(vertices.size(), sizeof(Vertex), vertices.data());
 		
 		// Index buffer
-		std::vector<U16> indices = { 
-			1, 2, 3,
-			4, 7, 6,
-			4, 5, 1,
-			1, 5, 6,
-			6, 7, 3,
-			4, 0, 3,
-			0, 1, 3,
-			5, 4, 6,
-			0, 4, 6,
-			2, 1, 6,
-			2, 6, 3,
-			7, 4, 3
-		};
+// 		std::vector<U16> indices = { 
+// 			1, 2, 3,
+// 			4, 7, 6,
+// 			4, 5, 1,
+// 			1, 5, 6,
+// 			6, 7, 3,
+// 			4, 0, 3,
+// 			0, 1, 3,
+// 			5, 4, 6,
+// 			0, 4, 6,
+// 			2, 1, 6,
+// 			2, 6, 3,
+// 			7, 4, 3
+// 		};
 		m_IndexBuffer = VulkanIndexBuffer(m_Device, indices.size());
 		m_IndexBuffer.updateData(indices.size(), indices.data());
 
 		// Vertex shader module
-		std::ifstream vertfile("shaders/vert.spv", std::ios::ate | std::ios::binary);
-		if (!vertfile.is_open()) std::cout << "failed to open file" << std::endl;
+		std::ifstream vertFile("shaders/vert.spv", std::ios::ate | std::ios::binary); //
+		if (!vertFile.is_open()) std::cout << "failed to open file" << std::endl;
 
-		size_t vertfileSize = (size_t) vertfile.tellg();
+		size_t vertfileSize = (size_t) vertFile.tellg();
 		std::vector<char> vertexShaderSrc(vertfileSize);
-		vertfile.seekg(0);
-		vertfile.read(vertexShaderSrc.data(), vertfileSize);
-		vertfile.close();
+		vertFile.seekg(0);
+		vertFile.read(vertexShaderSrc.data(), vertfileSize);
+		vertFile.close();
 		
 		m_VertexShaderModule = VulkanShaderModule(m_Device, vertexShaderSrc.size(), vertexShaderSrc.data());
 
@@ -168,63 +158,7 @@ namespace Froth
 
 
 		// Graphics pipeline
-		std::vector<VkPipelineShaderStageCreateInfo> pipelineShaderStages = {
-			VulkanGraphicsPipeline::createShaderStageInfo(VK_SHADER_STAGE_VERTEX_BIT, m_VertexShaderModule),
-			VulkanGraphicsPipeline::createShaderStageInfo(VK_SHADER_STAGE_FRAGMENT_BIT, m_FragmentShaderModule) 
-		};
-
-		std::vector<VkVertexInputBindingDescription> pipelineBindingDescs = { VulkanGraphicsPipeline::createVertexInputBindingDescription(0, sizeof(Vertex)) };
-		std::vector<VkVertexInputAttributeDescription> pipelineAttributeDescs = { 
-			VulkanGraphicsPipeline::createVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)),
-			VulkanGraphicsPipeline::createVertexInputAttributeDescription(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color))
-		};
-		VkPipelineVertexInputStateCreateInfo pipelineVertexInputState = VulkanGraphicsPipeline::createVertexInputStateInfo(pipelineBindingDescs.size(), pipelineBindingDescs.data(), pipelineAttributeDescs.size(), pipelineAttributeDescs.data());
-
-		VkPipelineInputAssemblyStateCreateInfo pipelineAssemblyState = VulkanGraphicsPipeline::createInputAssemblyStateInfo();
-
-		VkViewport viewport{
-			0.0f, // x
-			0.0f, // y
-			m_SwapChain.getExtent().width, // width
-			m_SwapChain.getExtent().height, // height
-			0.0f, // minDepth
-			1.0f // maxDepth
-		};
-		VkRect2D scissor{
-			{0, 0}, // offset
-			m_SwapChain.getExtent() // extent
-		};
-		VkPipelineViewportStateCreateInfo pipelineViewportState = VulkanGraphicsPipeline::createViewportStateInfo(1, &viewport, 1, &scissor);
-		
-		VkPipelineRasterizationStateCreateInfo pipelineRasterizationState = VulkanGraphicsPipeline::createRasterizationStateInfo(VK_FALSE, VK_FALSE, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FALSE);
-
-		VkPipelineMultisampleStateCreateInfo pipelineMultisampleState = VulkanGraphicsPipeline::createMultisampleStateInfo(VK_SAMPLE_COUNT_1_BIT);
-
-		F32 colorBlendConstants[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-		std::vector<VkPipelineColorBlendAttachmentState> colorBlendStateAttachments = { VulkanGraphicsPipeline::createColorBlendAttachmentStateInfo(VK_FALSE, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD, (VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT)) };
-		VkPipelineColorBlendStateCreateInfo pipelineColorBlendState = VulkanGraphicsPipeline::createColorBlendStateInfo(VK_FALSE, VK_LOGIC_OP_COPY, colorBlendStateAttachments.size(), colorBlendStateAttachments.data(), colorBlendConstants);
-
-		std::vector<VkDynamicState> pipelineDynamicStates = { VK_DYNAMIC_STATE_VIEWPORT };
-		VkPipelineDynamicStateCreateInfo pipelineDynamicState = VulkanGraphicsPipeline::createDynamicStateInfo(pipelineDynamicStates.size(), pipelineDynamicStates.data());
-
-		m_GraphicsPipeline = VulkanGraphicsPipeline(m_Device,
-			pipelineShaderStages.size(), pipelineShaderStages.data(),
-			&pipelineVertexInputState,
-			&pipelineAssemblyState,
-			nullptr,
-			&pipelineViewportState,
-			&pipelineRasterizationState,
-			&pipelineMultisampleState,
-			nullptr,
-			&pipelineColorBlendState,
-			nullptr/*&pipelineDynamicState*/,
-			m_PipelineLayout,
-			m_RenderPass,
-			0,
-			VK_NULL_HANDLE,
-			0
-		);
-
+		createGraphicsPipeline();
 
 		// Command buffers
 		m_GraphicsCommandBuffers.resize(m_SwapChain.getImageCount());
@@ -235,19 +169,7 @@ namespace Froth
 
 		for (U32 i = 0; i < m_GraphicsCommandBuffers.size(); i++)
 		{
-			m_GraphicsCommandBuffers[i].begin();
-			VkRect2D renderArea{
-				{0,0},
-				m_SwapChain.getExtent()
-			};
-			m_GraphicsCommandBuffers[i].beginRenderPass(m_RenderPass, m_Framebuffers[i], renderArea);
-			m_GraphicsCommandBuffers[i].bindGraphicsPipeline(m_GraphicsPipeline);
- 			m_GraphicsCommandBuffers[i].bindVertexBuffer(m_VertexBuffer);
-			m_GraphicsCommandBuffers[i].bindIndexBuffer(m_IndexBuffer);
- 			m_GraphicsCommandBuffers[i].bindGraphicsDescriptorSets(m_PipelineLayout, 1, &m_DescriptorSets[i]);
-			m_GraphicsCommandBuffers[i].drawIndexed(indices.size());
-			m_GraphicsCommandBuffers[i].endRenderPass();
-			m_GraphicsCommandBuffers[i].end();
+			recordCommandBuffer(m_GraphicsCommandBuffers[i], i);
 		}
 
 		m_CmdSubmitSemaphores.resize(m_SwapChain.getImageCount());
@@ -272,7 +194,26 @@ namespace Froth
 		vkWaitForFences(m_Device.getDevice(), 1, &m_FrameFinishedFences[m_CurrentFrame].getFence(), VK_TRUE, UINT64_MAX);
 
 		U32 swapImageIndex;
-		vkAcquireNextImageKHR(m_Device.getDevice() , m_SwapChain.getSwapchain(), 0, m_CmdSubmitSemaphores[m_CurrentFrame].getSemaphore(), VK_NULL_HANDLE, &swapImageIndex);
+		VkResult imageAcquisRes = vkAcquireNextImageKHR(m_Device.getDevice() , m_SwapChain.getSwapchain(), 0, m_CmdSubmitSemaphores[m_CurrentFrame].getSemaphore(), VK_NULL_HANDLE, &swapImageIndex);
+
+		if (imageAcquisRes == VK_ERROR_OUT_OF_DATE_KHR)
+		{
+			std::cout << "Reallocating Swapchain" << std::endl;
+			recreateSwapChain();
+			for (size_t i = 0; i < m_GraphicsCommandBuffers.size(); i++)
+			{
+				m_GraphicsCommandBuffers[i].reset();
+				recordCommandBuffer(m_GraphicsCommandBuffers[i], i);
+			}
+
+			return;
+		}
+		else if (imageAcquisRes != VK_SUCCESS)
+		{
+			// TODO: Throw error
+			std::cout << "Failed to acquire swap chain image" << std::endl;
+			return;
+		}
 
 		if (m_FrameInProgressFences[swapImageIndex] != VK_NULL_HANDLE) // The image that we want to render to is currently in use
 		{
@@ -428,7 +369,7 @@ namespace Froth
 
 		std::vector<bool> results(extensions.size(), false);
 
-		for (VkExtensionProperties e : availableExtensions)
+		for (const VkExtensionProperties& e : availableExtensions)
 		{
 			for (size_t i = 0; i < extensions.size(); i++)
 			{
@@ -445,6 +386,153 @@ namespace Froth
 			if (r == false) return false;
 		}
 		return true;
+	}
+
+	void VulkanRenderer::createRenderPass()
+	{
+		std::vector<VkAttachmentDescription> renderPassAttachments;
+		renderPassAttachments.push_back(VulkanRenderPass::createAttachmentDesc(m_SwapChain.getFormat()));
+
+		std::vector<VkAttachmentReference> renderPassReferences;
+		renderPassReferences.push_back(VulkanRenderPass::createAttachmentRef(0));
+
+		std::vector<VkSubpassDescription> renderPassSubpasses;
+		renderPassSubpasses.push_back(VulkanRenderPass::createSubpass(0, nullptr, renderPassReferences.size(), renderPassReferences.data()));
+
+		std::vector<VkSubpassDependency> renderPassDependencies;
+		renderPassDependencies.push_back(VulkanRenderPass::createDependency());
+
+		m_RenderPass = VulkanRenderPass(m_Device, renderPassAttachments.size(), renderPassAttachments.data(), renderPassSubpasses.size(), renderPassSubpasses.data(), renderPassDependencies.size(), renderPassDependencies.data());
+	}
+
+	void VulkanRenderer::createFrameBuffers()
+	{
+		m_Framebuffers.resize(m_SwapChain.getImageCount());
+		for (U32 i = 0; i < m_Framebuffers.size(); i++)
+		{
+			m_Framebuffers[i] = VulkanFramebuffer(m_Device, m_SwapChain.getImageViews()[i], m_SwapChain.getExtent().width, m_SwapChain.getExtent().height, m_RenderPass);
+		}
+	}
+
+	void VulkanRenderer::createUniformBuffers()
+	{
+		m_UniformBuffers.resize(m_SwapChain.getImageCount());
+		for (U32 i = 0; i < m_UniformBuffers.size(); i++)
+		{
+			m_UniformBuffers[i] = VulkanUniformBuffer(m_Device, sizeof(UniformBufferObject));
+		}
+	}
+
+	void VulkanRenderer::createDescriptorPool()
+	{
+		VkDescriptorPoolSize uniformBufferDescriptorPoolSize{
+			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			m_SwapChain.getImageCount()
+		};
+		m_DescriptorPool = VulkanDescriptorPool(m_Device, m_SwapChain.getImageCount(), 1, &uniformBufferDescriptorPoolSize);
+	}
+
+	void VulkanRenderer::createGraphicsPipeline()
+	{
+		std::vector<VkPipelineShaderStageCreateInfo> pipelineShaderStages = {
+			VulkanGraphicsPipeline::createShaderStageInfo(VK_SHADER_STAGE_VERTEX_BIT, m_VertexShaderModule),
+			VulkanGraphicsPipeline::createShaderStageInfo(VK_SHADER_STAGE_FRAGMENT_BIT, m_FragmentShaderModule)
+		};
+
+		std::vector<VkVertexInputBindingDescription> pipelineBindingDescs = { VulkanGraphicsPipeline::createVertexInputBindingDescription(0, sizeof(Vertex)) };
+		std::vector<VkVertexInputAttributeDescription> pipelineAttributeDescs = {
+			VulkanGraphicsPipeline::createVertexInputAttributeDescription(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, position)),
+			VulkanGraphicsPipeline::createVertexInputAttributeDescription(1, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color))
+		};
+		VkPipelineVertexInputStateCreateInfo pipelineVertexInputState = VulkanGraphicsPipeline::createVertexInputStateInfo(pipelineBindingDescs.size(), pipelineBindingDescs.data(), pipelineAttributeDescs.size(), pipelineAttributeDescs.data());
+
+		VkPipelineInputAssemblyStateCreateInfo pipelineAssemblyState = VulkanGraphicsPipeline::createInputAssemblyStateInfo();
+
+		VkViewport viewport{
+			0.0f, // x
+			0.0f, // y
+			m_SwapChain.getExtent().width, // width
+			m_SwapChain.getExtent().height, // height
+			0.0f, // minDepth
+			1.0f // maxDepth
+		};
+		VkRect2D scissor{
+			{0, 0}, // offset
+			m_SwapChain.getExtent() // extent
+		};
+		VkPipelineViewportStateCreateInfo pipelineViewportState = VulkanGraphicsPipeline::createViewportStateInfo(1, &viewport, 1, &scissor);
+
+		VkPipelineRasterizationStateCreateInfo pipelineRasterizationState = VulkanGraphicsPipeline::createRasterizationStateInfo(VK_FALSE, VK_FALSE, VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FALSE);
+
+		VkPipelineMultisampleStateCreateInfo pipelineMultisampleState = VulkanGraphicsPipeline::createMultisampleStateInfo(VK_SAMPLE_COUNT_1_BIT);
+
+		F32 colorBlendConstants[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+		std::vector<VkPipelineColorBlendAttachmentState> colorBlendStateAttachments = { VulkanGraphicsPipeline::createColorBlendAttachmentStateInfo(VK_FALSE, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD, VK_BLEND_FACTOR_ONE, VK_BLEND_FACTOR_ZERO, VK_BLEND_OP_ADD, (VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT)) };
+		VkPipelineColorBlendStateCreateInfo pipelineColorBlendState = VulkanGraphicsPipeline::createColorBlendStateInfo(VK_FALSE, VK_LOGIC_OP_COPY, colorBlendStateAttachments.size(), colorBlendStateAttachments.data(), colorBlendConstants);
+
+		std::vector<VkDynamicState> pipelineDynamicStates = { VK_DYNAMIC_STATE_VIEWPORT };
+		VkPipelineDynamicStateCreateInfo pipelineDynamicState = VulkanGraphicsPipeline::createDynamicStateInfo(pipelineDynamicStates.size(), pipelineDynamicStates.data());
+
+		m_GraphicsPipeline = VulkanGraphicsPipeline(m_Device,
+			pipelineShaderStages.size(), pipelineShaderStages.data(),
+			&pipelineVertexInputState,
+			&pipelineAssemblyState,
+			nullptr,
+			&pipelineViewportState,
+			&pipelineRasterizationState,
+			&pipelineMultisampleState,
+			nullptr,
+			&pipelineColorBlendState,
+			nullptr/*&pipelineDynamicState*/,
+			m_PipelineLayout,
+			m_RenderPass,
+			0,
+			VK_NULL_HANDLE,
+			0
+		);
+	}
+
+	void VulkanRenderer::recreateSwapChain()
+	{
+		vkDeviceWaitIdle(m_Device.getDevice());
+		// TODO: Following
+		// Destroy frame buffers
+		for (size_t i = 0; i < m_Framebuffers.size(); i++)
+		{
+			m_Framebuffers[i].destroyBuffer();
+		}
+
+		// Destroy graphics pipeline
+		m_GraphicsPipeline.destroyGraphicsPipeline();
+		// Destroy render pass
+		m_RenderPass.destroyRenderPass();
+
+		// Recreate swapchain
+		m_SwapChain.recreateSwapChain(m_Surface);
+
+		// Create render pass
+		createRenderPass();
+		// Create graphics pipeline
+		createGraphicsPipeline();
+		// Create frame buffers
+		createFrameBuffers();
+	}
+
+	void VulkanRenderer::recordCommandBuffer(const VulkanCommandBuffer& commandBuffer, U32 imageIndex)
+	{
+		commandBuffer.begin();
+		VkRect2D renderArea{
+			{0,0},
+			m_SwapChain.getExtent()
+		};
+		commandBuffer.beginRenderPass(m_RenderPass, m_Framebuffers[imageIndex], renderArea);
+		commandBuffer.bindGraphicsPipeline(m_GraphicsPipeline);
+		commandBuffer.bindVertexBuffer(m_VertexBuffer);
+		commandBuffer.bindIndexBuffer(m_IndexBuffer);
+		commandBuffer.bindGraphicsDescriptorSets(m_PipelineLayout, 1, &m_DescriptorSets[imageIndex]);
+		commandBuffer.drawIndexed(indices.size());
+		commandBuffer.endRenderPass();
+		commandBuffer.end();
 	}
 
 }

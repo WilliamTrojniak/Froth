@@ -15,6 +15,7 @@ namespace Froth
 		VulkanRenderPass(VulkanRenderPass& other) = delete;
 		VulkanRenderPass(VulkanRenderPass&& other);
 		~VulkanRenderPass();
+		void destroyRenderPass();
 
 		VulkanRenderPass& operator=(VulkanRenderPass&& other);
 

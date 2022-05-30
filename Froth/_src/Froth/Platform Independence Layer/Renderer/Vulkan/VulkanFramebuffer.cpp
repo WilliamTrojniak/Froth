@@ -32,6 +32,11 @@ namespace Froth
 
 	VulkanFramebuffer::~VulkanFramebuffer()
 	{
+		destroyBuffer();
+	}
+
+	void VulkanFramebuffer::destroyBuffer()
+	{
 		if (m_Framebuffer != nullptr)
 		{
 			std::cout << "Framebuffer destroyed" << std::endl;

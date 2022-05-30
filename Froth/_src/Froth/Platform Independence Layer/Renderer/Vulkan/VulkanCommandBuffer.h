@@ -29,7 +29,7 @@ namespace Froth
 		void bindIndexBuffer(const VulkanIndexBuffer& indexBuffer) const;
 		void bindGraphicsDescriptorSets(const VulkanPipelineLayout& pipelineLayout, U32 descriptorSetCount, VulkanDescriptorSet* descriptorSets) const;
 		void drawIndexed(U32 indexCount) const;
-
+		void reset();
 
 
 	private:

@@ -41,10 +41,16 @@ namespace Froth
 
 	VulkanImageView::~VulkanImageView()
 	{
+		destroyImageView();
+	}
+
+	void VulkanImageView::destroyImageView()
+	{
 		if (m_ImageView != nullptr)
 		{
 			std::cout << "ImageView destroyed" << std::endl;
 			vkDestroyImageView(m_Device->getDevice(), m_ImageView, nullptr);
+			m_ImageView = nullptr;
 		}
 	}
 

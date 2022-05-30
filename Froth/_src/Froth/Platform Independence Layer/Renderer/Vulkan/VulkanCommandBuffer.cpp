@@ -103,6 +103,11 @@ namespace Froth
 		vkCmdDrawIndexed(m_CommandBuffer, indexCount, 1, 0, 0, 0);
 	}
 
+	void VulkanCommandBuffer::reset()
+	{
+		vkResetCommandBuffer(m_CommandBuffer, 0);
+	}
+
 	VulkanCommandBuffer& VulkanCommandBuffer::operator=(VulkanCommandBuffer&& other)
 	{
 		m_Device = other.m_Device;

@@ -7,40 +7,18 @@ namespace Froth
 	VulkanSwapChain::VulkanSwapChain(const VulkanDevice& device, const VulkanSurface& surface)
 	{
 		m_Device = &device;
-
-		VkSurfaceCapabilitiesKHR surfaceCapabilities = m_Device->getSurfaceCapabilities(surface);
+		m_Extent = m_Device->getSurfaceCapabilities(surface).currentExtent;
+		
 		m_Format = chooseSurfaceFormat(m_Device->getSurfaceFormats(surface));
-		 
-		if (!(surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT))
+
+
+		if (!(m_Device->getSurfaceCapabilities(surface).supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT))
 		{
 			// TODO: Assert
 			std::cout << "The surface-device combination is not capable of being used in a frame buffer!" << std::endl;
 		}
 
-		m_Extent = surfaceCapabilities.currentExtent;
-
-		VkSwapchainCreateInfoKHR swapChainInfo{};
-		swapChainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		swapChainInfo.pNext = nullptr;
-		swapChainInfo.flags = 0;
-		swapChainInfo.surface = surface.getSurface();
-		swapChainInfo.minImageCount = max(surfaceCapabilities.minImageCount, 2);
-		swapChainInfo.imageFormat = m_Format.format;
-		swapChainInfo.imageColorSpace = m_Format.colorSpace;
-		swapChainInfo.imageExtent = m_Extent;
-		swapChainInfo.imageArrayLayers = 1; // TODO: Parameterize?
-		swapChainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-		swapChainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-		swapChainInfo.queueFamilyIndexCount = 0; // Ignored with VK_SHARING_MODE_EXCLUSIVE
-		swapChainInfo.pQueueFamilyIndices = nullptr; // Ignored with VK_SHARING_MODE_EXCLUSIVE
-		swapChainInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR; // TODO: Rotate images to accommodate portrait displays
-		swapChainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; // Windows are opaque
-		swapChainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR; // V-Sync // TODO: Parameterize
-		swapChainInfo.clipped = VK_TRUE; // Vulkan does not render parts of the window that are clipped (by other windows, etc.)
-		swapChainInfo.oldSwapchain = VK_NULL_HANDLE; // Change if remaking swap chain
-
-		// TODO: Assert
-		if (vkCreateSwapchainKHR(m_Device->getDevice(), &swapChainInfo, nullptr, &m_SwapChain) != VK_SUCCESS) std::cout << "Failed to create swap chain" << std::endl;
+		createSwapChain(surface);		
 
 		m_Images = retrieveImages();
 		m_ImageViews = createImagesViews();
@@ -62,10 +40,24 @@ namespace Froth
 
 	VulkanSwapChain::~VulkanSwapChain()
 	{
+		destroySwapChain();
+	}
+
+	void VulkanSwapChain::destroySwapChain()
+	{
 		if (m_SwapChain != nullptr)
 		{
+			destroyImageViews();
 			std::cout << "Swapchain destroyed" << std::endl;
 			vkDestroySwapchainKHR(m_Device->getDevice(), m_SwapChain, nullptr);
+		}
+	}
+
+	void VulkanSwapChain::destroyImageViews()
+	{
+		for (size_t i = 0; i < m_ImageViews.size(); i++)
+		{
+			m_ImageViews[i].destroyImageView();
 		}
 	}
 
@@ -135,6 +127,49 @@ namespace Froth
 		return formats[formatIndex];
 	}
 
+	void VulkanSwapChain::createSwapChain(const VulkanSurface& surface, const VkSwapchainKHR& oldSwapchain)
+	{
+		VkSwapchainCreateInfoKHR swapChainInfo{};
+		swapChainInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+		swapChainInfo.pNext = nullptr;
+		swapChainInfo.flags = 0;
+		swapChainInfo.surface = surface.getSurface();
+		swapChainInfo.minImageCount = max(m_Device->getSurfaceCapabilities(surface).minImageCount, 2);
+		swapChainInfo.imageFormat = m_Format.format;
+		swapChainInfo.imageColorSpace = m_Format.colorSpace;
+		swapChainInfo.imageExtent = getExtent();
+		swapChainInfo.imageArrayLayers = 1; // TODO: Parameterize?
+		swapChainInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+		swapChainInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		swapChainInfo.queueFamilyIndexCount = 0; // Ignored with VK_SHARING_MODE_EXCLUSIVE
+		swapChainInfo.pQueueFamilyIndices = nullptr; // Ignored with VK_SHARING_MODE_EXCLUSIVE
+		swapChainInfo.preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR; // TODO: Rotate images to accommodate portrait displays
+		swapChainInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR; // Windows are opaque
+		swapChainInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR; // V-Sync // TODO: Parameterize
+		swapChainInfo.clipped = VK_TRUE; // Vulkan does not render parts of the window that are clipped (by other windows, etc.)
+		swapChainInfo.oldSwapchain = oldSwapchain; // Change if remaking swap chain
+		// TODO: Assert
+		if (vkCreateSwapchainKHR(m_Device->getDevice(), &swapChainInfo, nullptr, &m_SwapChain) != VK_SUCCESS) std::cout << "Failed to create swap chain" << std::endl;
+	}
+
+	void VulkanSwapChain::recreateSwapChain(const VulkanSurface& surface)
+	{
+		m_Extent = m_Device->getSurfaceCapabilities(surface).currentExtent;
+		m_Format = chooseSurfaceFormat(m_Device->getSurfaceFormats(surface));
+
+		if (!(m_Device->getSurfaceCapabilities(surface).supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT))
+		{
+			// TODO: Assert
+			std::cout << "The surface-device combination is not capable of being used in a frame buffer!" << std::endl;
+		}
+
+		
+		createSwapChain(surface, m_SwapChain);
+
+		m_Images = retrieveImages();
+		m_ImageViews = createImagesViews(); // TODO: Make sure that the destructor is not destroying image views that are being carried on
+	}
+
 	std::vector<VkImage> VulkanSwapChain::retrieveImages()
 	{
 		U32 swapChainImageCount = 0;
@@ -143,19 +178,18 @@ namespace Froth
 		std::vector<VkImage> images(swapChainImageCount);
 		vkGetSwapchainImagesKHR(m_Device->getDevice(), m_SwapChain, &swapChainImageCount, images.data());
 
-		return std::move(images);
+		return images;
 		
 	}
 
 	std::vector<VulkanImageView> VulkanSwapChain::createImagesViews()
 	{
-
 		std::vector<VulkanImageView> imageViews;
 		for (U32 i = 0; i < m_Images.size(); i++)
 		{
 			imageViews.push_back(VulkanImageView(*m_Device, m_Images[i], VK_IMAGE_VIEW_TYPE_2D, m_Format.format));
 		}
-		return std::move(imageViews);
+		return imageViews;
 	}
 
 }

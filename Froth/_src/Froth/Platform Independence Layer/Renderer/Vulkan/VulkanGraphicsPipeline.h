@@ -30,6 +30,7 @@ namespace Froth
 		VulkanGraphicsPipeline(VulkanGraphicsPipeline&& other);
 		~VulkanGraphicsPipeline();
 
+		void destroyGraphicsPipeline();
 		VulkanGraphicsPipeline& operator=(VulkanGraphicsPipeline&& other);
 
 		const VkPipeline& getPipeline() const { return m_Pipeline; }

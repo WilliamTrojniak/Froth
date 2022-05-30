@@ -16,6 +16,8 @@ namespace Froth
 		VulkanSwapChain(VulkanSwapChain& other) = delete;
 		VulkanSwapChain(VulkanSwapChain&& other);
 		~VulkanSwapChain();
+		void destroySwapChain();
+		void destroyImageViews();
 
 		VulkanSwapChain& operator=(VulkanSwapChain&& other);
 
@@ -25,9 +27,11 @@ namespace Froth
 		const std::vector<VkImage>& getImages() const { return m_Images; }
 		U32 getImageCount() const;
 		const std::vector<VulkanImageView>& getImageViews() const { return m_ImageViews; }
+		void recreateSwapChain(const VulkanSurface& surface);
 
 	private:
 		VkSurfaceFormatKHR chooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& formats) const;
+		void createSwapChain(const VulkanSurface& surface, const VkSwapchainKHR& oldSwapchain = VK_NULL_HANDLE);
 
 		std::vector<VkImage> retrieveImages();
 		std::vector<VulkanImageView> createImagesViews();

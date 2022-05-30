@@ -32,6 +32,11 @@ namespace Froth
 
 	VulkanRenderPass::~VulkanRenderPass()
 	{
+		destroyRenderPass();
+	}
+
+	void VulkanRenderPass::destroyRenderPass()
+	{
 		if (m_RenderPass != nullptr)
 		{
 			std::cout << "RenderPass destroyed" << std::endl;

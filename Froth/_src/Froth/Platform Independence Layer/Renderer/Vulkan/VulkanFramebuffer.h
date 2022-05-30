@@ -15,6 +15,7 @@ namespace Froth
 		VulkanFramebuffer(VulkanFramebuffer& other) = delete;
 		VulkanFramebuffer(VulkanFramebuffer&& other);
 		~VulkanFramebuffer();
+		void destroyBuffer();
 
 		const VkFramebuffer& getFramebuffer() const { return m_Framebuffer; }
 

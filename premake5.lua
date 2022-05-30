@@ -58,11 +58,11 @@ project "Froth"
     "%{prj.name}/dependencies/vendor/GLFW/include",
     "%{prj.name}/dependencies/vendor/glm",
     "%{prj.name}/dependencies/vendor/stb_image",
-    "C:/VulkanSDK/1.2.182.0/Include"
+    "C:/VulkanSDK/1.2.198.1/Include"
   }
 
   libdirs {
-    "C:/VulkanSDK/1.2.182.0/Lib"
+    "C:/VulkanSDK/1.2.198.1/Lib"
   }
 
   links {
@@ -109,7 +109,7 @@ project "Playground"
       "Froth/dependencies/vendor/GLFW/include",
       "Froth/dependencies/vendor/glm/",
       "Froth/dependencies/vendor/stb_image",
-      "C:/VulkanSDK/1.2.182.0/Include"
+      "C:/VulkanSDK/1.2.198.1/Include"
 	  }
 
     links {

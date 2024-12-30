@@ -1,4 +1,4 @@
-#include "../froth/core/Application.h"
+#include "froth/core/Entrypoint.h"
 #include <iostream>
 
 class Playground : public Froth::Application {

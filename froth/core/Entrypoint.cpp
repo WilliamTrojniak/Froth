@@ -1,4 +1,4 @@
-#include "Entrypoint.h"
+#include "core/Entrypoint.h"
 
 int main(int argc, char *argv[]) {
   Froth::Application *app = Froth::CreateApplication();

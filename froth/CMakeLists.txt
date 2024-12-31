@@ -4,6 +4,9 @@ set(HOME "$ENV{HOME}")
 
 project(Froth)
 add_library(Froth 
+  core/events/ApplicationEvent.h
+  core/events/Event.h
+  core/events/EventDispatcher.h
   core/Application.h
   core/Application.cpp
   core/Entrypoint.h

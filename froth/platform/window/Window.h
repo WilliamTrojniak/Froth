@@ -13,7 +13,7 @@ protected:
   Window(int width, int height);
 
 public:
-  void setEventCallbackFunction(std::function<void(const Event &)>);
+  void setEventCallbackFunction(const std::function<void(const Event &)> &);
 
   static Window *createWindow(int width, int height, const char *title);
 

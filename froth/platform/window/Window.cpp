@@ -18,7 +18,8 @@ Window *Window::createWindow(int width, int height, const char *title) {
 
 void Window::pollEvents() { return GLFWWindow::pollEvents(); }
 
-void Window::setEventCallbackFunction(std::function<void(const Event &)> fn) {
+void Window::setEventCallbackFunction(
+    const std::function<void(const Event &)> &fn) {
   m_EventCallbackFn = fn;
 }
 

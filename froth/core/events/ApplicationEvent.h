@@ -8,7 +8,7 @@ public:
   static EventType staticEventType() { return EventType::WindowClose; }
   virtual EventType eventType() const override { return staticEventType(); }
   virtual int categoryFlags() const override {
-    return EventCategory::EventCategoryApplication;
+    return EventCategoryApplication;
   }
 };
 

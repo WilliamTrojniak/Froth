@@ -7,10 +7,14 @@ add_library(Froth
   core/events/ApplicationEvent.h
   core/events/Event.h
   core/events/EventDispatcher.h
+  core/events/KeyEvent.h
   core/Application.h
   core/Application.cpp
   core/Entrypoint.h
   core/Entrypoint.cpp
+  platform/keys/GLFWKeycodes.h
+  platform/keys/GLFWKeycodes.cpp
+  platform/keys/Keycodes.h
   platform/window/GLFWWindow.h
   platform/window/GLFWWindow.cpp
   platform/window/Window.h

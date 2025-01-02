@@ -3,14 +3,20 @@
 #include "core/events/ApplicationEvent.h"
 #include "platform/window/Window.h"
 #include <IOKit/IOKitLib.h>
+#include <stdexcept>
 
 namespace Froth {
 
 GLFWWindow::GLFWWindow(int width, int height, const char *title) : Window() {
+  if (!glfwInit()) {
+    throw std::runtime_error("Failed to initialize GLFW");
+    return;
+  }
+
   m_Window = glfwCreateWindow(width, height, title, NULL, NULL);
 
   if (!m_Window) {
-    // FIXME: Return indicator that creation failed
+    throw std::runtime_error("Failed to create GLFW window");
     return;
   }
 

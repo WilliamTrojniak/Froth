@@ -6,7 +6,12 @@ namespace Froth {
 
 Window *Window::createWindow(int width, int height, const char *title) {
   // FIXME: Handle error while creating
-  return new GLFWWindow(width, height, title);
+  try {
+    return new GLFWWindow(width, height, title);
+  } catch (std::runtime_error e) {
+    // TODO: Log error
+    return nullptr;
+  }
 }
 
 void Window::pollEvents() { return GLFWWindow::pollEvents(); }

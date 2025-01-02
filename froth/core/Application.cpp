@@ -15,14 +15,6 @@ namespace Froth {
 
 Application::Application() {
 
-  // FIXME: Handle errors with initialization
-  if (!glfwInit()) {
-    m_Running = false;
-    m_Window = nullptr;
-    return;
-  }
-
-  // FIXME: Handle errors with creation
   m_Window = Window::createWindow(640, 480, "Hello World");
   if (!m_Window) {
     m_Running = false;

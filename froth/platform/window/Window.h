@@ -9,6 +9,9 @@ protected:
   std::function<void(const Event &)> m_EventCallbackFn;
   void onEvent(const Event &e);
 
+  int m_Width, m_Height;
+  Window(int width, int height);
+
 public:
   void setEventCallbackFunction(std::function<void(const Event &)>);
 

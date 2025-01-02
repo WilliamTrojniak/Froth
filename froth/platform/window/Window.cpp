@@ -1,0 +1,25 @@
+#include "Window.h"
+#include "GLFWWindow.h"
+#include <functional>
+
+namespace Froth {
+
+Window *Window::createWindow(int width, int height, const char *title) {
+  // FIXME: Handle error while creating
+  return new GLFWWindow(width, height, title);
+}
+
+void Window::pollEvents() { return GLFWWindow::pollEvents(); }
+
+void Window::setEventCallbackFunction(std::function<void(const Event &)> fn) {
+  m_EventCallbackFn = fn;
+}
+
+void Window::onEvent(const Event &e) {
+
+  if (m_EventCallbackFn) {
+    m_EventCallbackFn(e);
+  }
+}
+
+} // namespace Froth

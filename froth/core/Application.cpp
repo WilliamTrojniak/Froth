@@ -1,25 +1,55 @@
 #define GLFW_INCLUDE_VULKAN
-#include "core/Application.h"
 #include <GLFW/glfw3.h>
 
+#include "core/Application.h"
+#include "core/events/ApplicationEvent.h"
+#include "core/events/Event.h"
+#include "core/events/EventDispatcher.h"
+#include "platform/window/Window.h"
+#include <functional>
+#include <iostream>
+
 namespace Froth {
+
+#define BIND_FUNC(x) std::bind(&Application::x, this, std::placeholders::_1)
+
 Application::Application() {
 
+  // FIXME: Handle errors with initialization
   if (!glfwInit()) {
-  }
-  GLFWwindow *window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
-  if (window) {
-    glfwMakeContextCurrent(window);
-    while (!glfwWindowShouldClose(window)) {
-      glfwPollEvents();
-    }
-    glfwDestroyWindow(window);
+    m_Running = false;
+    m_Window = nullptr;
+    return;
   }
 
+  // FIXME: Handle errors with creation
+  m_Window = Window::createWindow(640, 480, "Hello World");
+  if (!m_Window) {
+    m_Running = false;
+    return;
+  }
+  m_Window->setEventCallbackFunction(BIND_FUNC(onEvent));
+}
+Application::~Application() {
+  delete m_Window;
   glfwTerminate();
 }
-Application::~Application() {}
 
-void Application::Run() {}
+void Application::Run() {
+  while (m_Running) {
+    Window::pollEvents();
+  }
+}
+
+void Application::onEvent(const Event &e) {
+  EventDispatcher dispatcher = EventDispatcher(e);
+  dispatcher.dispatch<WindowCloseEvent>(BIND_FUNC(onWindowClose));
+}
+
+bool Application::onWindowClose(WindowCloseEvent &e) {
+  std::cerr << "Window Closed" << std::endl;
+  m_Running = false;
+  return true;
+}
 
 } // namespace Froth

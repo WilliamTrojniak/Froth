@@ -11,6 +11,10 @@ add_library(Froth
   core/Application.cpp
   core/Entrypoint.h
   core/Entrypoint.cpp
+  platform/window/GLFWWindow.h
+  platform/window/GLFWWindow.cpp
+  platform/window/Window.h
+  platform/window/Window.cpp
 )
 
 target_include_directories(Froth PRIVATE 

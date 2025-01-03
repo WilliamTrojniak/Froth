@@ -11,6 +11,8 @@
 
 namespace Froth {
 
+uint16_t GLFWWindow::s_InstanceCount = 0;
+
 GLFWWindow::GLFWWindow(int width, int height, const char *title)
     : Window(width, height) {
   if (!glfwInit()) {
@@ -24,6 +26,7 @@ GLFWWindow::GLFWWindow(int width, int height, const char *title)
     throw std::runtime_error("Failed to create GLFW window");
     return;
   }
+  s_InstanceCount++;
 
   glfwSetWindowUserPointer(m_Window, this);
 
@@ -44,7 +47,13 @@ GLFWWindow::GLFWWindow(int width, int height, const char *title)
   glfwSetDropCallback(m_Window, NULL);
 }
 
-GLFWWindow::~GLFWWindow() { glfwDestroyWindow(m_Window); }
+GLFWWindow::~GLFWWindow() {
+  glfwDestroyWindow(m_Window);
+  s_InstanceCount--;
+  if (s_InstanceCount == 0) {
+    glfwTerminate();
+  }
+}
 
 void GLFWWindow::pollEvents() { glfwPollEvents(); }
 

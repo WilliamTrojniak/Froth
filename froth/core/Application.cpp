@@ -1,5 +1,4 @@
 #define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
 
 #include "core/Application.h"
 #include "core/events/ApplicationEvent.h"
@@ -22,10 +21,7 @@ Application::Application() {
   }
   m_Window->setEventCallbackFunction(BIND_FUNC(onEvent));
 }
-Application::~Application() {
-  delete m_Window;
-  glfwTerminate();
-}
+Application::~Application() { delete m_Window; }
 
 void Application::Run() {
   while (m_Running) {

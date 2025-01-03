@@ -1,13 +1,15 @@
 #pragma once
 
-#include "GLFW/glfw3.h"
 #include "Window.h"
+#include <GLFW/glfw3.h>
 
 namespace Froth {
 class GLFWWindow : public Window {
   friend class Window;
 
 private:
+  static uint16_t s_InstanceCount;
+
   GLFWwindow *m_Window;
   void windowCloseCallback();
   void windowSizeCallback(int width, int height);

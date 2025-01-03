@@ -7,16 +7,17 @@ namespace Froth {
 class EventDispatcher {
 private:
   const Event &m_Event;
+  bool m_IsHandled = false;
 
 public:
   EventDispatcher(const Event &event) : m_Event(event) {}
+  bool isHandled() const { return m_IsHandled; }
 
   template <std::derived_from<Event> T>
-  bool dispatch(std::function<bool(T &)> func) {
+  void dispatch(std::function<bool(T &)> func) {
     if (m_Event.eventType() == T::staticEventType()) {
-      return func(*(T *)&m_Event);
+      m_IsHandled = m_IsHandled || func(*(T *)&m_Event);
     }
-    return false;
   }
 };
 } // namespace Froth

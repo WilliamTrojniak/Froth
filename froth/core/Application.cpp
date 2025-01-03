@@ -1,3 +1,5 @@
+#include <memory>
+#include <utility>
 #define GLFW_INCLUDE_VULKAN
 
 #include "core/Application.h"
@@ -25,14 +27,31 @@ Application::~Application() { delete m_Window; }
 
 void Application::Run() {
   while (m_Running) {
+    for (auto layer : m_LayerStack) {
+      layer->onUpdate(0);
+    }
     Window::pollEvents();
   }
 }
 
 void Application::onEvent(const Event &e) {
-  EventDispatcher dispatcher = EventDispatcher(e);
   std::cerr << e.ToString() << std::endl;
+
+  for (auto layer : m_LayerStack) {
+    if (layer->onEvent(e))
+      return;
+  }
+
+  EventDispatcher dispatcher = EventDispatcher(e);
   dispatcher.dispatch<WindowCloseEvent>(BIND_FUNC(onWindowClose));
+}
+
+void Application::pushLayer(std::shared_ptr<Layer> layer) {
+  m_LayerStack.pushLayer(std::move(layer));
+}
+
+void Application::pushOverlay(std::shared_ptr<Layer> overlay) {
+  m_LayerStack.pushOverlay(std::move(overlay));
 }
 
 bool Application::onWindowClose(WindowCloseEvent &e) {

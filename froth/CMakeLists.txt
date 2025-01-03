@@ -12,6 +12,9 @@ add_library(Froth
   core/Application.cpp
   core/Entrypoint.h
   core/Entrypoint.cpp
+  core/Layer.h
+  core/LayerStack.h
+  core/LayerStack.cpp
   platform/keys/GLFWCodes.h
   platform/keys/GLFWCodes.cpp
   platform/keys/Keycodes.h

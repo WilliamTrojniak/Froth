@@ -23,6 +23,9 @@ GLFWWindow::GLFWWindow(int width, int height, const char *title)
   m_Window = glfwCreateWindow(width, height, title, NULL, NULL);
 
   if (!m_Window) {
+    if (s_InstanceCount == 0) {
+      glfwTerminate();
+    }
     throw std::runtime_error("Failed to create GLFW window");
     return;
   }

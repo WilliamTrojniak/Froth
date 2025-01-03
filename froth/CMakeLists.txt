@@ -24,12 +24,15 @@ add_library(Froth
 
 target_include_directories(Froth PRIVATE 
   ./ 
+  dependencies/vendor/glm
   dependencies/vendor/glfw/include
   ${HOME}/VulkanSDK/1.3.296.0/macOS/include
 )
 
+add_subdirectory(dependencies/vendor/glm)
 add_subdirectory(dependencies/vendor/glfw)
 
+target_link_libraries(Froth PUBLIC glm)
 target_link_libraries(Froth PUBLIC glfw)
 
 add_library(vulkan1 SHARED IMPORTED GLOBAL)

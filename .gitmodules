@@ -1,3 +1,6 @@
 [submodule "froth/dependencies/vendor/glfw"]
 	path = froth/dependencies/vendor/glfw
 	url = git@github.com:glfw/glfw.git
+[submodule "froth/dependencies/vendor/glm"]
+	path = froth/dependencies/vendor/glm
+	url = git@github.com:g-truc/glm.git

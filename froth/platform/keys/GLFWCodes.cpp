@@ -1,9 +1,9 @@
-#include "GLFWKeycodes.h"
+#include "GLFWCodes.h"
 #include "GLFW/glfw3.h"
 
 namespace Froth {
 
-const std::unordered_map<int, KeyCode> GLFWKeys{
+const std::unordered_map<int, KeyCode> GLFWKeyCodes{
     {GLFW_KEY_SPACE, Key::Space},
     {GLFW_KEY_APOSTROPHE, Key::Apostrophe},
     {GLFW_KEY_COMMA, Key::Comma},
@@ -133,6 +133,23 @@ const std::unordered_map<int, KeyCode> GLFWKeys{
     {GLFW_KEY_RIGHT_ALT, Key::RightAlt},
     {GLFW_KEY_RIGHT_SUPER, Key::RightSuper},
     {GLFW_KEY_MENU, Key::Menu},
+};
+
+const std::unordered_map<int, MouseCode> GLFWMouseCodes{
+    {GLFW_MOUSE_BUTTON_1, Mouse::Button0},
+    {GLFW_MOUSE_BUTTON_2, Mouse::Button1},
+    {GLFW_MOUSE_BUTTON_3, Mouse::Button2},
+    {GLFW_MOUSE_BUTTON_4, Mouse::Button3},
+    {GLFW_MOUSE_BUTTON_5, Mouse::Button4},
+    {GLFW_MOUSE_BUTTON_6, Mouse::Button5},
+    {GLFW_MOUSE_BUTTON_7, Mouse::Button6},
+    {GLFW_MOUSE_BUTTON_8, Mouse::Button7},
+
+    {GLFW_MOUSE_BUTTON_LAST, Mouse::Button7},
+    {GLFW_MOUSE_BUTTON_LEFT, Mouse::Button0},
+    {GLFW_MOUSE_BUTTON_RIGHT, Mouse::Button1},
+    {GLFW_MOUSE_BUTTON_MIDDLE, Mouse::Button2},
+
 };
 
 } // namespace Froth

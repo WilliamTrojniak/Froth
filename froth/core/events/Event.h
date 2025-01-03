@@ -12,7 +12,7 @@ enum class EventType {
   KeyReleased,
   MouseButtonPressed,
   MouseButtonReleased,
-  MoseMove,
+  MouseMove,
   MouseScroll
 };
 

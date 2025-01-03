@@ -9,11 +9,14 @@ protected:
   std::function<void(const Event &)> m_EventCallbackFn;
   void onEvent(const Event &e);
 
-  int m_Width, m_Height;
-  Window(int width, int height);
+  size_t m_Width, m_Height;
+  Window(size_t width, size_t height);
 
 public:
   void setEventCallbackFunction(const std::function<void(const Event &)> &);
+
+  size_t width() const { return m_Width; }
+  size_t height() const { return m_Height; }
 
   static Window *createWindow(int width, int height, const char *title);
 

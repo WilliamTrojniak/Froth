@@ -2,7 +2,8 @@
 #include "GLFW/glfw3.h"
 #include "core/events/ApplicationEvent.h"
 #include "core/events/KeyEvent.h"
-#include "platform/keys/GLFWKeycodes.h"
+#include "core/events/MouseEvent.h"
+#include "platform/keys/GLFWCodes.h"
 #include "platform/keys/Keycodes.h"
 #include "platform/window/Window.h"
 #include <mach/mach_time.h>
@@ -26,11 +27,21 @@ GLFWWindow::GLFWWindow(int width, int height, const char *title)
 
   glfwSetWindowUserPointer(m_Window, this);
 
+  // Window Callbacks
   glfwSetWindowCloseCallback(m_Window, GLFWWindow::windowCloseCallback);
+  glfwSetWindowSizeCallback(m_Window, GLFWWindow::windowSizeCallback);
+
+  // Keyboard Callbacks
   glfwSetKeyCallback(m_Window, GLFWWindow::keyCallback);
+
+  // Mouse Callbacks
+  glfwSetMouseButtonCallback(m_Window, GLFWWindow::mouseButtonCallback);
+  glfwSetScrollCallback(m_Window, GLFWWindow::mouseScrollCallback);
+  glfwSetCursorPosCallback(m_Window, GLFWWindow::mouseMoveCallback);
+
+  // TODO: Implement
   glfwSetCharCallback(m_Window, NULL);
   glfwSetDropCallback(m_Window, NULL);
-  glfwSetWindowSizeCallback(m_Window, GLFWWindow::windowSizeCallback);
 }
 
 GLFWWindow::~GLFWWindow() { glfwDestroyWindow(m_Window); }
@@ -63,7 +74,7 @@ void GLFWWindow::keyCallback(GLFWwindow *window, int key, int scancode,
 
 void GLFWWindow::keyCallback(int key, int scancode, int action, int mods) {
 
-  KeyCode k = GLFWKeys.contains(key) ? GLFWKeys.at(key) : 0;
+  KeyCode k = GLFWKeyCodes.contains(key) ? GLFWKeyCodes.at(key) : 0;
   switch (action) {
   case GLFW_RELEASE:
     onEvent(KeyReleasedEvent(k));
@@ -75,6 +86,44 @@ void GLFWWindow::keyCallback(int key, int scancode, int action, int mods) {
     onEvent(KeyPressedEvent(k, true));
     break;
   }
+}
+
+void GLFWWindow::mouseButtonCallback(GLFWwindow *window, int button, int action,
+                                     int mods) {
+  auto handler = static_cast<GLFWWindow *>(glfwGetWindowUserPointer(window));
+  handler->mouseButtonCallback(button, action, mods);
+}
+
+void GLFWWindow::mouseButtonCallback(int button, int action, int mods) {
+  MouseCode code =
+      GLFWMouseCodes.contains(button) ? GLFWMouseCodes.at(button) : 0;
+
+  switch (action) {
+  case GLFW_PRESS:
+    onEvent(MouseButtonPressedEvent(code));
+    break;
+  case GLFW_REPEAT:
+    onEvent(MouseButtonReleasedEvent(code));
+  }
+}
+
+void GLFWWindow::mouseMoveCallback(GLFWwindow *window, double x, double y) {
+  auto handler = static_cast<GLFWWindow *>(glfwGetWindowUserPointer(window));
+  handler->mouseMoveCallback(x, y);
+}
+
+void GLFWWindow::mouseMoveCallback(double x, double y) {
+  onEvent(MouseMoveEvent(x, y));
+}
+
+void GLFWWindow::mouseScrollCallback(GLFWwindow *window, double xOffset,
+                                     double yOffset) {
+  auto handler = static_cast<GLFWWindow *>(glfwGetWindowUserPointer(window));
+  handler->mouseScrollCallback(xOffset, yOffset);
+}
+
+void GLFWWindow::mouseScrollCallback(double xOffset, double yOffset) {
+  onEvent(MouseScrollEvent(xOffset, yOffset));
 }
 
 } // namespace Froth

@@ -4,7 +4,8 @@
 
 namespace Froth {
 
-Window::Window(int width, int height) : m_Width(width), m_Height(height) {}
+Window::Window(size_t width, size_t height)
+    : m_Width(width), m_Height(height) {}
 
 Window *Window::createWindow(int width, int height, const char *title) {
   // FIXME: Handle error while creating

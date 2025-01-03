@@ -12,9 +12,10 @@ add_library(Froth
   core/Application.cpp
   core/Entrypoint.h
   core/Entrypoint.cpp
-  platform/keys/GLFWKeycodes.h
-  platform/keys/GLFWKeycodes.cpp
+  platform/keys/GLFWCodes.h
+  platform/keys/GLFWCodes.cpp
   platform/keys/Keycodes.h
+  platform/keys/Mousecodes.h
   platform/window/GLFWWindow.h
   platform/window/GLFWWindow.cpp
   platform/window/Window.h

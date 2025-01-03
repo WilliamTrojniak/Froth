@@ -1,6 +1,7 @@
 #pragma once
 #include "Event.h"
 #include <cstddef>
+#include <sstream>
 
 namespace Froth {
 class WindowCloseEvent : public Event {
@@ -12,6 +13,11 @@ public:
   }
   virtual inline int categoryFlags() const override {
     return EventCategoryApplication;
+  }
+  virtual std::string ToString() const override {
+    std::stringstream ss;
+    ss << "WindowCloseEvent";
+    return ss.str();
   }
 };
 
@@ -25,6 +31,11 @@ public:
   }
   virtual inline int categoryFlags() const override {
     return EventCategoryApplication;
+  }
+  virtual std::string ToString() const override {
+    std::stringstream ss;
+    ss << "WindowResizeEvent: " << m_Width << ", " << m_Height;
+    return ss.str();
   }
 
   size_t width() { return m_Width; }

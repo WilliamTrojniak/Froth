@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 namespace Froth {
 enum class EventType {
   None = 0,
@@ -32,6 +33,7 @@ public:
   virtual ~Event() = default;
   virtual EventType eventType() const = 0;
   virtual int categoryFlags() const = 0;
+  virtual std::string ToString() const = 0;
 
   inline bool isOfCategory(EventCategory category) const {
     return categoryFlags() & category;

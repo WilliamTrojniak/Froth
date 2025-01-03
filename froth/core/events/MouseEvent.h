@@ -2,6 +2,7 @@
 
 #include "core/events/Event.h"
 #include "platform/keys/GLFWCodes.h"
+#include <sstream>
 
 namespace Froth {
 class MouseEvent : public Event {
@@ -16,7 +17,7 @@ protected:
 
 class MouseButtonEvent : public MouseEvent {
 public:
-  inline MouseCode code() const;
+  inline MouseCode button() const { return m_Code; }
 
 private:
   MouseCode m_Code;
@@ -34,6 +35,11 @@ public:
   virtual inline EventType eventType() const override {
     return staticEventType();
   }
+  virtual std::string ToString() const override {
+    std::stringstream ss;
+    ss << "MouseButtonPressedEvent: " << button();
+    return ss.str();
+  }
 };
 
 class MouseButtonReleasedEvent : public MouseButtonEvent {
@@ -44,6 +50,11 @@ public:
   }
   virtual inline EventType eventType() const override {
     return staticEventType();
+  }
+  virtual std::string ToString() const override {
+    std::stringstream ss;
+    ss << "MouseButtonReleasedEvent: " << button();
+    return ss.str();
   }
 };
 
@@ -56,6 +67,11 @@ public:
   static inline EventType staticEventType() { return EventType::MouseMove; }
   virtual inline EventType eventType() const override {
     return staticEventType();
+  }
+  virtual std::string ToString() const override {
+    std::stringstream ss;
+    ss << "MouseMoveEvent: " << m_X << ", " << m_Y;
+    return ss.str();
   }
 
 private:
@@ -71,6 +87,11 @@ public:
   static inline EventType staticEventType() { return EventType::MouseScroll; }
   virtual inline EventType eventType() const override {
     return staticEventType();
+  }
+  virtual std::string ToString() const override {
+    std::stringstream ss;
+    ss << "MouseScrollEvent: " << m_X << ", " << m_Y;
+    return ss.str();
   }
 
 private:

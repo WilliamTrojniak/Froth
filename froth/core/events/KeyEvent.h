@@ -2,6 +2,7 @@
 
 #include "core/events/Event.h"
 #include "platform/keys/Keycodes.h"
+#include <sstream>
 
 namespace Froth {
 class KeyEvent : public Event {
@@ -32,6 +33,11 @@ public:
   virtual inline EventType eventType() const override {
     return staticEventType();
   }
+  virtual std::string ToString() const override {
+    std::stringstream ss;
+    ss << "KeyPressedEvent: " << keyCode() << ", " << m_IsRepeat;
+    return ss.str();
+  }
 };
 
 class KeyReleasedEvent : public KeyEvent {
@@ -40,6 +46,11 @@ public:
   static inline EventType staticEventType() { return EventType::KeyReleased; }
   virtual inline EventType eventType() const override {
     return staticEventType();
+  }
+  virtual std::string ToString() const override {
+    std::stringstream ss;
+    ss << "KeyReleasedEvent: " << keyCode();
+    return ss.str();
   }
 };
 } // namespace Froth

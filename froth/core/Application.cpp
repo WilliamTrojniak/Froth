@@ -35,11 +35,11 @@ void Application::Run() {
 
 void Application::onEvent(const Event &e) {
   EventDispatcher dispatcher = EventDispatcher(e);
+  std::cerr << e.ToString() << std::endl;
   dispatcher.dispatch<WindowCloseEvent>(BIND_FUNC(onWindowClose));
 }
 
 bool Application::onWindowClose(WindowCloseEvent &e) {
-  std::cerr << "Window Closed" << std::endl;
   m_Running = false;
   return true;
 }

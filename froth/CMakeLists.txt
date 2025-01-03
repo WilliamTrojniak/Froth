@@ -25,7 +25,7 @@ add_library(Froth
   platform/window/Window.cpp
 )
 
-target_include_directories(Froth PRIVATE 
+target_include_directories(Froth PUBLIC 
   ./ 
   dependencies/vendor/glm
   dependencies/vendor/glfw/include

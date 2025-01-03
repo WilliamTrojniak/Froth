@@ -19,7 +19,7 @@ class WindowResizeEvent : public Event {
 public:
   WindowResizeEvent(size_t width, size_t height)
       : m_Width(width), m_Height(height) {}
-  static inline EventType staticEventType() { return EventType::WindowClose; }
+  static inline EventType staticEventType() { return EventType::WindowResize; }
   virtual inline EventType eventType() const override {
     return staticEventType();
   }

@@ -6,6 +6,7 @@
 #include "platform/keys/GLFWCodes.h"
 #include "platform/keys/Keycodes.h"
 #include "platform/window/Window.h"
+#include <cstdint>
 #include <mach/mach_time.h>
 #include <stdexcept>
 
@@ -63,6 +64,13 @@ GLFWWindow::~GLFWWindow() {
 
 void GLFWWindow::pollEvents() { glfwPollEvents(); }
 
+void GLFWWindow::getFramebufferSize(uint32_t &width, uint32_t &height) const {
+  int w, h;
+  glfwGetFramebufferSize(m_Window, &w, &h);
+  width = static_cast<uint32_t>(w);
+  height = static_cast<uint32_t>(h);
+}
+
 void GLFWWindow::windowCloseCallback(GLFWwindow *window) {
   auto handler = static_cast<GLFWWindow *>(glfwGetWindowUserPointer(window));
   handler->windowCloseCallback();
@@ -81,8 +89,7 @@ void GLFWWindow::windowSizeCallback(int width, int height) {
   onEvent(WindowResizeEvent(width, height));
 }
 
-void GLFWWindow::keyCallback(GLFWwindow *window, int key, int scancode,
-                             int action, int mods) {
+void GLFWWindow::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
   auto handler = static_cast<GLFWWindow *>(glfwGetWindowUserPointer(window));
   handler->keyCallback(key, scancode, action, mods);
 }
@@ -110,8 +117,7 @@ void GLFWWindow::mouseButtonCallback(GLFWwindow *window, int button, int action,
 }
 
 void GLFWWindow::mouseButtonCallback(int button, int action, int mods) {
-  MouseCode code =
-      GLFWMouseCodes.contains(button) ? GLFWMouseCodes.at(button) : 0;
+  MouseCode code = GLFWMouseCodes.contains(button) ? GLFWMouseCodes.at(button) : 0;
 
   switch (action) {
   case GLFW_PRESS:
@@ -131,8 +137,7 @@ void GLFWWindow::mouseMoveCallback(double x, double y) {
   onEvent(MouseMoveEvent(x, y));
 }
 
-void GLFWWindow::mouseScrollCallback(GLFWwindow *window, double xOffset,
-                                     double yOffset) {
+void GLFWWindow::mouseScrollCallback(GLFWwindow *window, double xOffset, double yOffset) {
   auto handler = static_cast<GLFWWindow *>(glfwGetWindowUserPointer(window));
   handler->mouseScrollCallback(xOffset, yOffset);
 }

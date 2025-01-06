@@ -2,6 +2,7 @@
 
 #include "Window.h"
 #include <GLFW/glfw3.h>
+#include <cstdint>
 
 namespace Froth {
 class GLFWWindow : public Window {
@@ -19,13 +20,10 @@ private:
   void mouseScrollCallback(double xOffset, double yOffset);
   static void windowCloseCallback(GLFWwindow *window);
   static void windowSizeCallback(GLFWwindow *window, int width, int height);
-  static void keyCallback(GLFWwindow *window, int key, int scancode, int action,
-                          int mods);
-  static void mouseButtonCallback(GLFWwindow *window, int button, int action,
-                                  int mods);
+  static void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
+  static void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
   static void mouseMoveCallback(GLFWwindow *window, double x, double y);
-  static void mouseScrollCallback(GLFWwindow *window, double xOffset,
-                                  double yOffset);
+  static void mouseScrollCallback(GLFWwindow *window, double xOffset, double yOffset);
 
 protected:
   GLFWWindow(int width, int height, const char *title);
@@ -33,6 +31,7 @@ protected:
 public:
   static void pollEvents();
   virtual void *nativeWindow() const override { return m_Window; }
+  virtual void getFramebufferSize(uint32_t &width, uint32_t &height) const override;
   ~GLFWWindow();
 };
 } // namespace Froth

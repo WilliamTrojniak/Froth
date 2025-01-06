@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/events/Event.h"
+#include <cstdint>
 #include <functional>
 #include <memory>
 
@@ -19,6 +20,8 @@ public:
 
   size_t width() const { return m_Width; }
   size_t height() const { return m_Height; }
+
+  virtual void getFramebufferSize(uint32_t &width, uint32_t &height) const = 0;
 
   virtual void *nativeWindow() const = 0;
 

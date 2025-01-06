@@ -23,11 +23,11 @@ Application::Application() {
   }
   m_Window->setEventCallbackFunction(BIND_FUNC(onEvent));
 }
-Application::~Application() { delete m_Window; }
+Application::~Application() {}
 
 void Application::Run() {
   while (m_Running) {
-    for (auto layer : m_LayerStack) {
+    for (std::shared_ptr<Layer> layer : m_LayerStack) {
       layer->onUpdate(0);
     }
     Window::pollEvents();
@@ -37,7 +37,7 @@ void Application::Run() {
 void Application::onEvent(const Event &e) {
   std::cerr << e.ToString() << std::endl;
 
-  for (auto layer : m_LayerStack) {
+  for (std::shared_ptr<Layer> layer : m_LayerStack) {
     if (layer->onEvent(e))
       return;
   }
@@ -47,10 +47,12 @@ void Application::onEvent(const Event &e) {
 }
 
 void Application::pushLayer(std::shared_ptr<Layer> layer) {
+  layer->onAttach();
   m_LayerStack.pushLayer(std::move(layer));
 }
 
 void Application::pushOverlay(std::shared_ptr<Layer> overlay) {
+  overlay->onAttach();
   m_LayerStack.pushOverlay(std::move(overlay));
 }
 

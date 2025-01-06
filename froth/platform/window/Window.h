@@ -2,6 +2,7 @@
 
 #include "core/events/Event.h"
 #include <functional>
+#include <memory>
 
 namespace Froth {
 class Window {
@@ -13,12 +14,15 @@ protected:
   Window(size_t width, size_t height);
 
 public:
+  virtual ~Window() = default;
   void setEventCallbackFunction(const std::function<void(const Event &)> &);
 
   size_t width() const { return m_Width; }
   size_t height() const { return m_Height; }
 
-  static Window *createWindow(int width, int height, const char *title);
+  virtual void *nativeWindow() const = 0;
+
+  static std::unique_ptr<Window> createWindow(int width, int height, const char *title);
 
   static void pollEvents();
 };

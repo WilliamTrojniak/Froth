@@ -1,16 +1,17 @@
 #include "Window.h"
 #include "GLFWWindow.h"
 #include <functional>
+#include <memory>
 
 namespace Froth {
 
 Window::Window(size_t width, size_t height)
     : m_Width(width), m_Height(height) {}
 
-Window *Window::createWindow(int width, int height, const char *title) {
+std::unique_ptr<Window> Window::createWindow(int width, int height, const char *title) {
   // FIXME: Handle error while creating
   try {
-    return new GLFWWindow(width, height, title);
+    return std::unique_ptr<GLFWWindow>(new GLFWWindow(width, height, title));
   } catch (std::runtime_error e) {
     // TODO: Log error
     return nullptr;

@@ -32,6 +32,7 @@ protected:
 
 public:
   static void pollEvents();
+  virtual void *nativeWindow() const override { return m_Window; }
   ~GLFWWindow();
 };
 } // namespace Froth

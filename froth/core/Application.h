@@ -11,7 +11,7 @@ namespace Froth {
 class Application {
 private:
   bool m_Running = true;
-  Window *m_Window;
+  std::unique_ptr<Window> m_Window;
   LayerStack m_LayerStack;
 
 public:
@@ -24,6 +24,9 @@ public:
 
   void onEvent(const Event &e);
   bool onWindowClose(WindowCloseEvent &e);
+
+  // TODO: Remove
+  const Window &window() { return *m_Window.get(); }
 };
 Application *CreateApplication();
 } // namespace Froth

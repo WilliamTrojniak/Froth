@@ -1,17 +1,20 @@
+#include "vulkan/vulkan_core.h"
+#define GLFW_INCLUDE_VULKAN
+
 #include "core/events/ApplicationEvent.h"
 #include "core/events/Event.h"
 #include "core/events/EventDispatcher.h"
+#include "glm/glm.hpp"
+#include "platform/window/Window.h"
+#include <GLFW/glfw3.h>
+#include <array>
 #include <fstream>
 #include <functional>
-#include <sys/types.h>
-#define GLFW_INCLUDE_VULKAN
-#include "platform/window/Window.h"
-#include "vulkan/vulkan_core.h"
-#include <GLFW/glfw3.h>
 #include <limits>
 #include <optional>
 #include <set>
 #include <string>
+#include <sys/types.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -43,10 +46,24 @@ public:
       m_RenderFinishedSemaphores.push_back(createSemaphore(m_Device.device));
       m_FrameInFlightFences.push_back(createFence(m_Device.device, true));
     }
+
+    m_VertexBuffer = createVertexBuffer(m_Device.device, vertices);
+    m_VertexBufferMemory = allocateBufferMemory(m_Device.device, m_PhysicalDevice, m_VertexBuffer);
+    if (vkBindBufferMemory(m_Device.device, m_VertexBuffer, m_VertexBufferMemory, 0) != VK_SUCCESS) {
+      throw std::runtime_error("failed to bind vertex buffer memory");
+    }
+
+    void *data;
+    vkMapMemory(m_Device.device, m_VertexBufferMemory, 0, sizeof(Vertex) * vertices.size(), 0, &data);
+    memcpy(data, vertices.data(), sizeof(Vertex) * vertices.size());
+    vkUnmapMemory(m_Device.device, m_VertexBufferMemory);
   }
 
   virtual void onDetatch() override {
     vkDeviceWaitIdle(m_Device.device);
+
+    vkDestroyBuffer(m_Device.device, m_VertexBuffer, nullptr);
+    vkFreeMemory(m_Device.device, m_VertexBufferMemory, nullptr);
 
     cleanupSwapchain();
 
@@ -79,7 +96,7 @@ public:
     vkResetFences(m_Device.device, 1, &m_FrameInFlightFences[m_CurrentFrame]);
 
     vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
-    recordCommandBuffer(m_CommandBuffers[m_CurrentFrame], m_RenderPass, m_Pipeline.pipeline, m_SwapchainInfo, m_Framebuffers[imageIndex]);
+    recordCommandBuffer(m_CommandBuffers[m_CurrentFrame], m_RenderPass, m_Pipeline.pipeline, m_SwapchainInfo, m_Framebuffers[imageIndex], m_VertexBuffer);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -130,6 +147,40 @@ public:
   }
 
 private:
+  struct Vertex {
+    glm::vec2 pos;
+    glm::vec3 color;
+
+    static VkVertexInputBindingDescription getVkVertexInputBindingDescription() {
+      VkVertexInputBindingDescription bindingDesc{};
+      bindingDesc.binding = 0;
+      bindingDesc.stride = sizeof(Vertex);
+      bindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+      return bindingDesc;
+    }
+    static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescriptions() {
+      std::array<VkVertexInputAttributeDescription, 2> attributeDescriptions{};
+      attributeDescriptions[0].binding = 0;
+      attributeDescriptions[0].location = 0;
+      attributeDescriptions[0].format = VK_FORMAT_R32G32_SFLOAT;
+      attributeDescriptions[0].offset = offsetof(Vertex, pos);
+
+      attributeDescriptions[1].binding = 0;
+      attributeDescriptions[1].location = 1;
+      attributeDescriptions[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+      attributeDescriptions[1].offset = offsetof(Vertex, color);
+
+      return attributeDescriptions;
+    }
+  };
+
+  const std::vector<Vertex> vertices = {
+      {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+      {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+      {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+  };
+
   const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
   uint32_t m_CurrentFrame = 0;
   bool m_FramebufferResized = false;
@@ -180,6 +231,9 @@ private:
   std::vector<VkSemaphore> m_ImageAvailableSemaphores;
   std::vector<VkSemaphore> m_RenderFinishedSemaphores;
   std::vector<VkFence> m_FrameInFlightFences;
+
+  VkBuffer m_VertexBuffer;
+  VkDeviceMemory m_VertexBufferMemory;
 
 private:
   static bool hasExtensions(const std::vector<const char *> &extensions) {
@@ -684,11 +738,14 @@ private:
     dynamicState.pDynamicStates = dynamicStates.data();
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+    VkVertexInputBindingDescription bindingDesc = Vertex::getVkVertexInputBindingDescription();
+    std::array<VkVertexInputAttributeDescription, 2> vertexAttributeDescriptions = Vertex::getAttributeDescriptions();
+
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    vertexInputInfo.pVertexBindingDescriptions = nullptr;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
-    vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.pVertexBindingDescriptions = &bindingDesc;
+    vertexInputInfo.vertexAttributeDescriptionCount = vertexAttributeDescriptions.size();
+    vertexInputInfo.pVertexAttributeDescriptions = vertexAttributeDescriptions.data();
 
     VkPipelineInputAssemblyStateCreateInfo inputAssemblyInfo{};
     inputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -846,7 +903,7 @@ private:
     return buffers;
   }
 
-  static void recordCommandBuffer(VkCommandBuffer commandBuffer, VkRenderPass renderpass, VkPipeline pipeline, const SwapchainInfo &swapchain, VkFramebuffer framebuffer) {
+  static void recordCommandBuffer(VkCommandBuffer commandBuffer, VkRenderPass renderpass, VkPipeline pipeline, const SwapchainInfo &swapchain, VkFramebuffer framebuffer, VkBuffer vertexBuffer) {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = 0;
@@ -870,6 +927,9 @@ private:
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+    VkDeviceSize offsets[] = {0};
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
 
     VkViewport viewport{};
     viewport.x = 0.0f;
@@ -938,6 +998,50 @@ private:
     cleanupSwapchain();
     m_SwapchainInfo = createSwapchain(m_Device, m_PhysicalDevice, m_Surface, m_Window);
     m_Framebuffers = createFramebuffers(m_Device.device, m_SwapchainInfo, m_RenderPass);
+  }
+
+  static VkBuffer createVertexBuffer(VkDevice device, const std::vector<Vertex> &vertices) {
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size = sizeof(vertices[0]) * vertices.size();
+    bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VkBuffer buffer;
+    if (vkCreateBuffer(device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
+      throw std::runtime_error("Failed to create vertex buffer");
+    }
+
+    return buffer;
+  }
+
+  static uint32_t findMemoryType(VkPhysicalDevice physicalDevice, uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+      if (typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+        return i;
+      }
+    }
+
+    throw std::runtime_error("failed to find suitable memopry type");
+  }
+
+  static VkDeviceMemory allocateBufferMemory(VkDevice device, VkPhysicalDevice physicalDevice, VkBuffer buffer) {
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    VkDeviceMemory memory;
+    if (vkAllocateMemory(device, &allocInfo, nullptr, &memory) != VK_SUCCESS) {
+      throw std::runtime_error("failed to allocate buffer memory");
+    }
+    return memory;
   }
 };
 

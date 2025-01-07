@@ -68,10 +68,32 @@ public:
     copyBuffer(m_Device, stagingBuffer, m_VertexBuffer, vertexBufferSize, m_CommandPool);
     vkDestroyBuffer(m_Device.device, stagingBuffer, nullptr);
     vkFreeMemory(m_Device.device, stagingBufferMemory, nullptr);
+
+    VkDeviceSize indexBufferSize = sizeof(indices[0]) * indices.size();
+    m_IndexBuffer = createBuffer(m_Device.device, indexBufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+    m_IndexBufferMemory = allocateBufferMemory(m_Device.device, m_PhysicalDevice, m_IndexBuffer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    if (vkBindBufferMemory(m_Device.device, m_IndexBuffer, m_IndexBufferMemory, 0) != VK_SUCCESS) {
+      throw std::runtime_error("failed to bind index buffer memory");
+    }
+
+    VkBuffer indexStagingBuffer = createBuffer(m_Device.device, indexBufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+    VkDeviceMemory indexStagingBufferMemory = allocateBufferMemory(m_Device.device, m_PhysicalDevice, indexStagingBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    if (vkBindBufferMemory(m_Device.device, indexStagingBuffer, indexStagingBufferMemory, 0) != VK_SUCCESS) {
+      throw std::runtime_error("failed to bind index staging buffer memory");
+    }
+    vkMapMemory(m_Device.device, indexStagingBufferMemory, 0, indexBufferSize, 0, &data);
+    memcpy(data, indices.data(), indexBufferSize);
+    vkUnmapMemory(m_Device.device, indexStagingBufferMemory);
+    copyBuffer(m_Device, indexStagingBuffer, m_IndexBuffer, indexBufferSize, m_CommandPool);
+    vkDestroyBuffer(m_Device.device, indexStagingBuffer, nullptr);
+    vkFreeMemory(m_Device.device, indexStagingBufferMemory, nullptr);
   }
 
   virtual void onDetatch() override {
     vkDeviceWaitIdle(m_Device.device);
+
+    vkDestroyBuffer(m_Device.device, m_IndexBuffer, nullptr);
+    vkFreeMemory(m_Device.device, m_IndexBufferMemory, nullptr);
 
     vkDestroyBuffer(m_Device.device, m_VertexBuffer, nullptr);
     vkFreeMemory(m_Device.device, m_VertexBufferMemory, nullptr);
@@ -107,7 +129,8 @@ public:
     vkResetFences(m_Device.device, 1, &m_FrameInFlightFences[m_CurrentFrame]);
 
     vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
-    recordCommandBuffer(m_CommandBuffers[m_CurrentFrame], m_RenderPass, m_Pipeline.pipeline, m_SwapchainInfo, m_Framebuffers[imageIndex], m_VertexBuffer);
+    recordCommandBuffer(m_CommandBuffers[m_CurrentFrame], m_RenderPass, m_Pipeline.pipeline, m_SwapchainInfo, m_Framebuffers[imageIndex],
+                        m_VertexBuffer, m_IndexBuffer, indices.size());
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -187,9 +210,18 @@ private:
   };
 
   const std::vector<Vertex> vertices = {
-      {{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-      {{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-      {{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+      {{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+      {{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+      {{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+      {{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}},
+  };
+  const std::vector<uint16_t> indices = {
+      0,
+      1,
+      2,
+      2,
+      3,
+      0,
   };
 
   const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
@@ -245,6 +277,9 @@ private:
 
   VkBuffer m_VertexBuffer;
   VkDeviceMemory m_VertexBufferMemory;
+
+  VkBuffer m_IndexBuffer;
+  VkDeviceMemory m_IndexBufferMemory;
 
 private:
   static bool hasExtensions(const std::vector<const char *> &extensions) {
@@ -914,7 +949,9 @@ private:
     return buffers;
   }
 
-  static void recordCommandBuffer(VkCommandBuffer commandBuffer, VkRenderPass renderpass, VkPipeline pipeline, const SwapchainInfo &swapchain, VkFramebuffer framebuffer, VkBuffer vertexBuffer) {
+  static void recordCommandBuffer(VkCommandBuffer commandBuffer, VkRenderPass renderpass, VkPipeline pipeline,
+                                  const SwapchainInfo &swapchain, VkFramebuffer framebuffer, VkBuffer vertexBuffer,
+                                  VkBuffer indexBuffer, VkDeviceSize indexCount) {
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = 0;
@@ -942,6 +979,8 @@ private:
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
 
+    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
@@ -956,7 +995,7 @@ private:
     scissor.extent = swapchain.extent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+    vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
     vkCmdEndRenderPass(commandBuffer);
 
     if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {

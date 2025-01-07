@@ -22,8 +22,6 @@ GLFWWindow::GLFWWindow(int width, int height, const char *title)
   }
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-  // TODO: Remove
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
   m_Window = glfwCreateWindow(width, height, title, NULL, NULL);
 
   if (!m_Window) {

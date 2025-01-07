@@ -1,4 +1,8 @@
+#include "core/events/ApplicationEvent.h"
+#include "core/events/Event.h"
+#include "core/events/EventDispatcher.h"
 #include <fstream>
+#include <functional>
 #include <sys/types.h>
 #define GLFW_INCLUDE_VULKAN
 #include "platform/window/Window.h"
@@ -43,6 +47,13 @@ public:
 
   virtual void onDetatch() override {
     vkDeviceWaitIdle(m_Device.device);
+
+    cleanupSwapchain();
+
+    vkDestroyPipeline(m_Device.device, m_Pipeline.pipeline, nullptr);
+    vkDestroyPipelineLayout(m_Device.device, m_Pipeline.layout, nullptr);
+    vkDestroyRenderPass(m_Device.device, m_RenderPass, nullptr);
+
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
       vkDestroySemaphore(m_Device.device, m_ImageAvailableSemaphores[i], nullptr);
       vkDestroySemaphore(m_Device.device, m_RenderFinishedSemaphores[i], nullptr);
@@ -50,26 +61,22 @@ public:
     }
 
     vkDestroyCommandPool(m_Device.device, m_CommandPool, nullptr);
-    vkDestroyPipeline(m_Device.device, m_Pipeline.pipeline, nullptr);
-    vkDestroyPipelineLayout(m_Device.device, m_Pipeline.layout, nullptr);
-    for (const VkFramebuffer &buffer : m_Framebuffers) {
-      vkDestroyFramebuffer(m_Device.device, buffer, nullptr);
-    }
-    vkDestroyRenderPass(m_Device.device, m_RenderPass, nullptr);
-    for (const VkImageView &imageView : m_SwapchainInfo.imageViews) {
-      vkDestroyImageView(m_Device.device, imageView, nullptr);
-    }
-    vkDestroySwapchainKHR(m_Device.device, m_SwapchainInfo.swapchain, nullptr);
     vkDestroyDevice(m_Device.device, nullptr);
     vkDestroySurfaceKHR(m_Instance, m_Surface, nullptr);
     vkDestroyInstance(m_Instance, nullptr);
   }
   virtual void onUpdate(double ts) override {
     vkWaitForFences(m_Device.device, 1, &m_FrameInFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
-    vkResetFences(m_Device.device, 1, &m_FrameInFlightFences[m_CurrentFrame]);
 
     uint32_t imageIndex;
-    vkAcquireNextImageKHR(m_Device.device, m_SwapchainInfo.swapchain, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &imageIndex);
+    VkResult result = vkAcquireNextImageKHR(m_Device.device, m_SwapchainInfo.swapchain, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &imageIndex);
+    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+      m_FramebufferResized = false;
+      recreateSwapchain();
+    } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+      throw std::runtime_error("Failed to acquire swapchain image");
+    }
+    vkResetFences(m_Device.device, 1, &m_FrameInFlightFences[m_CurrentFrame]);
 
     vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
     recordCommandBuffer(m_CommandBuffers[m_CurrentFrame], m_RenderPass, m_Pipeline.pipeline, m_SwapchainInfo, m_Framebuffers[imageIndex]);
@@ -100,14 +107,32 @@ public:
     presentInfo.pImageIndices = &imageIndex;
     presentInfo.pResults = nullptr;
 
-    vkQueuePresentKHR(m_Device.presentQueue.queue, &presentInfo);
+    result = vkQueuePresentKHR(m_Device.presentQueue.queue, &presentInfo);
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_FramebufferResized) {
+      recreateSwapchain();
+    } else if (result != VK_SUCCESS) {
+      throw std::runtime_error("Failed to present swap chain image");
+    }
 
     m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+  }
+
+  virtual bool onEvent(const Froth::Event &e) override {
+    Froth::EventDispatcher d(e);
+    d.dispatch<Froth::WindowResizeEvent>(std::bind(&VulkanTriangle::onWindowResize, this, std::placeholders::_1));
+
+    return d.isHandled();
+  }
+
+  bool onWindowResize(const Froth::WindowResizeEvent &e) {
+    m_FramebufferResized = true;
+    return false;
   }
 
 private:
   const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
   uint32_t m_CurrentFrame = 0;
+  bool m_FramebufferResized = false;
   struct SwapChainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
@@ -890,6 +915,29 @@ private:
       throw std::runtime_error("Failed to create fence");
     }
     return fence;
+  }
+
+  void cleanupSwapchain() {
+
+    for (const VkFramebuffer &buffer : m_Framebuffers) {
+      vkDestroyFramebuffer(m_Device.device, buffer, nullptr);
+    }
+
+    for (const VkImageView &imageView : m_SwapchainInfo.imageViews) {
+      vkDestroyImageView(m_Device.device, imageView, nullptr);
+    }
+
+    vkDestroySwapchainKHR(m_Device.device, m_SwapchainInfo.swapchain, nullptr);
+
+    // TODO: Recreate render pass and pipeline
+  }
+
+  void recreateSwapchain() {
+    vkDeviceWaitIdle(m_Device.device);
+
+    cleanupSwapchain();
+    m_SwapchainInfo = createSwapchain(m_Device, m_PhysicalDevice, m_Surface, m_Window);
+    m_Framebuffers = createFramebuffers(m_Device.device, m_SwapchainInfo, m_RenderPass);
   }
 };
 

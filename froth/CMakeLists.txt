@@ -23,12 +23,14 @@ add_library(Froth
   platform/window/GLFWWindow.cpp
   platform/window/Window.h
   platform/window/Window.cpp
+  dependencies/vendor/stb/stb/stb_image.h
 )
 
 target_include_directories(Froth PUBLIC 
   ./ 
   dependencies/vendor/glm
   dependencies/vendor/glfw/include
+  dependencies/vendor/stb
   ${HOME}/VulkanSDK/1.3.296.0/macOS/include
 )
 

@@ -1,8 +1,9 @@
-#include "vulkan/vulkan_core.h"
 #define GLFW_INCLUDE_VULKAN
 #define STB_IMAGE_IMPLEMENTATION
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
 
 #include <stb/stb_image.h>
 
@@ -34,10 +35,15 @@
 
 #include "core/Entrypoint.h"
 
+const std::string MODEL_PATH = "../playground/models/viking_room.obj";
+const std::string TEXTURE_PATH = "../playground/textures/viking_room.png";
+
 class VulkanTriangle : public Froth::Layer {
 public:
   VulkanTriangle(const Froth::Window &window) : m_Window(window) {}
   virtual void onAttach() override {
+    loadModel(MODEL_PATH, vertices, indices);
+
     m_Instance = createVkInstance();
     m_Surface = createSurface(m_Instance, m_Window);
     m_PhysicalDevice = pickPhysicalDevice(m_Instance, m_Surface, m_DeviceExtensions);
@@ -117,7 +123,7 @@ public:
       vkMapMemory(m_Device.device, m_UniformBuffersMemory[i], 0, uboSize, 0, &m_UniformBuffersMapped[i]);
     }
 
-    m_Image = createTextureImage(m_Device, m_PhysicalDevice, m_CommandPool);
+    m_Image = createTextureImage(m_Device, m_PhysicalDevice, m_CommandPool, TEXTURE_PATH);
     m_ImageView = createImageView(m_Device.device, m_Image.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
     m_Sampler = createSampler(m_Device.device, m_PhysicalDevice);
 
@@ -305,20 +311,8 @@ private:
     glm::mat4 proj;
   };
 
-  const std::vector<Vertex> vertices = {
-      {{-0.5f, -0.5f, 0.0}, {1.0f, 0.0f, 0.0f}, {1.0, 0.0f}},
-      {{0.5f, -0.5f, 0.0}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-      {{0.5f, 0.5f, 0.0}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-      {{-0.5f, 0.5f, 0.0}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-
-      {{-0.5f, -0.5f, -0.5}, {1.0f, 0.0f, 0.0f}, {1.0, 0.0f}},
-      {{0.5f, -0.5f, -0.5}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}},
-      {{0.5f, 0.5f, -0.5}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}},
-      {{-0.5f, 0.5f, -0.5}, {1.0f, 1.0f, 1.0f}, {1.0f, 1.0f}},
-  };
-  const std::vector<uint16_t> indices = {
-      0, 1, 2, 2, 3, 0,
-      4, 5, 6, 6, 7, 4};
+  std::vector<Vertex> vertices;
+  std::vector<uint32_t> indices;
 
   const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
   uint32_t m_CurrentFrame = 0;
@@ -1157,7 +1151,7 @@ private:
     VkDeviceSize offsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertexBuffer, offsets);
 
-    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
     VkViewport viewport{};
     viewport.x = 0.0f;
@@ -1444,10 +1438,10 @@ private:
     return sets;
   }
 
-  static Image createTextureImage(DeviceConfig deviceCfg, VkPhysicalDevice physicalDevice, VkCommandPool commandPool) {
+  static Image createTextureImage(DeviceConfig deviceCfg, VkPhysicalDevice physicalDevice, VkCommandPool commandPool, const std::string &path) {
     VkDevice device = deviceCfg.device;
     int texWidth, texHeight, texChannels;
-    stbi_uc *pixels = stbi_load("../playground/textures/texture.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+    stbi_uc *pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
     VkDeviceSize imageSize = texWidth * texHeight * STBI_rgb_alpha;
     if (!pixels) {
       throw std::runtime_error("failed to load texture from file");
@@ -1562,6 +1556,36 @@ private:
       throw std::runtime_error("failed to create sampler");
     }
     return sampler;
+  }
+
+  static void loadModel(const std::string &path, std::vector<Vertex> &vertices, std::vector<uint32_t> &indices) {
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
+
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str())) {
+      throw std::runtime_error("Failed to load model");
+    }
+
+    for (const tinyobj::shape_t &shape : shapes) {
+      for (const auto &index : shape.mesh.indices) {
+        Vertex vertex;
+        vertex.pos = {
+            attrib.vertices[3 * index.vertex_index + 0],
+            attrib.vertices[3 * index.vertex_index + 1],
+            attrib.vertices[3 * index.vertex_index + 2],
+        };
+        vertex.texCoord = {
+            attrib.texcoords[2 * index.texcoord_index + 0],
+            1.0f - attrib.texcoords[2 * index.texcoord_index + 1],
+        };
+        vertex.color = {1.0f, 1.0f, 1.0f};
+
+        vertices.push_back(vertex);
+        indices.push_back(indices.size());
+      }
+    }
   }
 };
 

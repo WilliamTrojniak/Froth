@@ -24,6 +24,7 @@ add_library(Froth
   platform/window/Window.h
   platform/window/Window.cpp
   dependencies/vendor/stb/stb/stb_image.h
+  dependencies/vendor/tiny_obj_loader/tiny_obj_loader.h
 )
 
 target_include_directories(Froth PUBLIC 
@@ -31,6 +32,7 @@ target_include_directories(Froth PUBLIC
   dependencies/vendor/glm
   dependencies/vendor/glfw/include
   dependencies/vendor/stb
+  dependencies/vendor/tiny_obj_loader
   ${HOME}/VulkanSDK/1.3.296.0/macOS/include
 )
 

@@ -5,8 +5,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 set(HOME "$ENV{HOME}")
 
-project(Froth VERSION 0.1)
-configure_file(Defines.h Defines.h)
+project(Froth VERSION 0.0.1)
+configure_file(Defines.h.in Defines.h)
 
 add_library(${PROJECT_NAME}
   core/events/ApplicationEvent.h
@@ -30,6 +30,10 @@ add_library(${PROJECT_NAME}
   platform/window/GLFWWindow.cpp
   platform/window/Window.h
   platform/window/Window.cpp
+  renderer/vulkan/VulkanRenderer.h
+  renderer/vulkan/VulkanRenderer.cpp
+  renderer/Renderer.h
+  renderer/Renderer.cpp
   dependencies/vendor/stb/stb/stb_image.h
   dependencies/vendor/tiny_obj_loader/tiny_obj_loader.h
 )

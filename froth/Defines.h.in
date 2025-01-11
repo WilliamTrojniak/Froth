@@ -2,3 +2,8 @@
 // clang-format off
 #define FROTH_VERSION_MAJOR @Froth_VERSION_MAJOR@
 #define FROTH_VERSION_MINOR @Froth_VERSION_MINOR@
+#define FROTH_VERSION_PATCH @Froth_VERSION_PATCH@
+
+#ifdef FROTH_DEBUG
+#endif // FROTH_DEBUG
+

@@ -1,8 +1,0 @@
-// CMake configured defines
-// clang-format off
-#define FROTH_VERSION_MAJOR @Froth_VERSION_MAJOR@
-#define FROTH_VERSION_MINOR @Froth_VERSION_MINOR@
-
-#ifdef FROTH_DEBUG
-#endif // FROTH_DEBUG
-

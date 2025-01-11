@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(HOME "$ENV{HOME}")
 
 project(Froth VERSION 0.1)
-configure_file(Defines.h.in Defines.h)
+configure_file(Defines.h Defines.h)
 
 add_library(${PROJECT_NAME}
   core/events/ApplicationEvent.h
@@ -32,6 +32,10 @@ add_library(${PROJECT_NAME}
   platform/window/Window.cpp
   dependencies/vendor/stb/stb/stb_image.h
   dependencies/vendor/tiny_obj_loader/tiny_obj_loader.h
+)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+  $<$<CONFIG:Debug>:${PROJECT_NAME}_DEBUG=1>
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC 

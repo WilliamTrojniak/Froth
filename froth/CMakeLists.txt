@@ -1,9 +1,14 @@
 cmake_minimum_required(VERSION 3.12)
 
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
 set(HOME "$ENV{HOME}")
 
-project(Froth)
-add_library(Froth 
+project(Froth VERSION 0.1)
+configure_file(Defines.h.in Defines.h)
+
+add_library(${PROJECT_NAME}
   core/events/ApplicationEvent.h
   core/events/Event.h
   core/events/EventDispatcher.h
@@ -27,7 +32,8 @@ add_library(Froth
   dependencies/vendor/tiny_obj_loader/tiny_obj_loader.h
 )
 
-target_include_directories(Froth PUBLIC 
+target_include_directories(${PROJECT_NAME} PUBLIC 
+  ${PROJECT_BINARY_DIR}
   ./ 
   dependencies/vendor/glm
   dependencies/vendor/glfw/include
@@ -39,11 +45,11 @@ target_include_directories(Froth PUBLIC
 add_subdirectory(dependencies/vendor/glm)
 add_subdirectory(dependencies/vendor/glfw)
 
-target_link_libraries(Froth PUBLIC glm)
-target_link_libraries(Froth PUBLIC glfw)
+target_link_libraries(${PROJECT_NAME} PUBLIC glm)
+target_link_libraries(${PROJECT_NAME} PUBLIC glfw)
 
 add_library(vulkan1 SHARED IMPORTED GLOBAL)
 add_library(vulkan1xx SHARED IMPORTED GLOBAL)
 set_target_properties(vulkan1 PROPERTIES IMPORTED_LOCATION ${HOME}/VulkanSDK/1.3.296.0/macOS/lib/libvulkan.1.dylib)
 set_target_properties(vulkan1xx PROPERTIES IMPORTED_LOCATION ${HOME}/VulkanSDK/1.3.296.0/macOS/lib/libvulkan.1.3.296.dylib)
-target_link_libraries(Froth PUBLIC vulkan1 vulkan1xx)
+target_link_libraries(${PROJECT_NAME} PUBLIC vulkan1 vulkan1xx)

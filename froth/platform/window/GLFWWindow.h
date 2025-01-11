@@ -32,6 +32,7 @@ public:
   static void pollEvents();
   virtual void *nativeWindow() const override { return m_Window; }
   virtual void getFramebufferSize(uint32_t &width, uint32_t &height) const override;
-  ~GLFWWindow();
+  static const char **requiredVulkanExtensions(uint32_t &extensionCount) noexcept;
+  ~GLFWWindow() override;
 };
 } // namespace Froth

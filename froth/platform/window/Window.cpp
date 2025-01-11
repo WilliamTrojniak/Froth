@@ -18,6 +18,11 @@ std::unique_ptr<Window> Window::createWindow(int width, int height, const char *
   }
 }
 
+const char **Window::requiredVulkanExtensions(uint32_t &extensionCount) noexcept {
+  // TODO: Switch based on Window API
+  return GLFWWindow::requiredVulkanExtensions(extensionCount);
+}
+
 void Window::pollEvents() { return GLFWWindow::pollEvents(); }
 
 void Window::setEventCallbackFunction(

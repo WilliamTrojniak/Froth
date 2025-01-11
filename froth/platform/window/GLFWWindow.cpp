@@ -69,6 +69,9 @@ void GLFWWindow::getFramebufferSize(uint32_t &width, uint32_t &height) const {
   height = static_cast<uint32_t>(h);
 }
 
+const char **GLFWWindow::requiredVulkanExtensions(uint32_t &extensionCount) noexcept {
+  return glfwGetRequiredInstanceExtensions(&extensionCount);
+}
 void GLFWWindow::windowCloseCallback(GLFWwindow *window) {
   auto handler = static_cast<GLFWWindow *>(glfwGetWindowUserPointer(window));
   handler->windowCloseCallback();

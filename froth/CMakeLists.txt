@@ -13,6 +13,8 @@ add_library(${PROJECT_NAME}
   core/events/Event.h
   core/events/EventDispatcher.h
   core/events/KeyEvent.h
+  core/logger/Logger.h
+  core/logger/Logger.cpp
   core/Application.h
   core/Application.cpp
   core/Entrypoint.h

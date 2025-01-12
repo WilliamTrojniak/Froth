@@ -1,13 +1,15 @@
 #pragma once
 
-#include <memory>
+#include "platform/window/Window.h"
 namespace Froth {
 
 class Renderer {
 public:
   virtual ~Renderer() = default;
 
-  static std::unique_ptr<Renderer> createRenderer();
+  static Renderer &getInstance() noexcept;
+  static bool init(std::shared_ptr<Window> &window) noexcept;
+  static void shutdown() noexcept;
 
 protected:
   Renderer() = default;

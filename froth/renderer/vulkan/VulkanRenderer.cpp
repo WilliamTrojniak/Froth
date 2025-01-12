@@ -1,8 +1,8 @@
 #include "VulkanRenderer.h"
 #include "Defines.h"
-#include <platform/window/Window.h>
+#include "core/logger/Logger.h"
+#include "renderer/vulkan/VulkanDevice.h"
 #include <set>
-#include <vector>
 
 namespace Froth {
 
@@ -12,46 +12,66 @@ bool hasLayers(const std::vector<const char *> &layers) noexcept;
 
 const char *VK_LAYER_KHRONOS_validation = "VK_LAYER_KHRONOS_validation";
 
-VulkanRenderer::VulkanRendererContext VulkanRenderer::s_Context{
-    nullptr,
-    nullptr,
-};
-uint32_t VulkanRenderer::s_Count = 0;
 bool VulkanRenderer::s_Initialized = false;
 
-VulkanRenderer::VulkanRenderer() {
-  if (!s_Initialized && !init()) {
-    throw std::runtime_error("Failed to initialize Vulkan Renderer");
+VulkanRenderer &VulkanRenderer::getInstance() {
+  if (!s_Initialized) {
+    // TODO: Maybe throw an error?
+    FROTH_WARN("Retreived Vulkan renderer before initialization");
   }
-
-  s_Count++;
+  return getInstanceInt();
+}
+VulkanRenderer &VulkanRenderer::getInstanceInt() noexcept {
+  static VulkanRenderer s_Instance;
+  return s_Instance;
 }
 
 VulkanRenderer::~VulkanRenderer() {
-  s_Count--;
-  if (s_Count == 0 && !shutdown()) {
-    // TODO: Log that shutdown failed
+  if (s_Initialized) {
+    FROTH_WARN("Renderer not shutdown.")
   }
 }
 
-bool VulkanRenderer::init() noexcept {
-  if (!initInstance(s_Context.instance)) {
+bool VulkanRenderer::init(std::shared_ptr<Window> &window) noexcept {
+  VulkanRenderer &s_Instance = getInstanceInt();
+  s_Instance.m_Context.window = window;
+  // TODO: Configurable allocator
+  if (!initInstance(nullptr, s_Instance.m_Context)) {
+    s_Instance.shutdown();
     return false;
   }
+
+  if (!window->createVulkanSurface(s_Instance.m_Context.instance, s_Instance.m_Context.allocator, s_Instance.m_Context.surface)) {
+    s_Instance.shutdown();
+    return false;
+  }
+
+  if (!VulkanDevice::create(s_Instance.m_Context.instance, s_Instance.m_Context.surface, s_Instance.m_Context.device)) {
+    s_Instance.shutdown();
+    return false;
+  }
+
+  FROTH_INFO("Initialized Vulkan Renderer")
   s_Initialized = true;
   return true;
 }
 
-bool VulkanRenderer::shutdown() noexcept {
-
-  if (s_Context.instance != nullptr) {
-    vkDestroyInstance(s_Context.instance, s_Context.allocator);
-    s_Context.instance = nullptr;
+void VulkanRenderer::shutdown() noexcept {
+  s_Initialized = false;
+  if (m_Context.surface != nullptr) {
+    vkDestroySurfaceKHR(m_Context.instance, m_Context.surface, m_Context.allocator);
   }
-  return true;
+
+  if (m_Context.instance != nullptr) {
+    vkDestroyInstance(m_Context.instance, m_Context.allocator);
+    m_Context.instance = nullptr;
+  }
+  FROTH_DEBUG("Shut down Vulkan Renderer")
 }
 
-bool VulkanRenderer::initInstance(VkInstance &instance) noexcept {
+bool VulkanRenderer::initInstance(const VkAllocationCallbacks *allocator, VulkanRendererContext &context) noexcept {
+  context.allocator = allocator;
+
   VkApplicationInfo appInfo{VK_STRUCTURE_TYPE_APPLICATION_INFO};
   appInfo.pApplicationName = "App Name";                 // TODO: Make configurable
   appInfo.applicationVersion = VK_MAKE_VERSION(0, 1, 0); // TODO: Make configurable
@@ -88,7 +108,7 @@ bool VulkanRenderer::initInstance(VkInstance &instance) noexcept {
   createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
   createInfo.ppEnabledLayerNames = validationLayers.data();
 
-  return vkCreateInstance(&createInfo, s_Context.allocator, &instance) == VK_SUCCESS;
+  return vkCreateInstance(&createInfo, context.allocator, &context.instance) == VK_SUCCESS;
 }
 
 bool getRequiredExtensions(std::vector<const char *> &extensions) noexcept {

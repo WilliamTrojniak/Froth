@@ -21,15 +21,15 @@ public:
 };
 
 #ifndef FROTH_FATAL
-#define FROTH_FATAL(message, ...) Logger::log(Logger::LogLevel::FATAL, message, __VA_ARGS__);
+#define FROTH_FATAL(message, ...) Logger::log(Logger::LogLevel::FATAL, message, ##__VA_ARGS__);
 #endif // !FROTH_FATAL
 
 #ifndef FROTH_ERROR
-#define FROTH_ERROR(message, ...) Logger::log(Logger::LogLevel::ERROR, message, __VA_ARGS__);
+#define FROTH_ERROR(message, ...) Logger::log(Logger::LogLevel::ERROR, message, ##__VA_ARGS__);
 #endif // !FROTH_ERROR
 
 #if FROTH_WARN_ENABLED == 1
-#define FROTH_WARN(message, ...) Logger::log(Logger::LogLevel::WARN, message, __VA_ARGS__);
+#define FROTH_WARN(message, ...) Logger::log(Logger::LogLevel::WARN, message, ##__VA_ARGS__);
 #else
 #define FROTH_WARN(message, ...)
 #endif // !FROTH_WARN_ENABLED == 1
@@ -41,13 +41,13 @@ public:
 #endif // !FROTH_WARN_ENABLED == 1
 
 #if FROTH_DEBUG_ENABLED == 1
-#define FROTH_DEBUG(message, ...) Logger::log(Logger::LogLevel::DEBUG, message, __VA_ARGS__);
+#define FROTH_DEBUG(message, ...) Logger::log(Logger::LogLevel::DEBUG, message, ##__VA_ARGS__);
 #else
 #define FROTH_DEBUG(message, ...)
 #endif // !FROTH_DEBUG_ENABLED == 1
 
 #if FROTH_TRACE_ENABLED == 1
-#define FROTH_TRACE(message, ...) Logger::log(Logger::LogLevel::TRACE, message, __VA_ARGS__);
+#define FROTH_TRACE(message, ...) Logger::log(Logger::LogLevel::TRACE, message, ##__VA_ARGS__);
 #else
 #define FROTH_TRACE(message, ...)
 #endif // !FROTH_TRACE_ENABLED == 1

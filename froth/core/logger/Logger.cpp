@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <stdarg.h>
+#include <stdexcept>
 #include <stdio.h>
 #include <string.h>
 #include <type_traits>
@@ -24,6 +25,10 @@ void Logger::log(LogLevel level, const char *message, ...) {
 
   std::snprintf(outMessage2, MAX_LOG_SIZE, "%s%s\n", levelStrings[static_cast<std::underlying_type<LogLevel>::type>(level)], outMessage);
   printf("%s", outMessage2);
+
+  if (level == LogLevel::ERROR) {
+    throw std::runtime_error(outMessage);
+  }
 }
 
 } // namespace Froth

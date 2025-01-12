@@ -3,11 +3,11 @@
 #include "core/events/ApplicationEvent.h"
 #include "core/events/KeyEvent.h"
 #include "core/events/MouseEvent.h"
+#include "core/logger/Logger.h"
 #include "platform/keys/GLFWCodes.h"
 #include "platform/keys/Keycodes.h"
 #include "platform/window/Window.h"
 #include <cstdint>
-#include <mach/mach_time.h>
 #include <stdexcept>
 
 namespace Froth {
@@ -82,6 +82,16 @@ void GLFWWindow::windowSizeCallback(GLFWwindow *window, int width, int height) {
   auto handler = static_cast<GLFWWindow *>(glfwGetWindowUserPointer(window));
   handler->windowSizeCallback(width, height);
 }
+
+bool GLFWWindow::createVulkanSurface(VkInstance instance, const VkAllocationCallbacks *allocator, VkSurfaceKHR &surface) const {
+  // TODO: Take into account allocation callback
+  // TODO: Should Window own the surface?
+  if (glfwCreateWindowSurface(instance, m_Window, allocator, &surface) != VK_SUCCESS) {
+    FROTH_WARN("Failed to create Vulkan surface for GLFW window");
+    return false;
+  }
+  return true;
+};
 
 void GLFWWindow::windowSizeCallback(int width, int height) {
   m_Width = width;

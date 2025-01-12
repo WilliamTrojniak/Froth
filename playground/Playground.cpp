@@ -496,7 +496,7 @@ private:
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
       throw std::runtime_error("Failed to create vulkan instance");
     }
-    std::cerr << "Created Vulkan Instance" << std::endl;
+    /*std::cerr << "Created Vulkan Instance" << std::endl;*/
     return instance;
   }
   static bool isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface, const std::vector<const char *> &extensions) {

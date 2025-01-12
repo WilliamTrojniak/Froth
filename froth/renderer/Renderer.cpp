@@ -1,12 +1,21 @@
 #include "Renderer.h"
 #include "./vulkan/VulkanRenderer.h"
-#include <memory>
 
 namespace Froth {
 
-std::unique_ptr<Renderer> Renderer::createRenderer() {
+Renderer &Renderer::getInstance() noexcept {
   // TODO: Change based on defines
-  return std::unique_ptr<VulkanRenderer>(new VulkanRenderer());
+  return VulkanRenderer::getInstance();
+}
+
+bool Renderer::init(std::shared_ptr<Window> &window) noexcept {
+  // TODO: Change based on defines
+  return VulkanRenderer::init(window);
+}
+
+void Renderer::shutdown() noexcept {
+  // TODO: Change based on defines
+  VulkanRenderer::getInstance().shutdown();
 }
 
 } // namespace Froth

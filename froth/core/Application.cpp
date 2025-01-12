@@ -1,17 +1,15 @@
-#include "core/logger/Logger.h"
-#include "renderer/Renderer.h"
-#include <memory>
-#include <utility>
 #define GLFW_INCLUDE_VULKAN
 
-#include "Defines.h"
 #include "core/Application.h"
+#include "Defines.h"
 #include "core/events/ApplicationEvent.h"
 #include "core/events/Event.h"
 #include "core/events/EventDispatcher.h"
+#include "core/logger/Logger.h"
 #include "platform/window/Window.h"
+#include "renderer/Renderer.h"
 #include <functional>
-#include <iostream>
+#include <memory>
 
 namespace Froth {
 
@@ -26,9 +24,12 @@ Application::Application() {
   }
   m_Window->setEventCallbackFunction(BIND_FUNC(onEvent));
 
-  m_Renderer = Renderer::createRenderer();
+  Renderer::init(m_Window);
+  Renderer::getInstance();
 }
-Application::~Application() {}
+Application::~Application() {
+  Renderer::shutdown();
+}
 
 void Application::Run() {
   while (m_Running) {
@@ -40,8 +41,6 @@ void Application::Run() {
 }
 
 void Application::onEvent(const Event &e) {
-  std::cerr << e.ToString() << std::endl;
-
   for (std::shared_ptr<Layer> layer : m_LayerStack) {
     if (layer->onEvent(e))
       return;

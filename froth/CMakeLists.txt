@@ -32,8 +32,12 @@ add_library(${PROJECT_NAME}
   platform/window/Window.cpp
   renderer/vulkan/VulkanDevice.h
   renderer/vulkan/VulkanDevice.cpp
+  renderer/vulkan/VulkanInstance.h
+  renderer/vulkan/VulkanInstance.cpp
   renderer/vulkan/VulkanRenderer.h
   renderer/vulkan/VulkanRenderer.cpp
+  renderer/vulkan/VulkanSurface.h
+  renderer/vulkan/VulkanSurface.cpp
   renderer/Renderer.h
   renderer/Renderer.cpp
   dependencies/vendor/stb/stb/stb_image.h
@@ -41,7 +45,7 @@ add_library(${PROJECT_NAME}
 )
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-  $<$<CONFIG:Debug>:${PROJECT_NAME}_DEBUG=1>
+  $<$<CONFIG:Debug>:${PROJECT_NAME}_BUILD_DEBUG=1>
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC 

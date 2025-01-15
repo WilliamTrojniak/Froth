@@ -1,9 +1,7 @@
 #pragma once
 
-#define GLFW_INCLUDE_VULKAN
 #include "core/events/Event.h"
-#include <GLFW/glfw3.h>
-#include <cstdint>
+#include "renderer/vulkan/VulkanSurface.h"
 #include <functional>
 #include <memory>
 
@@ -25,7 +23,7 @@ public:
 
   virtual void getFramebufferSize(uint32_t &width, uint32_t &height) const = 0;
   static const char **requiredVulkanExtensions(uint32_t &extensionCount) noexcept;
-  virtual bool createVulkanSurface(VkInstance instance, const VkAllocationCallbacks *allocator, VkSurfaceKHR &surface) const = 0;
+  virtual std::unique_ptr<VulkanSurface> createVulkanSurface(const VulkanInstance &instance) const = 0;
 
   virtual void *
   nativeWindow() const = 0;

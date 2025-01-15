@@ -1,27 +1,53 @@
 #include "VulkanDevice.h"
+#include "renderer/vulkan/VulkanInstance.h"
+#include "renderer/vulkan/VulkanSurface.h"
 #include <core/logger/Logger.h>
 #include <set>
 #include <string>
+#include <vector>
 
 namespace Froth {
 
-VulkanDevice::VulkanDevice(VkPhysicalDevice physicalDevice, VkDevice device) : m_PhysicalDevice(physicalDevice), m_LogicalDevice(device) {
-}
+VulkanDevice::VulkanDevice(const VulkanInstance &instance, const VulkanSurface &surface) : m_Instance(instance) {
+  // TODO: This should be driven by the Engine
+  // Device Requirements
+  PhysicalDeviceProperties requirements{};
+  requirements.graphics = true;
+  requirements.present = true;
+  requirements.compute = false;
+  requirements.transfer = true;
 
-bool VulkanDevice::create(VkInstance instance, VkSurfaceKHR surface, VulkanDevice &device) noexcept {
-  VkPhysicalDevice physicalDevice = pickPhysicalDevice(instance, surface);
-  if (physicalDevice == nullptr) {
-    FROTH_WARN("Failed to find suitable Vulkan physical device")
-    return false;
+  requirements.extensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+  requirements.extensions.emplace_back("VK_KHR_portability_subset"); // TODO: Only enable on MacOS
+
+#ifdef FROTH_BUILD_DEBUG
+  requirements.layers.emplace_back("VK_LAYER_KHRONOS_validation");
+#endif // FROTH_BUILD_DEBUG
+
+  requirements.layers.emplace_back("VK_LAYER_KHRONOS_validation");
+  requirements.samplerAnisotropy = true; // TODO: This can probably be made optional?
+  // Device Requirements
+
+  m_PhysicalDevice = pickPhysicalDevice(m_Instance.instance(), surface.surface(), requirements);
+  if (m_PhysicalDevice == nullptr) {
+    FROTH_ERROR("Failed to find suitable Vulkan physical device")
   }
 
-  VkDevice logicalDevice;
-
-  device = VulkanDevice(physicalDevice, logicalDevice);
-  return true;
+  m_LogicalDevice = createLogicalDevice(m_Instance, m_PhysicalDevice, surface.surface(), requirements);
+  if (m_LogicalDevice == nullptr) {
+    FROTH_ERROR("Failed to create Vulkan Logical Device from physical device")
+  }
 }
 
-VkPhysicalDevice VulkanDevice::pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface) noexcept {
+VulkanDevice::~VulkanDevice() {
+  if (m_LogicalDevice != nullptr) {
+    vkDestroyDevice(m_LogicalDevice, m_Instance.allocator());
+    m_LogicalDevice = nullptr;
+    FROTH_DEBUG("Destroyed Vulkan logical device")
+  }
+}
+
+VkPhysicalDevice VulkanDevice::pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, const PhysicalDeviceProperties &requirements) noexcept {
   uint32_t physicalDeviceCount;
   if (vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr) != VK_SUCCESS || physicalDeviceCount == 0) {
     FROTH_WARN("No physical devices with Vulkan Support were detected.")
@@ -32,22 +58,6 @@ VkPhysicalDevice VulkanDevice::pickPhysicalDevice(VkInstance instance, VkSurface
     FROTH_WARN("Failed to retreive available Vulkan physical devices")
     return nullptr;
   }
-
-  // TODO: This should be driven by the Engine
-  // Device Requirements
-  PhysicalDeviceProperties requirements{};
-  requirements.graphics = true;
-  requirements.present = surface != nullptr;
-  requirements.compute = false;
-  requirements.transfer = true;
-
-  if (surface != nullptr) {
-    requirements.extensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-  }
-
-  requirements.extensions.emplace_back("VK_KHR_portability_subset"); // TODO: Only enable on MacOS
-  requirements.samplerAnisotropy = true;                             // TODO: This can probably be made optional?
-  // Device Requirements
 
   // Select Best Available Physical Device
   uint32_t maxScore = 0;
@@ -115,6 +125,10 @@ bool VulkanDevice::physicalDeviceMeetsRequirements(VkPhysicalDevice device, VkSu
   }
 
   if (!VulkanDevice::physicalDeviceSupportsExtensions(device, requirements.extensions)) {
+    return false;
+  }
+
+  if (!VulkanDevice::physicalDeviceSupportsLayers(device, requirements.layers)) {
     return false;
   }
 
@@ -200,6 +214,25 @@ bool VulkanDevice::physicalDeviceSupportsExtensions(VkPhysicalDevice device, con
   return extensionsSet.empty();
 }
 
+bool VulkanDevice::physicalDeviceSupportsLayers(VkPhysicalDevice device, const std::vector<const char *> &layers) noexcept {
+  uint32_t availableLayersCount;
+  if (vkEnumerateDeviceLayerProperties(device, &availableLayersCount, nullptr) != VK_SUCCESS) {
+    return false;
+  }
+
+  std::vector<VkLayerProperties> availableLayers(availableLayersCount);
+  if (vkEnumerateDeviceLayerProperties(device, &availableLayersCount, availableLayers.data()) != VK_SUCCESS) {
+    return false;
+  }
+
+  std::set<std::string> layerSet(layers.begin(), layers.end());
+  for (const auto &l : availableLayers) {
+    layerSet.erase(l.layerName);
+  }
+
+  return layerSet.empty();
+}
+
 VulkanDevice::SurfaceCapabilities VulkanDevice::physicalDeviceSurfaceSupport(VkPhysicalDevice device, VkSurfaceKHR surface) noexcept {
   SurfaceCapabilities capabilities;
 
@@ -226,6 +259,52 @@ VulkanDevice::SurfaceCapabilities VulkanDevice::physicalDeviceSurfaceSupport(VkP
   }
 
   return capabilities;
+}
+
+VkDevice VulkanDevice::createLogicalDevice(const VulkanInstance &context, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, const PhysicalDeviceProperties &requirements) noexcept {
+  const QueueFamilies queueFamilies = getPhysicalDeviceQueueFamilies(physicalDevice, surface);
+  std::set<uint32_t> uniqueQueueFamilyIndices;
+  if (queueFamilies.graphics.valid) {
+    uniqueQueueFamilyIndices.emplace(queueFamilies.graphics.index);
+  }
+  if (queueFamilies.present.valid) {
+    uniqueQueueFamilyIndices.emplace(queueFamilies.present.index);
+  }
+  if (queueFamilies.compute.valid) {
+    uniqueQueueFamilyIndices.emplace(queueFamilies.compute.index);
+  }
+  if (queueFamilies.transfer.valid) {
+    uniqueQueueFamilyIndices.emplace(queueFamilies.transfer.index);
+  }
+
+  float queuePriority = 1.0f; // TODO: make dynamic
+  std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+  for (const auto &index : uniqueQueueFamilyIndices) {
+    VkDeviceQueueCreateInfo queueCreateInfo{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
+    queueCreateInfo.queueFamilyIndex = index;
+    queueCreateInfo.queueCount = 1; // TODO: Dynamic
+    queueCreateInfo.pQueuePriorities = &queuePriority;
+    queueCreateInfos.push_back(queueCreateInfo);
+  }
+
+  VkPhysicalDeviceFeatures deviceFeatures{};
+  deviceFeatures.samplerAnisotropy = requirements.samplerAnisotropy;
+
+  VkDeviceCreateInfo deviceCreateInfo{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+  deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+  deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+  deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
+  deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(requirements.extensions.size());
+  deviceCreateInfo.ppEnabledExtensionNames = requirements.extensions.data();
+  deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(requirements.layers.size());
+  deviceCreateInfo.ppEnabledLayerNames = requirements.layers.data();
+
+  VkDevice device;
+  if (vkCreateDevice(physicalDevice, &deviceCreateInfo, context.allocator(), &device) != VK_SUCCESS) {
+    return nullptr;
+  }
+
+  return device;
 }
 
 } // namespace Froth

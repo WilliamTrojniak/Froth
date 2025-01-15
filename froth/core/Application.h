@@ -4,6 +4,7 @@
 #include "events/ApplicationEvent.h"
 #include "events/Event.h"
 #include "platform/window/Window.h"
+#include "renderer/Renderer.h"
 #include <memory>
 
 namespace Froth {
@@ -11,8 +12,9 @@ namespace Froth {
 class Application {
 private:
   bool m_Running = true;
-  std::shared_ptr<Window> m_Window;
   LayerStack m_LayerStack;
+  std::unique_ptr<Window> m_Window;
+  std::unique_ptr<Renderer> m_Renderer;
 
 public:
   Application();

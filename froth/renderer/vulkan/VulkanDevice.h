@@ -1,7 +1,7 @@
 #pragma once
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
+#include "renderer/vulkan/VulkanInstance.h"
+#include "renderer/vulkan/VulkanSurface.h"
 #include <vector>
 
 namespace Froth {
@@ -9,7 +9,10 @@ class VulkanDevice {
   friend class VulkanRenderer;
 
 public:
-  static bool create(VkInstance instance, VkSurfaceKHR surface, VulkanDevice &device) noexcept;
+  VulkanDevice(const VulkanInstance &instance, const VulkanSurface &surface);
+  VulkanDevice(VulkanDevice const &) = delete;
+  void operator=(VulkanDevice const &) = delete;
+  ~VulkanDevice();
 
   struct PhysicalDeviceProperties {
     bool graphics;
@@ -18,6 +21,7 @@ public:
     bool transfer;
 
     std::vector<const char *> extensions;
+    std::vector<const char *> layers;
     bool samplerAnisotropy;
   };
 
@@ -39,21 +43,21 @@ public:
     std::vector<VkPresentModeKHR> presentModes;
   };
 
-protected:
-  VulkanDevice() = default;
-  VulkanDevice(VkPhysicalDevice physicalDevice, VkDevice logicalDevice);
-
 private:
   VkPhysicalDevice m_PhysicalDevice;
-  VkDevice m_LogicalDevice;
+  VkDevice m_LogicalDevice = nullptr;
+  const VulkanInstance &m_Instance;
   QueueFamilies m_Queues;
 
-  static VkPhysicalDevice pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface) noexcept;
+  static VkPhysicalDevice pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, const PhysicalDeviceProperties &requirements) noexcept;
   static uint32_t ratePhysicalDevice(VkPhysicalDevice device, VkSurfaceKHR surface) noexcept;
   static bool physicalDeviceMeetsRequirements(VkPhysicalDevice device, VkSurfaceKHR surface, const PhysicalDeviceProperties &requirements) noexcept;
   static QueueFamilies getPhysicalDeviceQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) noexcept;
   static bool physicalDeviceSupportsExtensions(VkPhysicalDevice device, const std::vector<const char *> &extensions) noexcept;
+  static bool physicalDeviceSupportsLayers(VkPhysicalDevice device, const std::vector<const char *> &layers) noexcept;
   static SurfaceCapabilities physicalDeviceSurfaceSupport(VkPhysicalDevice device, VkSurfaceKHR surface) noexcept;
+
+  static VkDevice createLogicalDevice(const VulkanInstance &context, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, const PhysicalDeviceProperties &requirements) noexcept;
 };
 
 } // namespace Froth

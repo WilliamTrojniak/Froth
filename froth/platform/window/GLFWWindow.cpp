@@ -7,7 +7,11 @@
 #include "platform/keys/GLFWCodes.h"
 #include "platform/keys/Keycodes.h"
 #include "platform/window/Window.h"
+#include "renderer/vulkan/VulkanInstance.h"
+#include "renderer/vulkan/VulkanSurface.h"
+#include "vulkan/vulkan_core.h"
 #include <cstdint>
+#include <memory>
 #include <stdexcept>
 
 namespace Froth {
@@ -20,6 +24,7 @@ GLFWWindow::GLFWWindow(int width, int height, const char *title)
     throw std::runtime_error("Failed to initialize GLFW");
     return;
   }
+  FROTH_INFO("Initialized GLFW");
 
   glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
   m_Window = glfwCreateWindow(width, height, title, NULL, NULL);
@@ -27,6 +32,7 @@ GLFWWindow::GLFWWindow(int width, int height, const char *title)
   if (!m_Window) {
     if (s_InstanceCount == 0) {
       glfwTerminate();
+      FROTH_INFO("Terminated GLFW");
     }
     throw std::runtime_error("Failed to create GLFW window");
     return;
@@ -57,6 +63,7 @@ GLFWWindow::~GLFWWindow() {
   s_InstanceCount--;
   if (s_InstanceCount == 0) {
     glfwTerminate();
+    FROTH_INFO("Terminated GLFW");
   }
 }
 
@@ -83,14 +90,14 @@ void GLFWWindow::windowSizeCallback(GLFWwindow *window, int width, int height) {
   handler->windowSizeCallback(width, height);
 }
 
-bool GLFWWindow::createVulkanSurface(VkInstance instance, const VkAllocationCallbacks *allocator, VkSurfaceKHR &surface) const {
+std::unique_ptr<VulkanSurface> GLFWWindow::createVulkanSurface(const VulkanInstance &instance) const {
   // TODO: Take into account allocation callback
   // TODO: Should Window own the surface?
-  if (glfwCreateWindowSurface(instance, m_Window, allocator, &surface) != VK_SUCCESS) {
-    FROTH_WARN("Failed to create Vulkan surface for GLFW window");
-    return false;
+  VkSurfaceKHR surface;
+  if (glfwCreateWindowSurface(instance.instance(), m_Window, instance.allocator(), &surface) != VK_SUCCESS) {
+    FROTH_ERROR("Failed to create Vulkan surface for GLFW window");
   }
-  return true;
+  return std::make_unique<VulkanSurface>(instance, surface);
 };
 
 void GLFWWindow::windowSizeCallback(int width, int height) {

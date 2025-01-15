@@ -1,9 +1,10 @@
 #pragma once
 
-#define GLFW_INCLUDE_VULKAN
 #include "renderer/Renderer.h"
 #include "renderer/vulkan/VulkanDevice.h"
-#include <GLFW/glfw3.h>
+#include "renderer/vulkan/VulkanInstance.h"
+#include "renderer/vulkan/VulkanSurface.h"
+#include <memory>
 
 namespace Froth {
 class VulkanRenderer : public Renderer {
@@ -14,25 +15,17 @@ public:
   VulkanRenderer(VulkanRenderer const &) = delete;
   void operator=(VulkanRenderer const &) = delete;
 
-  static bool init(std::shared_ptr<Window> &window) noexcept;
+  virtual bool init(const Window &window) noexcept override;
 
 protected:
-  static VulkanRenderer &getInstance();
+  VulkanRenderer();
 
 private:
-  VulkanRenderer() = default;
-  struct VulkanRendererContext {
-    const VkAllocationCallbacks *allocator;
-    VkInstance instance;
-    VkSurfaceKHR surface;
-    std::shared_ptr<const Window> window;
-    VulkanDevice device;
-  } m_Context;
-
-  static bool initInstance(const VkAllocationCallbacks *allocator, VulkanRendererContext &context) noexcept;
-  void shutdown() noexcept;
-
   static bool s_Initialized;
-  static VulkanRenderer &getInstanceInt() noexcept;
+  static VulkanInstance s_Ctx;
+  std::unique_ptr<VulkanSurface> m_Surface; // HACK: Can this be stack-allocated somehow?
+  std::unique_ptr<VulkanDevice> m_Device;   // HACK: Can this be stack-allocated somehow?
+
+  void shutdown() noexcept;
 };
 } // namespace Froth

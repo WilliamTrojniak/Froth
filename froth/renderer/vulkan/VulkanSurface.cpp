@@ -3,6 +3,10 @@
 
 namespace Froth {
 
+VulkanSurface::VulkanSurface(VulkanSurface &&o) : m_Instance(o.m_Instance), m_Surface(o.m_Surface) {
+  o.m_Surface = nullptr;
+}
+
 VulkanSurface::~VulkanSurface() {
   if (m_Surface != nullptr) {
     vkDestroySurfaceKHR(m_Instance.instance(), m_Surface, m_Instance.allocator());

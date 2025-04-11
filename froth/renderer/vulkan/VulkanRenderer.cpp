@@ -1,9 +1,7 @@
 #include "VulkanRenderer.h"
 #include "Defines.h"
-#include "core/logger/Logger.h"
 #include "renderer/vulkan/VulkanDevice.h"
 #include "renderer/vulkan/VulkanInstance.h"
-#include <exception>
 #include <memory>
 
 namespace Froth {
@@ -15,28 +13,20 @@ bool hasLayers(const std::vector<const char *> &layers) noexcept;
 bool VulkanRenderer::s_Initialized = false;
 VulkanInstance VulkanRenderer::s_Ctx{};
 
-VulkanRenderer::VulkanRenderer() {
+VulkanRenderer::VulkanRenderer(VulkanSurface &&surface)
+    : m_Surface(std::move(surface)), m_Device(s_Ctx, m_Surface) {
 }
 
 VulkanRenderer::~VulkanRenderer() {
   shutdown();
 }
 
-bool VulkanRenderer::init(const Window &window) noexcept {
-  if (s_Initialized)
-    return true;
-
-  try {
+std::unique_ptr<VulkanRenderer> VulkanRenderer::create(const Window &window) {
+  if (!s_Initialized) {
     s_Ctx = VulkanInstance(nullptr); // TODO: Configurable allocator
-    m_Surface = window.createVulkanSurface(s_Ctx);
-    m_Device = std::make_unique<VulkanDevice>(s_Ctx, *m_Surface);
-  } catch (std::exception e) {
-    return false;
+    s_Initialized = true;
   }
-
-  FROTH_INFO("Initialized Vulkan Renderer")
-  s_Initialized = true;
-  return true;
+  return std::unique_ptr<VulkanRenderer>(new VulkanRenderer(window.createVulkanSurface(s_Ctx)));
 }
 
 void VulkanRenderer::shutdown() noexcept {

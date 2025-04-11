@@ -4,9 +4,9 @@
 
 namespace Froth {
 
-std::unique_ptr<Renderer> Renderer::create() noexcept {
+std::unique_ptr<Renderer> Renderer::create(const Window &window) {
   // TODO: Switch based on defines
-  return std::unique_ptr<Renderer>(new VulkanRenderer);
+  return VulkanRenderer::create(window);
 }
 
 } // namespace Froth

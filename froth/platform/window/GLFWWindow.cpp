@@ -90,14 +90,14 @@ void GLFWWindow::windowSizeCallback(GLFWwindow *window, int width, int height) {
   handler->windowSizeCallback(width, height);
 }
 
-std::unique_ptr<VulkanSurface> GLFWWindow::createVulkanSurface(const VulkanInstance &instance) const {
+VulkanSurface GLFWWindow::createVulkanSurface(const VulkanInstance &instance) const {
   // TODO: Take into account allocation callback
   // TODO: Should Window own the surface?
   VkSurfaceKHR surface;
   if (glfwCreateWindowSurface(instance.instance(), m_Window, instance.allocator(), &surface) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Vulkan surface for GLFW window");
   }
-  return std::make_unique<VulkanSurface>(instance, surface);
+  return VulkanSurface(instance, surface);
 };
 
 void GLFWWindow::windowSizeCallback(int width, int height) {

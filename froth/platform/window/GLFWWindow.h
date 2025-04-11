@@ -5,7 +5,6 @@
 #include "renderer/vulkan/VulkanSurface.h"
 #include <GLFW/glfw3.h>
 #include <cstdint>
-#include <memory>
 
 namespace Froth {
 class GLFWWindow : public Window {
@@ -36,7 +35,7 @@ public:
   virtual void *nativeWindow() const override { return m_Window; }
   virtual void getFramebufferSize(uint32_t &width, uint32_t &height) const override;
   static const char **requiredVulkanExtensions(uint32_t &extensionCount) noexcept;
-  virtual std::unique_ptr<VulkanSurface> createVulkanSurface(const VulkanInstance &instance) const override;
+  virtual VulkanSurface createVulkanSurface(const VulkanInstance &instance) const override;
   ~GLFWWindow() override;
 };
 } // namespace Froth

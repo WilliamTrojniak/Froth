@@ -29,7 +29,6 @@
 #include <cstdint>
 #include <cstring>
 #include <iostream>
-#include <memory>
 #include <stdexcept>
 #include <vector>
 
@@ -1591,7 +1590,9 @@ private:
 
 class Playground : public Froth::Application {
 public:
-  Playground() { pushLayer(std::make_unique<VulkanTriangle>(window())); }
+  Playground() {
+    /*pushLayer(std::make_unique<VulkanTriangle>(window())); */
+  }
 };
 
 Froth::Application *Froth::CreateApplication() { return new Playground(); }

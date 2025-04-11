@@ -11,8 +11,12 @@ protected:
 public:
   virtual ~Renderer() = default;
 
-  static std::unique_ptr<Renderer> create() noexcept;
-  virtual bool init(const Window &window) noexcept = 0;
+  /* Creates an abstract Renderer backend
+   *
+   * @returns  Renderer Backend
+   * @throws std::runtime_error if Window Surface cannot be created
+   */
+  static std::unique_ptr<Renderer> create(const Window &window);
 };
 
 } // namespace Froth

@@ -23,8 +23,7 @@ Application::Application() {
     return;
   }
   m_Window->setEventCallbackFunction(BIND_FUNC(onEvent));
-  m_Renderer = Renderer::create();
-  m_Renderer->init(*m_Window);
+  m_Renderer = Renderer::create(*m_Window);
 }
 Application::~Application() {
   /*Renderer::shutdown();*/

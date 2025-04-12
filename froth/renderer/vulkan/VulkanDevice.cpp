@@ -1,7 +1,4 @@
 #include "VulkanDevice.h"
-#include "renderer/vulkan/VulkanInstance.h"
-#include "renderer/vulkan/VulkanSurface.h"
-#include "vulkan/vulkan_core.h"
 #include <core/logger/Logger.h>
 #include <set>
 #include <string>
@@ -50,6 +47,33 @@ VulkanDevice::~VulkanDevice() {
 
 VulkanDevice::SurfaceCapabilities VulkanDevice::getSurfaceSupport(const VulkanSurface &surface) const {
   return VulkanDevice::physicalDeviceSurfaceSupport(m_PhysicalDevice, surface.surface());
+}
+
+VkDeviceMemory VulkanDevice::allocateMemory(const VkMemoryRequirements &requirements, VkMemoryPropertyFlags properties) const {
+  VkMemoryAllocateInfo allocInfo{};
+  allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+  allocInfo.allocationSize = requirements.size;
+  allocInfo.memoryTypeIndex = findMemoryTypeIndex(requirements, properties);
+
+  VkDeviceMemory memory;
+  if (vkAllocateMemory(m_LogicalDevice, &allocInfo, nullptr, &memory) != VK_SUCCESS) {
+    FROTH_ERROR("Failed to allocate device memory");
+    throw std::runtime_error("failed to allocate buffer memory");
+  }
+  return memory;
+}
+
+uint32_t VulkanDevice::findMemoryTypeIndex(const VkMemoryRequirements &requirements, VkMemoryPropertyFlags properties) const {
+  VkPhysicalDeviceMemoryProperties memProperties;
+  vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &memProperties);
+
+  for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
+    if (requirements.memoryTypeBits & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+      return i;
+    }
+  }
+  FROTH_ERROR("Failed to find suitable memory type");
+  return -1;
 }
 
 VkPhysicalDevice VulkanDevice::pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, const PhysicalDeviceProperties &requirements) noexcept {

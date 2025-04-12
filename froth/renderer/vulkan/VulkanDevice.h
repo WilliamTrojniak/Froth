@@ -16,6 +16,7 @@ public:
 
   VkDevice device() const noexcept { return m_LogicalDevice; }
   const VulkanInstance &instance() const noexcept { return m_Instance; }
+  VkDeviceMemory allocateMemory(const VkMemoryRequirements &requirements, VkMemoryPropertyFlags properties) const;
 
   struct PhysicalDeviceProperties {
     bool graphics;
@@ -53,6 +54,8 @@ private:
   VkPhysicalDevice m_PhysicalDevice;
   VkDevice m_LogicalDevice = nullptr;
   const VulkanInstance &m_Instance;
+
+  uint32_t findMemoryTypeIndex(const VkMemoryRequirements &requirements, VkMemoryPropertyFlags properties) const;
 
   static VkPhysicalDevice pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, const PhysicalDeviceProperties &requirements) noexcept;
   static uint32_t ratePhysicalDevice(VkPhysicalDevice device, VkSurfaceKHR surface) noexcept;

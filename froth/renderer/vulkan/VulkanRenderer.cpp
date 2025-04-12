@@ -1,7 +1,5 @@
 #include "VulkanRenderer.h"
 #include "Defines.h"
-#include "renderer/vulkan/VulkanDevice.h"
-#include "renderer/vulkan/VulkanInstance.h"
 #include <memory>
 
 namespace Froth {
@@ -16,7 +14,13 @@ VulkanInstance VulkanRenderer::s_Ctx{};
 VulkanRenderer::VulkanRenderer(const Window &window)
     : m_Surface(window.createVulkanSurface(s_Ctx)),
       m_Device(s_Ctx, m_Surface),
-      m_Swapchain(m_Device, window, m_Surface) {
+      m_Swapchain(m_Device, window, m_Surface),
+      m_DepthImage(m_Device, VulkanImage::CreateInfo{
+                                 .extent = {.width = m_Swapchain.extent().width, .height = m_Swapchain.extent().height},
+                                 .format = VK_FORMAT_D32_SFLOAT,
+                                 .tiling = VK_IMAGE_TILING_OPTIMAL,
+                                 .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                             }) {
 }
 
 VulkanRenderer::~VulkanRenderer() {

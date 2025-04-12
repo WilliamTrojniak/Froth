@@ -14,6 +14,9 @@ public:
   void operator=(VulkanDevice const &) = delete;
   ~VulkanDevice();
 
+  VkDevice device() const noexcept { return m_LogicalDevice; }
+  const VulkanInstance &instance() const noexcept { return m_Instance; }
+
   struct PhysicalDeviceProperties {
     bool graphics;
     bool present;
@@ -43,11 +46,13 @@ public:
     std::vector<VkPresentModeKHR> presentModes;
   };
 
+  SurfaceCapabilities getSurfaceSupport(const VulkanSurface &surface) const;
+  QueueFamilies getSurfaceQueueFamilies(const VulkanSurface &surface) const noexcept;
+
 private:
   VkPhysicalDevice m_PhysicalDevice;
   VkDevice m_LogicalDevice = nullptr;
   const VulkanInstance &m_Instance;
-  QueueFamilies m_Queues;
 
   static VkPhysicalDevice pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, const PhysicalDeviceProperties &requirements) noexcept;
   static uint32_t ratePhysicalDevice(VkPhysicalDevice device, VkSurfaceKHR surface) noexcept;

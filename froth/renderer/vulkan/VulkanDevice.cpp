@@ -1,6 +1,7 @@
 #include "VulkanDevice.h"
 #include "renderer/vulkan/VulkanInstance.h"
 #include "renderer/vulkan/VulkanSurface.h"
+#include "vulkan/vulkan_core.h"
 #include <core/logger/Logger.h>
 #include <set>
 #include <string>
@@ -45,6 +46,10 @@ VulkanDevice::~VulkanDevice() {
     m_LogicalDevice = nullptr;
     FROTH_DEBUG("Destroyed Vulkan logical device")
   }
+}
+
+VulkanDevice::SurfaceCapabilities VulkanDevice::getSurfaceSupport(const VulkanSurface &surface) const {
+  return VulkanDevice::physicalDeviceSurfaceSupport(m_PhysicalDevice, surface.surface());
 }
 
 VkPhysicalDevice VulkanDevice::pickPhysicalDevice(VkInstance instance, VkSurfaceKHR surface, const PhysicalDeviceProperties &requirements) noexcept {
@@ -140,6 +145,10 @@ bool VulkanDevice::physicalDeviceMeetsRequirements(VkPhysicalDevice device, VkSu
   }
 
   return true;
+}
+
+VulkanDevice::QueueFamilies VulkanDevice::getSurfaceQueueFamilies(const VulkanSurface &surface) const noexcept {
+  return getPhysicalDeviceQueueFamilies(m_PhysicalDevice, surface.surface());
 }
 
 VulkanDevice::QueueFamilies VulkanDevice::getPhysicalDeviceQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) noexcept {

@@ -4,6 +4,7 @@
 #include "renderer/vulkan/VulkanDevice.h"
 #include "renderer/vulkan/VulkanInstance.h"
 #include "renderer/vulkan/VulkanSurface.h"
+#include "renderer/vulkan/VulkanSwapchain.h"
 #include <memory>
 
 namespace Froth {
@@ -16,7 +17,7 @@ public:
   void operator=(VulkanRenderer const &) = delete;
 
 protected:
-  VulkanRenderer(VulkanSurface &&surface);
+  VulkanRenderer(const Window &window, VulkanSurface &&surface);
 
   /* Creates a Vulkan Renderer backend
    *
@@ -30,6 +31,7 @@ private:
   static VulkanInstance s_Ctx;
   VulkanSurface m_Surface;
   VulkanDevice m_Device;
+  VulkanSwapChain m_Swapchain;
 
   void shutdown() noexcept;
 };

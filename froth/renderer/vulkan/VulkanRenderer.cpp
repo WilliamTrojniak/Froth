@@ -13,8 +13,8 @@ bool hasLayers(const std::vector<const char *> &layers) noexcept;
 bool VulkanRenderer::s_Initialized = false;
 VulkanInstance VulkanRenderer::s_Ctx{};
 
-VulkanRenderer::VulkanRenderer(VulkanSurface &&surface)
-    : m_Surface(std::move(surface)), m_Device(s_Ctx, m_Surface) {
+VulkanRenderer::VulkanRenderer(const Window &window, VulkanSurface &&surface)
+    : m_Surface(std::move(surface)), m_Device(s_Ctx, m_Surface), m_Swapchain(m_Device, window, m_Surface) {
 }
 
 VulkanRenderer::~VulkanRenderer() {
@@ -26,7 +26,7 @@ std::unique_ptr<VulkanRenderer> VulkanRenderer::create(const Window &window) {
     s_Ctx = VulkanInstance(nullptr); // TODO: Configurable allocator
     s_Initialized = true;
   }
-  return std::unique_ptr<VulkanRenderer>(new VulkanRenderer(window.createVulkanSurface(s_Ctx)));
+  return std::unique_ptr<VulkanRenderer>(new VulkanRenderer(window, window.createVulkanSurface(s_Ctx)));
 }
 
 void VulkanRenderer::shutdown() noexcept {

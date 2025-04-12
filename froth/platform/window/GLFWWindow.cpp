@@ -11,7 +11,6 @@
 #include "renderer/vulkan/VulkanSurface.h"
 #include "vulkan/vulkan_core.h"
 #include <cstdint>
-#include <memory>
 #include <stdexcept>
 
 namespace Froth {

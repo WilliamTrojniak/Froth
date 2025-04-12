@@ -38,6 +38,8 @@ add_library(${PROJECT_NAME}
   renderer/vulkan/VulkanRenderer.cpp
   renderer/vulkan/VulkanSurface.h
   renderer/vulkan/VulkanSurface.cpp
+  renderer/vulkan/VulkanSwapchain.h
+  renderer/vulkan/VulkanSwapchain.cpp
   renderer/Renderer.h
   renderer/Renderer.cpp
   dependencies/vendor/stb/stb/stb_image.h

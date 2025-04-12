@@ -17,7 +17,7 @@ public:
   void operator=(VulkanRenderer const &) = delete;
 
 protected:
-  VulkanRenderer(const Window &window, VulkanSurface &&surface);
+  VulkanRenderer(const Window &window);
 
   /* Creates a Vulkan Renderer backend
    *

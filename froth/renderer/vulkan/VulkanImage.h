@@ -2,6 +2,8 @@
 #include "VulkanDevice.h"
 
 namespace Froth {
+class VulkanImageView;
+
 class VulkanImage {
   friend class VulkanRenderer;
 
@@ -9,6 +11,8 @@ public:
   VulkanImage(VulkanImage const &) = delete;
   void operator=(VulkanImage const &) = delete;
   ~VulkanImage();
+  VkImage image() const { return m_Image; }
+  VulkanImageView createView(VkFormat format, VkImageAspectFlags aspect) const;
 
   struct CreateInfo {
     struct {

@@ -1,4 +1,5 @@
 #include "VulkanImage.h"
+#include "VulkanImageView.h"
 #include "core/logger/Logger.h"
 
 namespace Froth {
@@ -40,6 +41,10 @@ VulkanImage::VulkanImage(const VulkanDevice &device, const CreateInfo &opts)
 
 VulkanImage::~VulkanImage() {
   cleanup();
+}
+
+VulkanImageView VulkanImage::createView(VkFormat format, VkImageAspectFlags aspect) const {
+  return VulkanImageView(m_Device, *this, format, aspect);
 }
 
 void VulkanImage::cleanup() {

@@ -34,6 +34,8 @@ add_library(${PROJECT_NAME}
   renderer/vulkan/VulkanDevice.cpp
   renderer/vulkan/VulkanImage.h
   renderer/vulkan/VulkanImage.cpp
+  renderer/vulkan/VulkanImageView.h
+  renderer/vulkan/VulkanImageView.cpp
   renderer/vulkan/VulkanInstance.h
   renderer/vulkan/VulkanInstance.cpp
   renderer/vulkan/VulkanRenderer.h

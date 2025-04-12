@@ -3,6 +3,7 @@
 #include "renderer/Renderer.h"
 #include "renderer/vulkan/VulkanDevice.h"
 #include "renderer/vulkan/VulkanImage.h"
+#include "renderer/vulkan/VulkanImageView.h"
 #include "renderer/vulkan/VulkanInstance.h"
 #include "renderer/vulkan/VulkanSurface.h"
 #include "renderer/vulkan/VulkanSwapchain.h"
@@ -34,6 +35,7 @@ private:
   VulkanDevice m_Device;
   VulkanSwapChain m_Swapchain;
   VulkanImage m_DepthImage;
+  VulkanImageView m_DepthImageView;
 
   void shutdown() noexcept;
 };

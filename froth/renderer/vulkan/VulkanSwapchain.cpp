@@ -2,7 +2,6 @@
 #include "VulkanDevice.h"
 #include "core/logger/Logger.h"
 #include "renderer/vulkan/VulkanInstance.h"
-#include "vulkan/vulkan_core.h"
 #include <algorithm>
 #include <cstdint>
 

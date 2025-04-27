@@ -9,7 +9,6 @@
 #include "platform/window/Window.h"
 #include "renderer/vulkan/VulkanInstance.h"
 #include "renderer/vulkan/VulkanSurface.h"
-#include "vulkan/vulkan_core.h"
 #include <cstdint>
 #include <stdexcept>
 

@@ -13,6 +13,8 @@ public:
   VkExtent2D extent() const { return m_Extent; }
   VkSurfaceFormatKHR format() const { return m_Format; }
 
+  const std::vector<VkImageView> views() const { return m_ImageViews; }
+
 private:
   const VulkanDevice &m_Device;
   VkExtent2D m_Extent;

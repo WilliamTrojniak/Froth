@@ -13,6 +13,7 @@ public:
   ~VulkanImageView();
 
   VkFormat format() const { return m_Format; }
+  VkImageView view() const { return m_View; }
 
 protected:
   VulkanImageView(const VulkanDevice &device, const VulkanImage &image, VkFormat format, VkImageAspectFlags aspect);

@@ -2,6 +2,7 @@
 
 #include "renderer/Renderer.h"
 #include "renderer/vulkan/VulkanDevice.h"
+#include "renderer/vulkan/VulkanFramebuffer.h"
 #include "renderer/vulkan/VulkanImage.h"
 #include "renderer/vulkan/VulkanImageView.h"
 #include "renderer/vulkan/VulkanInstance.h"
@@ -9,6 +10,7 @@
 #include "renderer/vulkan/VulkanSurface.h"
 #include "renderer/vulkan/VulkanSwapchain.h"
 #include <memory>
+#include <vector>
 
 namespace Froth {
 class VulkanRenderer : public Renderer {
@@ -38,6 +40,7 @@ private:
   VulkanImage m_DepthImage;
   VulkanImageView m_DepthImageView;
   VulkanRenderPass m_RenderPass;
+  std::vector<VulkanFramebuffer> m_Framebuffers;
 
   void shutdown() noexcept;
 };

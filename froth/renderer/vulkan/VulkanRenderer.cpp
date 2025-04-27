@@ -1,6 +1,7 @@
 #include "VulkanRenderer.h"
 #include "Defines.h"
 #include <memory>
+#include <vector>
 
 namespace Froth {
 
@@ -22,6 +23,14 @@ VulkanRenderer::VulkanRenderer(const Window &window)
                                  .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                              }),
       m_DepthImageView(m_DepthImage.createView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT)), m_RenderPass(m_Device, m_Swapchain, m_DepthImageView) {
+
+  m_Framebuffers.reserve(m_Swapchain.views().size());
+  std::vector<VkImageView> framebufferAttachments(2);
+  framebufferAttachments[1] = m_DepthImageView.view();
+  for (size_t i = 0; i < m_Swapchain.views().size(); i++) {
+    framebufferAttachments[0] = m_Swapchain.views()[i];
+    m_Framebuffers.emplace_back(m_Device, m_RenderPass, m_Swapchain.extent(), framebufferAttachments);
+  }
 }
 
 VulkanRenderer::~VulkanRenderer() {

@@ -32,6 +32,8 @@ add_library(${PROJECT_NAME}
   platform/window/Window.cpp
   renderer/vulkan/VulkanDevice.h
   renderer/vulkan/VulkanDevice.cpp
+  renderer/vulkan/VulkanFramebuffer.h
+  renderer/vulkan/VulkanFramebuffer.cpp
   renderer/vulkan/VulkanImage.h
   renderer/vulkan/VulkanImage.cpp
   renderer/vulkan/VulkanImageView.h

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "renderer/Renderer.h"
+#include "renderer/vulkan/VulkanDescriptorSetLayout.h"
 #include "renderer/vulkan/VulkanDevice.h"
 #include "renderer/vulkan/VulkanFramebuffer.h"
 #include "renderer/vulkan/VulkanImage.h"
@@ -40,6 +41,7 @@ private:
   VulkanImage m_DepthImage;
   VulkanImageView m_DepthImageView;
   VulkanRenderPass m_RenderPass;
+  VulkanDescriptorSetLayout m_DescriptorSetLayout;
   std::vector<VulkanFramebuffer> m_Framebuffers;
 
   void shutdown() noexcept;

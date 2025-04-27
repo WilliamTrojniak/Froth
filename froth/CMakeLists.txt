@@ -40,6 +40,8 @@ add_library(${PROJECT_NAME}
   renderer/vulkan/VulkanInstance.cpp
   renderer/vulkan/VulkanRenderer.h
   renderer/vulkan/VulkanRenderer.cpp
+  renderer/vulkan/VulkanRenderPass.h
+  renderer/vulkan/VulkanRenderPass.cpp
   renderer/vulkan/VulkanSurface.h
   renderer/vulkan/VulkanSurface.cpp
   renderer/vulkan/VulkanSwapchain.h

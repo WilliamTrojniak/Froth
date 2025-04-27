@@ -4,7 +4,7 @@
 namespace Froth {
 
 VulkanImageView::VulkanImageView(const VulkanDevice &device, const VulkanImage &image, VkFormat format, VkImageAspectFlags aspect)
-    : m_Device(device) {
+    : m_Device(device), m_Format(format) {
 
   // TODO: Make the rest of this config accessible
   VkImageViewCreateInfo createInfo{};

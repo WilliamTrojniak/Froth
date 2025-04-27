@@ -5,6 +5,7 @@
 #include "renderer/vulkan/VulkanImage.h"
 #include "renderer/vulkan/VulkanImageView.h"
 #include "renderer/vulkan/VulkanInstance.h"
+#include "renderer/vulkan/VulkanRenderPass.h"
 #include "renderer/vulkan/VulkanSurface.h"
 #include "renderer/vulkan/VulkanSwapchain.h"
 #include <memory>
@@ -36,6 +37,7 @@ private:
   VulkanSwapChain m_Swapchain;
   VulkanImage m_DepthImage;
   VulkanImageView m_DepthImageView;
+  VulkanRenderPass m_RenderPass;
 
   void shutdown() noexcept;
 };

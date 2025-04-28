@@ -11,7 +11,7 @@ public:
   VulkanSurface(VulkanSurface &&);
   VulkanSurface &operator=(const VulkanSurface &) = delete;
   ~VulkanSurface();
-  VkSurfaceKHR surface() const { return m_Surface; }
+  operator VkSurfaceKHR() const { return m_Surface; }
 
 private:
   const VulkanInstance &m_Instance;

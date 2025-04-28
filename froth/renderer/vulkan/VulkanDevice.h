@@ -48,11 +48,12 @@ public:
   };
 
   SurfaceCapabilities getSurfaceSupport(const VulkanSurface &surface) const;
-  QueueFamilies getSurfaceQueueFamilies(const VulkanSurface &surface) const noexcept;
+  const QueueFamilies getQueueFamilies() const noexcept;
 
 private:
   VkPhysicalDevice m_PhysicalDevice;
   VkDevice m_LogicalDevice = nullptr;
+  QueueFamilies m_QueueFamilies;
   const VulkanInstance &m_Instance;
 
   uint32_t findMemoryTypeIndex(const VkMemoryRequirements &requirements, VkMemoryPropertyFlags properties) const;
@@ -65,7 +66,7 @@ private:
   static bool physicalDeviceSupportsLayers(VkPhysicalDevice device, const std::vector<const char *> &layers) noexcept;
   static SurfaceCapabilities physicalDeviceSurfaceSupport(VkPhysicalDevice device, VkSurfaceKHR surface) noexcept;
 
-  static VkDevice createLogicalDevice(const VulkanInstance &context, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, const PhysicalDeviceProperties &requirements) noexcept;
+  static VkDevice createLogicalDevice(const VulkanInstance &context, VkPhysicalDevice physicalDevice, const QueueFamilies &queueFamilies, const PhysicalDeviceProperties &requirements) noexcept;
 };
 
 } // namespace Froth

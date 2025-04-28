@@ -25,7 +25,7 @@ VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const Window &windo
 
   VkSwapchainCreateInfoKHR createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-  createInfo.surface = surface.surface();
+  createInfo.surface = surface;
   createInfo.minImageCount = imageCount;
   createInfo.imageFormat = m_Format.format;
   createInfo.imageColorSpace = m_Format.colorSpace;
@@ -33,7 +33,7 @@ VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const Window &windo
   createInfo.imageArrayLayers = 1;
   createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-  VulkanDevice::QueueFamilies indices = m_Device.getSurfaceQueueFamilies(surface);
+  VulkanDevice::QueueFamilies indices = m_Device.getQueueFamilies();
   uint32_t queueFamilyIndices[] = {indices.graphics.index, indices.present.index};
 
   if (indices.graphics.index != indices.present.index) {

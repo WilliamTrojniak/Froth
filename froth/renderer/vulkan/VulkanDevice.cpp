@@ -26,12 +26,13 @@ VulkanDevice::VulkanDevice(const VulkanInstance &instance, const VulkanSurface &
   requirements.samplerAnisotropy = true; // TODO: This can probably be made optional?
   // Device Requirements
 
-  m_PhysicalDevice = pickPhysicalDevice(m_Instance.instance(), surface.surface(), requirements);
+  m_PhysicalDevice = pickPhysicalDevice(m_Instance.instance(), surface, requirements);
   if (m_PhysicalDevice == nullptr) {
     FROTH_ERROR("Failed to find suitable Vulkan physical device")
   }
 
-  m_LogicalDevice = createLogicalDevice(m_Instance, m_PhysicalDevice, surface.surface(), requirements);
+  m_QueueFamilies = getPhysicalDeviceQueueFamilies(m_PhysicalDevice, surface);
+  m_LogicalDevice = createLogicalDevice(m_Instance, m_PhysicalDevice, m_QueueFamilies, requirements);
   if (m_LogicalDevice == nullptr) {
     FROTH_ERROR("Failed to create Vulkan Logical Device from physical device")
   }
@@ -46,7 +47,7 @@ VulkanDevice::~VulkanDevice() {
 }
 
 VulkanDevice::SurfaceCapabilities VulkanDevice::getSurfaceSupport(const VulkanSurface &surface) const {
-  return VulkanDevice::physicalDeviceSurfaceSupport(m_PhysicalDevice, surface.surface());
+  return VulkanDevice::physicalDeviceSurfaceSupport(m_PhysicalDevice, surface);
 }
 
 VkDeviceMemory VulkanDevice::allocateMemory(const VkMemoryRequirements &requirements, VkMemoryPropertyFlags properties) const {
@@ -171,8 +172,8 @@ bool VulkanDevice::physicalDeviceMeetsRequirements(VkPhysicalDevice device, VkSu
   return true;
 }
 
-VulkanDevice::QueueFamilies VulkanDevice::getSurfaceQueueFamilies(const VulkanSurface &surface) const noexcept {
-  return getPhysicalDeviceQueueFamilies(m_PhysicalDevice, surface.surface());
+const VulkanDevice::QueueFamilies VulkanDevice::getQueueFamilies() const noexcept {
+  return m_QueueFamilies;
 }
 
 VulkanDevice::QueueFamilies VulkanDevice::getPhysicalDeviceQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) noexcept {
@@ -294,8 +295,7 @@ VulkanDevice::SurfaceCapabilities VulkanDevice::physicalDeviceSurfaceSupport(VkP
   return capabilities;
 }
 
-VkDevice VulkanDevice::createLogicalDevice(const VulkanInstance &context, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, const PhysicalDeviceProperties &requirements) noexcept {
-  const QueueFamilies queueFamilies = getPhysicalDeviceQueueFamilies(physicalDevice, surface);
+VkDevice VulkanDevice::createLogicalDevice(const VulkanInstance &context, VkPhysicalDevice physicalDevice, const QueueFamilies &queueFamilies, const PhysicalDeviceProperties &requirements) noexcept {
   std::set<uint32_t> uniqueQueueFamilyIndices;
   if (queueFamilies.graphics.valid) {
     uniqueQueueFamilyIndices.emplace(queueFamilies.graphics.index);

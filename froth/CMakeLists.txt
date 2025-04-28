@@ -44,6 +44,8 @@ add_library(${PROJECT_NAME}
   renderer/vulkan/VulkanImageView.cpp
   renderer/vulkan/VulkanInstance.h
   renderer/vulkan/VulkanInstance.cpp
+  renderer/vulkan/VulkanPipelineLayout.h
+  renderer/vulkan/VulkanPipelineLayout.cpp
   renderer/vulkan/VulkanRenderer.h
   renderer/vulkan/VulkanRenderer.cpp
   renderer/vulkan/VulkanRenderPass.h

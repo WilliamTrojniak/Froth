@@ -2,6 +2,7 @@
 #include "Defines.h"
 #include "platform/filesystem/Filesystem.h"
 #include "renderer/vulkan/VulkanShaderModule.h"
+#include "vulkan/vulkan_core.h"
 #include <memory>
 #include <vector>
 
@@ -24,7 +25,7 @@ VulkanRenderer::VulkanRenderer(const Window &window)
                                  .tiling = VK_IMAGE_TILING_OPTIMAL,
                                  .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                              }),
-      m_DepthImageView(m_DepthImage.createView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT)), m_RenderPass(m_Device, m_Swapchain, m_DepthImageView), m_DescriptorSetLayout(m_Device) {
+      m_DepthImageView(m_DepthImage.createView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT)), m_RenderPass(m_Device, m_Swapchain, m_DepthImageView), m_DescriptorSetLayout(m_Device), m_PipelineLayout(m_Device, {m_DescriptorSetLayout.data()}) {
 
   m_Framebuffers.reserve(m_Swapchain.views().size());
   std::vector<VkImageView> framebufferAttachments(2);

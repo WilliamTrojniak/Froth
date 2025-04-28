@@ -11,6 +11,8 @@ public:
   void operator=(VulkanDescriptorSetLayout const &) = delete;
   ~VulkanDescriptorSetLayout();
 
+  VkDescriptorSetLayout data() const { return m_DescriptorSetLayout; }
+
 private:
   const VulkanDevice &m_Device;
   VkDescriptorSetLayout m_DescriptorSetLayout;

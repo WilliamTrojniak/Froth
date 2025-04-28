@@ -12,7 +12,7 @@ VulkanShaderModule::VulkanShaderModule(const VulkanDevice &device, const std::ve
   createInfo.codeSize = code.size();
   createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
-  if (vkCreateShaderModule(device.device(), &createInfo, device.instance().allocator(), &m_ShaderModule) != VK_SUCCESS) {
+  if (vkCreateShaderModule(device, &createInfo, device.instance().allocator(), &m_ShaderModule) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create shader module");
   }
 }
@@ -23,7 +23,7 @@ VulkanShaderModule::~VulkanShaderModule() {
 
 void VulkanShaderModule::cleanup() {
   if (m_ShaderModule) {
-    vkDestroyShaderModule(m_Device.device(), m_ShaderModule, m_Device.instance().allocator());
+    vkDestroyShaderModule(m_Device, m_ShaderModule, m_Device.instance().allocator());
     m_ShaderModule = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Shader Module")
   }

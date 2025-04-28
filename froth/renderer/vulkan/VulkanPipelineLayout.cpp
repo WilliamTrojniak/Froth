@@ -14,7 +14,7 @@ VulkanPipelineLayout::VulkanPipelineLayout(const VulkanDevice &device, const std
   layoutInfo.pushConstantRangeCount = 0;
   layoutInfo.pPushConstantRanges = nullptr;
 
-  if (vkCreatePipelineLayout(m_Device.device(), &layoutInfo, m_Device.instance().allocator(), &m_Layout) != VK_SUCCESS) {
+  if (vkCreatePipelineLayout(m_Device, &layoutInfo, m_Device.instance().allocator(), &m_Layout) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create pipeline layout");
   }
 }
@@ -25,7 +25,7 @@ VulkanPipelineLayout::~VulkanPipelineLayout() {
 
 void VulkanPipelineLayout::cleanup() {
   if (m_Layout) {
-    vkDestroyPipelineLayout(m_Device.device(), m_Layout, m_Device.instance().allocator());
+    vkDestroyPipelineLayout(m_Device, m_Layout, m_Device.instance().allocator());
     m_Layout = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Pipeline Layout")
   }

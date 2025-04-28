@@ -29,7 +29,7 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(const VulkanDevice &device)
   layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
   layoutInfo.pBindings = bindings.data();
 
-  if (vkCreateDescriptorSetLayout(device.device(), &layoutInfo, device.instance().allocator(), &m_DescriptorSetLayout) != VK_SUCCESS) {
+  if (vkCreateDescriptorSetLayout(device, &layoutInfo, device.instance().allocator(), &m_DescriptorSetLayout) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Descriptor Set Layout")
   }
 }
@@ -40,7 +40,7 @@ VulkanDescriptorSetLayout::~VulkanDescriptorSetLayout() {
 
 void VulkanDescriptorSetLayout::cleanup() {
   if (m_DescriptorSetLayout) {
-    vkDestroyDescriptorSetLayout(m_Device.device(), m_DescriptorSetLayout, m_Device.instance().allocator());
+    vkDestroyDescriptorSetLayout(m_Device, m_DescriptorSetLayout, m_Device.instance().allocator());
     m_DescriptorSetLayout = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Descriptor Set Layout")
   }

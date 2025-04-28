@@ -53,19 +53,19 @@ VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const Window &windo
   createInfo.clipped = VK_TRUE;
   createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-  if (vkCreateSwapchainKHR(m_Device.device(), &createInfo, m_Device.instance().allocator(), &m_Swapchain) != VK_SUCCESS) {
+  if (vkCreateSwapchainKHR(m_Device, &createInfo, m_Device.instance().allocator(), &m_Swapchain) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create swap chain");
   }
 
-  if (vkGetSwapchainImagesKHR(m_Device.device(), m_Swapchain, &imageCount, nullptr) != VK_SUCCESS) {
-    vkDestroySwapchainKHR(m_Device.device(), m_Swapchain, m_Device.instance().allocator());
+  if (vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &imageCount, nullptr) != VK_SUCCESS) {
+    vkDestroySwapchainKHR(m_Device, m_Swapchain, m_Device.instance().allocator());
     m_Swapchain = nullptr;
     FROTH_ERROR("Failed to retreive created swap chain images");
   }
 
   m_Images.resize(imageCount);
-  if (vkGetSwapchainImagesKHR(m_Device.device(), m_Swapchain, &imageCount, m_Images.data()) != VK_SUCCESS) {
-    vkDestroySwapchainKHR(m_Device.device(), m_Swapchain, m_Device.instance().allocator());
+  if (vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &imageCount, m_Images.data()) != VK_SUCCESS) {
+    vkDestroySwapchainKHR(m_Device, m_Swapchain, m_Device.instance().allocator());
     m_Swapchain = nullptr;
     FROTH_ERROR("Failed to retreive created swap chain images");
   }
@@ -87,12 +87,12 @@ VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const Window &windo
     createInfo.subresourceRange.baseArrayLayer = 0;
     createInfo.subresourceRange.layerCount = 1;
 
-    if (vkCreateImageView(m_Device.device(), &createInfo, m_Device.instance().allocator(), &m_ImageViews[i]) != VK_SUCCESS) {
+    if (vkCreateImageView(m_Device, &createInfo, m_Device.instance().allocator(), &m_ImageViews[i]) != VK_SUCCESS) {
       for (uint32_t k = 0; k < i; k++) {
-        vkDestroyImageView(m_Device.device(), m_ImageViews[k], m_Device.instance().allocator());
+        vkDestroyImageView(m_Device, m_ImageViews[k], m_Device.instance().allocator());
         m_ImageViews[i] = nullptr;
       }
-      vkDestroySwapchainKHR(m_Device.device(), m_Swapchain, m_Device.instance().allocator());
+      vkDestroySwapchainKHR(m_Device, m_Swapchain, m_Device.instance().allocator());
       m_Swapchain = nullptr;
       FROTH_ERROR("Failed to create swapchain image view");
     }
@@ -101,12 +101,12 @@ VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const Window &windo
 
 VulkanSwapChain::~VulkanSwapChain() {
   for (auto imageView : m_ImageViews) {
-    vkDestroyImageView(m_Device.device(), imageView, m_Device.instance().allocator());
+    vkDestroyImageView(m_Device, imageView, m_Device.instance().allocator());
     FROTH_DEBUG("Destroyed Vulkan Swapchain Image View")
   }
 
   if (m_Swapchain) {
-    vkDestroySwapchainKHR(m_Device.device(), m_Swapchain, m_Device.instance().allocator());
+    vkDestroySwapchainKHR(m_Device, m_Swapchain, m_Device.instance().allocator());
     m_Swapchain = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Swapchain");
   }

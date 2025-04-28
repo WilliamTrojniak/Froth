@@ -13,7 +13,7 @@ public:
   void operator=(VulkanShaderModule const &) = delete;
   ~VulkanShaderModule();
 
-  VkShaderModule shaderModule() const { return m_ShaderModule; }
+  operator VkShaderModule() const { return m_ShaderModule; }
 
 private:
   const VulkanDevice &m_Device;

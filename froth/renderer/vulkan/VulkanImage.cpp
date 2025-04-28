@@ -24,16 +24,16 @@ VulkanImage::VulkanImage(const VulkanDevice &device, const CreateInfo &opts)
   createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
   createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-  if (vkCreateImage(m_Device.device(), &createInfo, m_Device.instance().allocator(), &m_Image) != VK_SUCCESS) {
+  if (vkCreateImage(m_Device, &createInfo, m_Device.instance().allocator(), &m_Image) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Vulkan Image");
   }
 
   VkMemoryRequirements memRequirements;
-  vkGetImageMemoryRequirements(m_Device.device(), m_Image, &memRequirements);
+  vkGetImageMemoryRequirements(m_Device, m_Image, &memRequirements);
 
   // TODO: Property flag will need to be brought to part of the constructor
   m_Memory = m_Device.allocateMemory(memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  if (vkBindImageMemory(m_Device.device(), m_Image, m_Memory, 0) != VK_SUCCESS) {
+  if (vkBindImageMemory(m_Device, m_Image, m_Memory, 0) != VK_SUCCESS) {
     cleanup();
     FROTH_ERROR("Failed to bind Vulkan Image memory");
   }
@@ -49,13 +49,13 @@ VulkanImageView VulkanImage::createView(VkFormat format, VkImageAspectFlags aspe
 
 void VulkanImage::cleanup() {
   if (m_Memory) {
-    vkFreeMemory(m_Device.device(), m_Memory, m_Device.instance().allocator());
+    vkFreeMemory(m_Device, m_Memory, m_Device.instance().allocator());
     m_Memory = nullptr;
     FROTH_DEBUG("Freed Vulkan Image memory")
   }
 
   if (m_Image) {
-    vkDestroyImage(m_Device.device(), m_Image, m_Device.instance().allocator());
+    vkDestroyImage(m_Device, m_Image, m_Device.instance().allocator());
     m_Image = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Image")
   }

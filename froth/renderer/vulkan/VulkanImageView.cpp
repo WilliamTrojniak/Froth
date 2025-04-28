@@ -18,7 +18,7 @@ VulkanImageView::VulkanImageView(const VulkanDevice &device, const VulkanImage &
   createInfo.subresourceRange.baseArrayLayer = 0;
   createInfo.subresourceRange.layerCount = 1;
 
-  if (vkCreateImageView(m_Device.device(), &createInfo, m_Device.instance().allocator(), &m_View) != VK_SUCCESS) {
+  if (vkCreateImageView(m_Device, &createInfo, m_Device.instance().allocator(), &m_View) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Image View")
   }
 }
@@ -29,7 +29,7 @@ VulkanImageView::~VulkanImageView() {
 
 void VulkanImageView::cleanup() {
   if (m_View) {
-    vkDestroyImageView(m_Device.device(), m_View, m_Device.instance().allocator());
+    vkDestroyImageView(m_Device, m_View, m_Device.instance().allocator());
     m_View = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Image View")
   }

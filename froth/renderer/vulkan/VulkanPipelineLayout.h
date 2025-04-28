@@ -11,7 +11,7 @@ public:
   void operator=(VulkanPipelineLayout const &) = delete;
   ~VulkanPipelineLayout();
 
-  VkPipelineLayout data() const { return m_Layout; }
+  operator VkPipelineLayout() const { return m_Layout; }
 
 private:
   const VulkanDevice &m_Device;

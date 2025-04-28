@@ -1,7 +1,9 @@
 #include "VulkanRenderer.h"
 #include "Defines.h"
 #include "platform/filesystem/Filesystem.h"
+#include "renderer/vulkan/VulkanPipelineBuilder.h"
 #include "renderer/vulkan/VulkanShaderModule.h"
+#include "renderer/vulkan/VulkanVertex.h"
 #include "vulkan/vulkan_core.h"
 #include <memory>
 #include <vector>
@@ -40,6 +42,24 @@ VulkanRenderer::VulkanRenderer(const Window &window)
 
   VulkanShaderModule vertShaderModule = VulkanShaderModule(m_Device, vertShaderCode);
   VulkanShaderModule fragShaderModule = VulkanShaderModule(m_Device, fragShaderCode);
+
+  VkViewport viewport{};
+  viewport.x = 0.0f;
+  viewport.y = 0.0f;
+  viewport.width = m_Swapchain.extent().width;
+  viewport.height = m_Swapchain.extent().height;
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+
+  VkRect2D scissor{};
+  scissor.offset = {0, 0};
+  scissor.extent = m_Swapchain.extent();
+
+  m_Pipeline = VulkanPipelineBuilder()
+                   .setVertexInput(Vertex::getInputDescription().getInfo())
+                   .setShaders(vertShaderModule, fragShaderModule)
+                   .setViewport(viewport, scissor)
+                   .build(m_Device, m_RenderPass, m_PipelineLayout);
 }
 
 VulkanRenderer::~VulkanRenderer() {

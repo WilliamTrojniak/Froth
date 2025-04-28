@@ -8,14 +8,14 @@ VulkanFramebuffer::VulkanFramebuffer(const VulkanDevice &device, const VulkanRen
 
   VkFramebufferCreateInfo framebufferInfo{};
   framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-  framebufferInfo.renderPass = renderPass.renderpass();
+  framebufferInfo.renderPass = renderPass;
   framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
   framebufferInfo.pAttachments = attachments.data();
   framebufferInfo.width = extent.width;
   framebufferInfo.height = extent.height;
   framebufferInfo.layers = 1;
 
-  if (vkCreateFramebuffer(device.device(), &framebufferInfo, device.instance().allocator(), &m_Framebuffer) != VK_SUCCESS) {
+  if (vkCreateFramebuffer(device, &framebufferInfo, device.instance().allocator(), &m_Framebuffer) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create framebuffer")
   }
 }
@@ -32,7 +32,7 @@ VulkanFramebuffer::~VulkanFramebuffer() {
 
 void VulkanFramebuffer::cleanup() {
   if (m_Framebuffer) {
-    vkDestroyFramebuffer(m_Device.device(), m_Framebuffer, m_Device.instance().allocator());
+    vkDestroyFramebuffer(m_Device, m_Framebuffer, m_Device.instance().allocator());
     m_Framebuffer = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Framebuffer")
   }

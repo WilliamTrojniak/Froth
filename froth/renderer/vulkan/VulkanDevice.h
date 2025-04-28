@@ -14,7 +14,7 @@ public:
   void operator=(VulkanDevice const &) = delete;
   ~VulkanDevice();
 
-  VkDevice device() const noexcept { return m_LogicalDevice; }
+  operator VkDevice() const noexcept { return m_LogicalDevice; }
   const VulkanInstance &instance() const noexcept { return m_Instance; }
   VkDeviceMemory allocateMemory(const VkMemoryRequirements &requirements, VkMemoryPropertyFlags properties) const;
 

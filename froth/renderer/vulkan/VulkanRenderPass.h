@@ -13,7 +13,7 @@ public:
   VulkanRenderPass(VulkanRenderPass const &) = delete;
   void operator=(VulkanImageView const &) = delete;
 
-  VkRenderPass renderpass() const { return m_RenderPass; }
+  operator VkRenderPass() const { return m_RenderPass; }
 
 protected:
   VulkanRenderPass(const VulkanDevice &device, const VulkanSwapChain &swapchain, const VulkanImageView &depthImageView);

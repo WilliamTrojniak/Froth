@@ -60,7 +60,7 @@ VulkanRenderPass::VulkanRenderPass(const VulkanDevice &device, const VulkanSwapC
   renderPassInfo.dependencyCount = 1;
   renderPassInfo.pDependencies = &dependency;
 
-  if (vkCreateRenderPass(m_Device.device(), &renderPassInfo, m_Device.instance().allocator(), &m_RenderPass) != VK_SUCCESS) {
+  if (vkCreateRenderPass(m_Device, &renderPassInfo, m_Device.instance().allocator(), &m_RenderPass) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Render Pass")
   }
 }
@@ -71,7 +71,7 @@ VulkanRenderPass::~VulkanRenderPass() {
 
 void VulkanRenderPass::cleanup() {
   if (m_RenderPass) {
-    vkDestroyRenderPass(m_Device.device(), m_RenderPass, m_Device.instance().allocator());
+    vkDestroyRenderPass(m_Device, m_RenderPass, m_Device.instance().allocator());
     m_RenderPass = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Render Pass")
   }

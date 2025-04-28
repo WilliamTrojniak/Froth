@@ -7,6 +7,7 @@
 #include "renderer/vulkan/VulkanImage.h"
 #include "renderer/vulkan/VulkanImageView.h"
 #include "renderer/vulkan/VulkanInstance.h"
+#include "renderer/vulkan/VulkanPipeline.h"
 #include "renderer/vulkan/VulkanPipelineLayout.h"
 #include "renderer/vulkan/VulkanRenderPass.h"
 #include "renderer/vulkan/VulkanSurface.h"
@@ -44,6 +45,7 @@ private:
   VulkanRenderPass m_RenderPass;
   VulkanDescriptorSetLayout m_DescriptorSetLayout;
   VulkanPipelineLayout m_PipelineLayout;
+  std::unique_ptr<VulkanPipeline> m_Pipeline;
   std::vector<VulkanFramebuffer> m_Framebuffers;
 
   void shutdown() noexcept;

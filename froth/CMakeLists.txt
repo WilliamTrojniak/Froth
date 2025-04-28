@@ -22,6 +22,8 @@ add_library(${PROJECT_NAME}
   core/Layer.h
   core/LayerStack.h
   core/LayerStack.cpp
+  platform/filesystem/Filesystem.h
+  platform/filesystem/Filesystem.cpp
   platform/keys/GLFWCodes.h
   platform/keys/GLFWCodes.cpp
   platform/keys/Keycodes.h
@@ -46,6 +48,8 @@ add_library(${PROJECT_NAME}
   renderer/vulkan/VulkanRenderer.cpp
   renderer/vulkan/VulkanRenderPass.h
   renderer/vulkan/VulkanRenderPass.cpp
+  renderer/vulkan/VulkanShaderModule.h
+  renderer/vulkan/VulkanShaderModule.cpp
   renderer/vulkan/VulkanSurface.h
   renderer/vulkan/VulkanSurface.cpp
   renderer/vulkan/VulkanSwapchain.h

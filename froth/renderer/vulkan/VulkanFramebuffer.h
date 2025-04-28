@@ -12,7 +12,7 @@ public:
   ~VulkanFramebuffer();
   VulkanFramebuffer(VulkanFramebuffer const &) = delete;
   void operator=(VulkanFramebuffer const &) = delete;
-  VulkanFramebuffer(VulkanFramebuffer &&other);
+  VulkanFramebuffer(VulkanFramebuffer &&other) noexcept;
   VulkanFramebuffer(const VulkanDevice &device, const VulkanRenderPass &renderPass, const VkExtent2D &extent, const std::vector<VkImageView> &attachments);
 
 private:

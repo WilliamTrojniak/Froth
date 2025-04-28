@@ -20,7 +20,8 @@ VulkanFramebuffer::VulkanFramebuffer(const VulkanDevice &device, const VulkanRen
   }
 }
 
-VulkanFramebuffer::VulkanFramebuffer(VulkanFramebuffer &&other) : m_Device(other.m_Device) {
+VulkanFramebuffer::VulkanFramebuffer(VulkanFramebuffer &&other) noexcept
+    : m_Device(other.m_Device) {
   m_Framebuffer = other.m_Framebuffer;
   other.m_Framebuffer = nullptr;
 }

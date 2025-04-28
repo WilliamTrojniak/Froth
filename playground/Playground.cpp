@@ -1591,7 +1591,7 @@ private:
 class Playground : public Froth::Application {
 public:
   Playground() {
-    /*pushLayer(std::make_unique<VulkanTriangle>(window())); */
+    /*pushLayer(std::make_unique<VulkanTriangle>(window()));*/
   }
 };
 

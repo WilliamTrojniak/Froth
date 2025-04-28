@@ -1,5 +1,7 @@
 #include "VulkanRenderer.h"
 #include "Defines.h"
+#include "platform/filesystem/Filesystem.h"
+#include "renderer/vulkan/VulkanShaderModule.h"
 #include <memory>
 #include <vector>
 
@@ -31,6 +33,12 @@ VulkanRenderer::VulkanRenderer(const Window &window)
     framebufferAttachments[0] = m_Swapchain.views()[i];
     m_Framebuffers.emplace_back(m_Device, m_RenderPass, m_Swapchain.extent(), framebufferAttachments);
   }
+
+  std::vector<char> vertShaderCode = Filesystem::readFile("../playground/shaders/vert.spv");
+  std::vector<char> fragShaderCode = Filesystem::readFile("../playground/shaders/frag.spv");
+
+  VulkanShaderModule vertShaderModule = VulkanShaderModule(m_Device, vertShaderCode);
+  VulkanShaderModule fragShaderModule = VulkanShaderModule(m_Device, fragShaderCode);
 }
 
 VulkanRenderer::~VulkanRenderer() {

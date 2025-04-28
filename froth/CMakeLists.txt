@@ -32,6 +32,8 @@ add_library(${PROJECT_NAME}
   platform/window/GLFWWindow.cpp
   platform/window/Window.h
   platform/window/Window.cpp
+  renderer/vulkan/VulkanCommandBuffer.h
+  renderer/vulkan/VulkanCommandBuffer.cpp
   renderer/vulkan/VulkanCommandPool.h
   renderer/vulkan/VulkanCommandPool.cpp
   renderer/vulkan/VulkanDescriptorSetLayout.h

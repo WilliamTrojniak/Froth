@@ -11,6 +11,8 @@ public:
   VulkanCommandPool(VulkanCommandPool const &) = delete;
   VulkanCommandPool &operator=(VulkanCommandPool const &) = delete;
 
+  operator VkCommandPool() const { return m_Pool; }
+
 private:
   const VulkanDevice &m_Device;
   VkCommandPool m_Pool;

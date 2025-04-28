@@ -1,6 +1,7 @@
 #pragma once
 
 #include "renderer/Renderer.h"
+#include "renderer/vulkan/VulkanCommandBuffer.h"
 #include "renderer/vulkan/VulkanCommandPool.h"
 #include "renderer/vulkan/VulkanDescriptorSetLayout.h"
 #include "renderer/vulkan/VulkanDevice.h"
@@ -49,6 +50,7 @@ private:
   std::unique_ptr<VulkanPipeline> m_Pipeline;
   std::vector<VulkanFramebuffer> m_Framebuffers;
   VulkanCommandPool m_GraphicsCommandPool;
+  std::vector<VulkanCommandBuffer> m_CommandBuffers;
 
   void shutdown() noexcept;
 };

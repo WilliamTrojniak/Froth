@@ -9,6 +9,7 @@
 #include <vector>
 
 namespace Froth {
+const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
 bool hasExtensions(const std::vector<const char *> &extensions) noexcept;
 bool getRequiredExtensions(std::vector<const char *> &extensions) noexcept;
@@ -60,6 +61,10 @@ VulkanRenderer::VulkanRenderer(const Window &window)
                    .setShaders(vertShaderModule, fragShaderModule)
                    .setViewport(viewport, scissor)
                    .build(m_Device, m_RenderPass, m_PipelineLayout);
+
+  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+    m_CommandBuffers.emplace_back(m_Device, m_GraphicsCommandPool);
+  }
 }
 
 VulkanRenderer::~VulkanRenderer() {

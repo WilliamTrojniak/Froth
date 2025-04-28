@@ -5,6 +5,7 @@
 #include "renderer/vulkan/VulkanCommandPool.h"
 #include "renderer/vulkan/VulkanDescriptorSetLayout.h"
 #include "renderer/vulkan/VulkanDevice.h"
+#include "renderer/vulkan/VulkanFence.h"
 #include "renderer/vulkan/VulkanFramebuffer.h"
 #include "renderer/vulkan/VulkanImage.h"
 #include "renderer/vulkan/VulkanImageView.h"
@@ -12,6 +13,7 @@
 #include "renderer/vulkan/VulkanPipeline.h"
 #include "renderer/vulkan/VulkanPipelineLayout.h"
 #include "renderer/vulkan/VulkanRenderPass.h"
+#include "renderer/vulkan/VulkanSemaphore.h"
 #include "renderer/vulkan/VulkanSurface.h"
 #include "renderer/vulkan/VulkanSwapchain.h"
 #include <memory>
@@ -51,6 +53,9 @@ private:
   std::vector<VulkanFramebuffer> m_Framebuffers;
   VulkanCommandPool m_GraphicsCommandPool;
   std::vector<VulkanCommandBuffer> m_CommandBuffers;
+  std::vector<VulkanSemaphore> m_ImageAvailableSemaphores;
+  std::vector<VulkanSemaphore> m_RenderFinishedSemaphores;
+  std::vector<VulkanFence> m_FrameInFlightFences;
 
   void shutdown() noexcept;
 };

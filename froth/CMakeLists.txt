@@ -40,6 +40,8 @@ add_library(${PROJECT_NAME}
   renderer/vulkan/VulkanDescriptorSetLayout.cpp
   renderer/vulkan/VulkanDevice.h
   renderer/vulkan/VulkanDevice.cpp
+  renderer/vulkan/VulkanFence.h
+  renderer/vulkan/VulkanFence.cpp
   renderer/vulkan/VulkanFramebuffer.h
   renderer/vulkan/VulkanFramebuffer.cpp
   renderer/vulkan/VulkanImage.h
@@ -58,6 +60,8 @@ add_library(${PROJECT_NAME}
   renderer/vulkan/VulkanRenderer.cpp
   renderer/vulkan/VulkanRenderPass.h
   renderer/vulkan/VulkanRenderPass.cpp
+  renderer/vulkan/VulkanSemaphore.h
+  renderer/vulkan/VulkanSemaphore.cpp
   renderer/vulkan/VulkanShaderModule.h
   renderer/vulkan/VulkanShaderModule.cpp
   renderer/vulkan/VulkanSurface.h

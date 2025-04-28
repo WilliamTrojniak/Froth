@@ -64,6 +64,9 @@ VulkanRenderer::VulkanRenderer(const Window &window)
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     m_CommandBuffers.emplace_back(m_Device, m_GraphicsCommandPool);
+    m_ImageAvailableSemaphores.emplace_back(m_Device);
+    m_RenderFinishedSemaphores.emplace_back(m_Device);
+    m_FrameInFlightFences.emplace_back(m_Device, true);
   }
 }
 

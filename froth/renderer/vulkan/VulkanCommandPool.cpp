@@ -12,7 +12,7 @@ VulkanCommandPool::VulkanCommandPool(const VulkanDevice &device, uint32_t queueF
   poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
   poolInfo.queueFamilyIndex = queueFamilyIndex;
 
-  if (vkCreateCommandPool(m_Device, &poolInfo, nullptr, &m_Pool) != VK_SUCCESS) {
+  if (vkCreateCommandPool(m_Device, &poolInfo, m_Device.instance().allocator(), &m_Pool) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Vulkan Command Pool");
   }
 }

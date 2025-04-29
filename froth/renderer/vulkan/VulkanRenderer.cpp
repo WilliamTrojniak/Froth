@@ -27,51 +27,8 @@ VulkanRenderer::VulkanRenderer(const Window &window)
       m_DescriptorSetLayout(m_Device),
       m_GraphicsCommandPool(m_Device, m_Device.getQueueFamilies().graphics.index) {
 
-  m_Swapchain = std::make_unique<VulkanSwapChain>(m_Device, m_Surface, nullptr);
-  m_DepthImage = std::make_unique<VulkanImage>(m_Device, VulkanImage::CreateInfo{
-                                                             .extent = {.width = m_Swapchain->extent().width,
-                                                                        .height = m_Swapchain->extent().height},
-                                                             .format = VK_FORMAT_D32_SFLOAT,
-                                                             .tiling = VK_IMAGE_TILING_OPTIMAL,
-                                                             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                                                         });
-  m_DepthImageView = std::make_unique<VulkanImageView>(m_DepthImage->createView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT));
-  m_RenderPass = std::make_unique<VulkanRenderPass>(m_Device, *m_Swapchain, *m_DepthImageView);
-
   std::vector<VkDescriptorSetLayout> descSetLayouts = {m_DescriptorSetLayout.data()};
   m_PipelineLayout = std::make_unique<VulkanPipelineLayout>(m_Device, descSetLayouts);
-
-  m_Framebuffers.reserve(m_Swapchain->views().size());
-  std::vector<VkImageView> framebufferAttachments(2);
-  framebufferAttachments[1] = *m_DepthImageView;
-  for (size_t i = 0; i < m_Swapchain->views().size(); i++) {
-    framebufferAttachments[0] = m_Swapchain->views()[i];
-    m_Framebuffers.emplace_back(m_Device, *m_RenderPass, m_Swapchain->extent(), framebufferAttachments);
-  }
-
-  std::vector<char> vertShaderCode = Filesystem::readFile("../playground/shaders/vert.spv");
-  std::vector<char> fragShaderCode = Filesystem::readFile("../playground/shaders/frag.spv");
-
-  VulkanShaderModule vertShaderModule = VulkanShaderModule(m_Device, vertShaderCode);
-  VulkanShaderModule fragShaderModule = VulkanShaderModule(m_Device, fragShaderCode);
-
-  VkViewport viewport{};
-  viewport.x = 0.0f;
-  viewport.y = 0.0f;
-  viewport.width = m_Swapchain->extent().width;
-  viewport.height = m_Swapchain->extent().height;
-  viewport.minDepth = 0.0f;
-  viewport.maxDepth = 1.0f;
-
-  VkRect2D scissor{};
-  scissor.offset = {0, 0};
-  scissor.extent = m_Swapchain->extent();
-
-  m_Pipeline = VulkanPipelineBuilder()
-                   .setVertexInput(Vertex::getInputDescription().getInfo())
-                   .setShaders(vertShaderModule, fragShaderModule)
-                   .setViewport(viewport, scissor)
-                   .build(m_Device, *m_RenderPass, *m_PipelineLayout);
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     m_CommandBuffers.emplace_back(m_Device, m_GraphicsCommandPool);
@@ -90,6 +47,8 @@ VulkanRenderer::VulkanRenderer(const Window &window)
   m_IndexBuffer = std::make_unique<VulkanIndexBuffer>(m_Device, sizeof(uint32_t) * 3, m_GraphicsCommandPool);
   std::vector<uint32_t> iData = {0, 1, 2};
   m_IndexBuffer->write(iData.data(), sizeof(uint32_t) * iData.size());
+
+  recreateSwapchain();
 }
 
 VulkanRenderer::~VulkanRenderer() {
@@ -225,7 +184,10 @@ void VulkanRenderer::shutdown() noexcept {
 void VulkanRenderer::recreateSwapchain() {
   FROTH_DEBUG("Recreating swapchain");
   vkDeviceWaitIdle(m_Device);
+
+  m_Pipeline = nullptr;
   m_Framebuffers.clear();
+  m_RenderPass = nullptr;
   m_DepthImageView = nullptr;
   m_DepthImage = nullptr;
   m_Swapchain = std::make_unique<VulkanSwapChain>(m_Device, m_Surface, m_Swapchain.get());
@@ -237,6 +199,8 @@ void VulkanRenderer::recreateSwapchain() {
                                                              .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                                                          });
   m_DepthImageView = std::make_unique<VulkanImageView>(m_DepthImage->createView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT));
+  m_RenderPass = std::make_unique<VulkanRenderPass>(m_Device, *m_Swapchain, *m_DepthImageView);
+
   m_Framebuffers.reserve(m_Swapchain->views().size());
   std::vector<VkImageView> framebufferAttachments(2);
   framebufferAttachments[1] = *m_DepthImageView;
@@ -244,6 +208,30 @@ void VulkanRenderer::recreateSwapchain() {
     framebufferAttachments[0] = m_Swapchain->views()[i];
     m_Framebuffers.emplace_back(m_Device, *m_RenderPass, m_Swapchain->extent(), framebufferAttachments);
   }
+
+  std::vector<char> vertShaderCode = Filesystem::readFile("../playground/shaders/vert.spv");
+  std::vector<char> fragShaderCode = Filesystem::readFile("../playground/shaders/frag.spv");
+
+  VulkanShaderModule vertShaderModule = VulkanShaderModule(m_Device, vertShaderCode);
+  VulkanShaderModule fragShaderModule = VulkanShaderModule(m_Device, fragShaderCode);
+
+  VkViewport viewport{};
+  viewport.x = 0.0f;
+  viewport.y = 0.0f;
+  viewport.width = m_Swapchain->extent().width;
+  viewport.height = m_Swapchain->extent().height;
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+
+  VkRect2D scissor{};
+  scissor.offset = {0, 0};
+  scissor.extent = m_Swapchain->extent();
+
+  m_Pipeline = VulkanPipelineBuilder()
+                   .setVertexInput(Vertex::getInputDescription().getInfo())
+                   .setShaders(vertShaderModule, fragShaderModule)
+                   .setViewport(viewport, scissor)
+                   .build(m_Device, *m_RenderPass, *m_PipelineLayout);
 }
 
 } // namespace Froth

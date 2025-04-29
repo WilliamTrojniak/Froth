@@ -14,6 +14,11 @@ public:
   virtual void onUpdate(double ts) = 0;
   virtual bool onEvent(const Event &e) = 0;
 
+  virtual bool beginFrame() = 0;
+  virtual void beginRenderPass() = 0;
+  virtual void endRenderPass() = 0;
+  virtual void endFrame() = 0;
+
   /* Creates an abstract Renderer backend
    *
    * @returns  Renderer Backend

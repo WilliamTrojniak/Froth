@@ -31,10 +31,14 @@ Application::~Application() {
 
 void Application::Run() {
   while (m_Running) {
+    m_Renderer->beginFrame();
+    m_Renderer->beginRenderPass();
     for (std::shared_ptr<Layer> layer : m_LayerStack) {
       layer->onUpdate(0);
     }
     m_Renderer->onUpdate(0);
+    m_Renderer->endRenderPass();
+    m_Renderer->endFrame();
     Window::pollEvents();
   }
 }

@@ -37,6 +37,11 @@ public:
   virtual bool onEvent(const Event &e) override;
   bool onWindowResize(WindowResizeEvent &e);
 
+  virtual bool beginFrame() override;
+  virtual void beginRenderPass() override;
+  virtual void endRenderPass() override;
+  virtual void endFrame() override;
+
 protected:
   VulkanRenderer(const Window &window);
 
@@ -68,6 +73,7 @@ private:
   std::unique_ptr<VulkanVertexBuffer> m_VertexBuffer;
   std::unique_ptr<VulkanIndexBuffer> m_IndexBuffer;
   size_t m_CurrentFrame = 0;
+  uint32_t m_CurrentImageIndex = 0;
   bool m_WindowResized = false;
 
   void shutdown() noexcept;

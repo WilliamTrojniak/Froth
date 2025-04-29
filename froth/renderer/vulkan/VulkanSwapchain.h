@@ -8,7 +8,7 @@ namespace Froth {
 
 class VulkanSwapChain {
 public:
-  VulkanSwapChain(const VulkanDevice &device, const Window &window, const VulkanSurface &surface);
+  VulkanSwapChain(const VulkanDevice &device, const Window &window, const VulkanSurface &surface, const VulkanSwapChain *oldSwapchain);
   ~VulkanSwapChain();
   VkExtent2D extent() const { return m_Extent; }
   VkSurfaceFormatKHR format() const { return m_Format; }

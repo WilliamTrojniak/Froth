@@ -8,6 +8,9 @@ class VulkanImage {
   friend class VulkanRenderer;
 
 public:
+  struct CreateInfo;
+
+  VulkanImage(const VulkanDevice &device, const CreateInfo &opts);
   VulkanImage(VulkanImage const &) = delete;
   void operator=(VulkanImage const &) = delete;
   ~VulkanImage();
@@ -23,9 +26,6 @@ public:
     VkImageTiling tiling;
     VkImageUsageFlags usage;
   };
-
-protected:
-  VulkanImage(const VulkanDevice &device, const CreateInfo &opts);
 
 private:
   const VulkanDevice &m_Device;

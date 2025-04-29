@@ -3,7 +3,9 @@
 #include "core/logger/Logger.h"
 #include "platform/filesystem/Filesystem.h"
 #include "renderer/vulkan/VulkanPipelineBuilder.h"
+#include "renderer/vulkan/VulkanPipelineLayout.h"
 #include "renderer/vulkan/VulkanShaderModule.h"
+#include "renderer/vulkan/VulkanSwapchain.h"
 #include "renderer/vulkan/VulkanVertex.h"
 #include "vulkan/vulkan_core.h"
 #include <cstdint>
@@ -21,24 +23,32 @@ bool VulkanRenderer::s_Initialized = false;
 VulkanInstance VulkanRenderer::s_Ctx{};
 
 VulkanRenderer::VulkanRenderer(const Window &window)
-    : m_Surface(window.createVulkanSurface(s_Ctx)),
+    : m_Window(window),
+      m_Surface(window.createVulkanSurface(s_Ctx)),
       m_Device(s_Ctx, m_Surface),
-      m_Swapchain(m_Device, window, m_Surface),
-      m_DepthImage(m_Device, VulkanImage::CreateInfo{
-                                 .extent = {.width = m_Swapchain.extent().width,
-                                            .height = m_Swapchain.extent().height},
-                                 .format = VK_FORMAT_D32_SFLOAT,
-                                 .tiling = VK_IMAGE_TILING_OPTIMAL,
-                                 .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                             }),
-      m_DepthImageView(m_DepthImage.createView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT)), m_RenderPass(m_Device, m_Swapchain, m_DepthImageView), m_DescriptorSetLayout(m_Device), m_PipelineLayout(m_Device, {m_DescriptorSetLayout.data()}), m_GraphicsCommandPool(m_Device, m_Device.getQueueFamilies().graphics.index) {
+      m_DescriptorSetLayout(m_Device),
+      m_GraphicsCommandPool(m_Device, m_Device.getQueueFamilies().graphics.index) {
 
-  m_Framebuffers.reserve(m_Swapchain.views().size());
+  m_Swapchain = std::make_unique<VulkanSwapChain>(m_Device, m_Window, m_Surface, nullptr);
+  m_DepthImage = std::make_unique<VulkanImage>(m_Device, VulkanImage::CreateInfo{
+                                                             .extent = {.width = m_Swapchain->extent().width,
+                                                                        .height = m_Swapchain->extent().height},
+                                                             .format = VK_FORMAT_D32_SFLOAT,
+                                                             .tiling = VK_IMAGE_TILING_OPTIMAL,
+                                                             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                                                         });
+  m_DepthImageView = std::make_unique<VulkanImageView>(m_DepthImage->createView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT));
+  m_RenderPass = std::make_unique<VulkanRenderPass>(m_Device, *m_Swapchain, *m_DepthImageView);
+
+  std::vector<VkDescriptorSetLayout> descSetLayouts = {m_DescriptorSetLayout.data()};
+  m_PipelineLayout = std::make_unique<VulkanPipelineLayout>(m_Device, descSetLayouts);
+
+  m_Framebuffers.reserve(m_Swapchain->views().size());
   std::vector<VkImageView> framebufferAttachments(2);
-  framebufferAttachments[1] = m_DepthImageView.view();
-  for (size_t i = 0; i < m_Swapchain.views().size(); i++) {
-    framebufferAttachments[0] = m_Swapchain.views()[i];
-    m_Framebuffers.emplace_back(m_Device, m_RenderPass, m_Swapchain.extent(), framebufferAttachments);
+  framebufferAttachments[1] = *m_DepthImageView;
+  for (size_t i = 0; i < m_Swapchain->views().size(); i++) {
+    framebufferAttachments[0] = m_Swapchain->views()[i];
+    m_Framebuffers.emplace_back(m_Device, *m_RenderPass, m_Swapchain->extent(), framebufferAttachments);
   }
 
   std::vector<char> vertShaderCode = Filesystem::readFile("../playground/shaders/vert.spv");
@@ -50,20 +60,20 @@ VulkanRenderer::VulkanRenderer(const Window &window)
   VkViewport viewport{};
   viewport.x = 0.0f;
   viewport.y = 0.0f;
-  viewport.width = m_Swapchain.extent().width;
-  viewport.height = m_Swapchain.extent().height;
+  viewport.width = m_Swapchain->extent().width;
+  viewport.height = m_Swapchain->extent().height;
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
 
   VkRect2D scissor{};
   scissor.offset = {0, 0};
-  scissor.extent = m_Swapchain.extent();
+  scissor.extent = m_Swapchain->extent();
 
   m_Pipeline = VulkanPipelineBuilder()
                    .setVertexInput(Vertex::getInputDescription().getInfo())
                    .setShaders(vertShaderModule, fragShaderModule)
                    .setViewport(viewport, scissor)
-                   .build(m_Device, m_RenderPass, m_PipelineLayout);
+                   .build(m_Device, *m_RenderPass, *m_PipelineLayout);
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
     m_CommandBuffers.emplace_back(m_Device, m_GraphicsCommandPool);
@@ -101,11 +111,11 @@ void VulkanRenderer::onUpdate(double ts) {
   vkWaitForFences(m_Device, 1, inFlightFence, VK_TRUE, UINT64_MAX);
 
   uint32_t imageIndex;
-  VkResult result = vkAcquireNextImageKHR(m_Device, m_Swapchain, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &imageIndex);
+  VkResult result = vkAcquireNextImageKHR(m_Device, *m_Swapchain, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &imageIndex);
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
     // TODO: Recreate swapchain
     //      m_FramebufferResized = false;
-    //     recreateSwapchain();
+    recreateSwapchain();
   } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
     FROTH_ERROR("Failed to acquire swapchain image");
   }
@@ -129,10 +139,10 @@ void VulkanRenderer::onUpdate(double ts) {
 
   VkRenderPassBeginInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  renderPassInfo.renderPass = m_RenderPass;
+  renderPassInfo.renderPass = *m_RenderPass;
   renderPassInfo.framebuffer = m_Framebuffers[imageIndex];
   renderPassInfo.renderArea.offset = {0, 0};
-  renderPassInfo.renderArea.extent = m_Swapchain.extent();
+  renderPassInfo.renderArea.extent = m_Swapchain->extent();
   renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
   renderPassInfo.pClearValues = clearValues.data();
   vkCmdBeginRenderPass(m_CommandBuffers[m_CurrentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -150,8 +160,8 @@ void VulkanRenderer::onUpdate(double ts) {
   VkViewport viewport{};
   viewport.x = 0.0f;
   viewport.y = 0.0f;
-  viewport.width = m_Swapchain.extent().width;
-  viewport.height = m_Swapchain.extent().height;
+  viewport.width = m_Swapchain->extent().width;
+  viewport.height = m_Swapchain->extent().height;
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
   vkCmdSetViewport(m_CommandBuffers[m_CurrentFrame], 0, 1, &viewport);
@@ -159,7 +169,7 @@ void VulkanRenderer::onUpdate(double ts) {
   // Scissor
   VkRect2D scissor{};
   scissor.offset = {0, 0};
-  scissor.extent = m_Swapchain.extent();
+  scissor.extent = m_Swapchain->extent();
   vkCmdSetScissor(m_CommandBuffers[m_CurrentFrame], 0, 1, &scissor);
 
   vkCmdDrawIndexed(m_CommandBuffers[m_CurrentFrame], 3, 1, 0, 0, 0);
@@ -192,7 +202,7 @@ void VulkanRenderer::onUpdate(double ts) {
   presentInfo.waitSemaphoreCount = 1;
   presentInfo.pWaitSemaphores = renderFinishedSemaphore;
 
-  VkSwapchainKHR swapchains[] = {m_Swapchain};
+  VkSwapchainKHR swapchains[] = {*m_Swapchain};
   presentInfo.swapchainCount = 1;
   presentInfo.pSwapchains = swapchains;
   presentInfo.pImageIndices = &imageIndex;
@@ -201,7 +211,7 @@ void VulkanRenderer::onUpdate(double ts) {
   result = vkQueuePresentKHR(m_Device.getQueueFamilies().present.queue, &presentInfo);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR /* || m_FramebufferResized */) {
     // TODO: Recreate swapchain
-    /*recreateSwapchain();*/
+    recreateSwapchain();
   } else if (result != VK_SUCCESS) {
     FROTH_ERROR("Failed to present swap chain image");
   }
@@ -212,6 +222,30 @@ void VulkanRenderer::onUpdate(double ts) {
 void VulkanRenderer::shutdown() noexcept {
   s_Initialized = false;
   vkDeviceWaitIdle(m_Device);
+}
+
+void VulkanRenderer::recreateSwapchain() {
+  FROTH_DEBUG("Recreating swapchain");
+  vkDeviceWaitIdle(m_Device);
+  m_Framebuffers.clear();
+  m_DepthImageView = nullptr;
+  m_DepthImage = nullptr;
+  m_Swapchain = std::make_unique<VulkanSwapChain>(m_Device, m_Window, m_Surface, m_Swapchain.get());
+  m_DepthImage = std::make_unique<VulkanImage>(m_Device, VulkanImage::CreateInfo{
+                                                             .extent = {.width = m_Swapchain->extent().width,
+                                                                        .height = m_Swapchain->extent().height},
+                                                             .format = VK_FORMAT_D32_SFLOAT,
+                                                             .tiling = VK_IMAGE_TILING_OPTIMAL,
+                                                             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                                                         });
+  m_DepthImageView = std::make_unique<VulkanImageView>(m_DepthImage->createView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT));
+  m_Framebuffers.reserve(m_Swapchain->views().size());
+  std::vector<VkImageView> framebufferAttachments(2);
+  framebufferAttachments[1] = *m_DepthImageView;
+  for (size_t i = 0; i < m_Swapchain->views().size(); i++) {
+    framebufferAttachments[0] = m_Swapchain->views()[i];
+    m_Framebuffers.emplace_back(m_Device, *m_RenderPass, m_Swapchain->extent(), framebufferAttachments);
+  }
 }
 
 } // namespace Froth

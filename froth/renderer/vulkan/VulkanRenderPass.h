@@ -9,14 +9,12 @@ class VulkanRenderPass {
   friend class VulkanRenderer;
 
 public:
+  VulkanRenderPass(const VulkanDevice &device, const VulkanSwapChain &swapchain, const VulkanImageView &depthImageView);
   ~VulkanRenderPass();
   VulkanRenderPass(VulkanRenderPass const &) = delete;
   void operator=(VulkanImageView const &) = delete;
 
   operator VkRenderPass() const { return m_RenderPass; }
-
-protected:
-  VulkanRenderPass(const VulkanDevice &device, const VulkanSwapChain &swapchain, const VulkanImageView &depthImageView);
 
 private:
   const VulkanDevice &m_Device;

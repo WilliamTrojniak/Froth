@@ -2,12 +2,13 @@
 #include "VulkanDevice.h"
 #include "core/logger/Logger.h"
 #include "renderer/vulkan/VulkanInstance.h"
+#include "vulkan/vulkan_core.h"
 #include <algorithm>
 #include <cstdint>
 
 namespace Froth {
 
-VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const Window &window, const VulkanSurface &surface)
+VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const Window &window, const VulkanSurface &surface, const VulkanSwapChain *oldSwapchain)
     : m_Device(device) {
   VulkanDevice::SurfaceCapabilities surfaceCapabilities = m_Device.getSurfaceSupport(surface);
 
@@ -51,7 +52,11 @@ VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const Window &windo
 
   createInfo.presentMode = presentMode;
   createInfo.clipped = VK_TRUE;
-  createInfo.oldSwapchain = VK_NULL_HANDLE;
+  VkSwapchainKHR oldSwapchainPtr = VK_NULL_HANDLE;
+  if (oldSwapchain) {
+    oldSwapchainPtr = *oldSwapchain;
+  }
+  createInfo.oldSwapchain = oldSwapchainPtr;
 
   if (vkCreateSwapchainKHR(m_Device, &createInfo, m_Device.instance().allocator(), &m_Swapchain) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create swap chain");

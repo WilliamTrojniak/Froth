@@ -23,6 +23,11 @@ VulkanImageView::VulkanImageView(const VulkanDevice &device, const VulkanImage &
   }
 }
 
+VulkanImageView::VulkanImageView(VulkanImageView &&other)
+    : m_Device(other.m_Device), m_Format(other.m_Format), m_View(other.m_View) {
+  other.m_View = nullptr;
+}
+
 VulkanImageView::~VulkanImageView() {
   cleanup();
 }

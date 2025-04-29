@@ -1,5 +1,6 @@
 #pragma once
 
+#include "platform/window/Window.h"
 #include "renderer/Renderer.h"
 #include "renderer/vulkan/VulkanCommandBuffer.h"
 #include "renderer/vulkan/VulkanCommandPool.h"
@@ -45,17 +46,18 @@ protected:
 private:
   static bool s_Initialized;
   static VulkanInstance s_Ctx;
+  const Window &m_Window;
   VulkanSurface m_Surface;
   VulkanDevice m_Device;
-  VulkanSwapChain m_Swapchain;
-  VulkanImage m_DepthImage;
-  VulkanImageView m_DepthImageView;
-  VulkanRenderPass m_RenderPass;
   VulkanDescriptorSetLayout m_DescriptorSetLayout;
-  VulkanPipelineLayout m_PipelineLayout;
+  VulkanCommandPool m_GraphicsCommandPool;
+  std::unique_ptr<VulkanSwapChain> m_Swapchain;
+  std::unique_ptr<VulkanImage> m_DepthImage;
+  std::unique_ptr<VulkanImageView> m_DepthImageView;
+  std::unique_ptr<VulkanRenderPass> m_RenderPass;
+  std::unique_ptr<VulkanPipelineLayout> m_PipelineLayout;
   std::unique_ptr<VulkanPipeline> m_Pipeline;
   std::vector<VulkanFramebuffer> m_Framebuffers;
-  VulkanCommandPool m_GraphicsCommandPool;
   std::vector<VulkanCommandBuffer> m_CommandBuffers;
   std::vector<VulkanSemaphore> m_ImageAvailableSemaphores;
   std::vector<VulkanSemaphore> m_RenderFinishedSemaphores;
@@ -65,5 +67,7 @@ private:
   size_t m_CurrentFrame = 0;
 
   void shutdown() noexcept;
+
+  void recreateSwapchain();
 };
 } // namespace Froth

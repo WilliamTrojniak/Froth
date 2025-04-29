@@ -32,6 +32,7 @@ public:
   struct VulkanQueueFamilyInfo {
     bool valid;
     uint32_t index;
+    VkQueue queue;
   };
 
   struct QueueFamilies {
@@ -66,7 +67,7 @@ private:
   static bool physicalDeviceSupportsLayers(VkPhysicalDevice device, const std::vector<const char *> &layers) noexcept;
   static SurfaceCapabilities physicalDeviceSurfaceSupport(VkPhysicalDevice device, VkSurfaceKHR surface) noexcept;
 
-  static VkDevice createLogicalDevice(const VulkanInstance &context, VkPhysicalDevice physicalDevice, const QueueFamilies &queueFamilies, const PhysicalDeviceProperties &requirements) noexcept;
+  static VkDevice createLogicalDevice(const VulkanInstance &context, VkPhysicalDevice physicalDevice, QueueFamilies &queueFamilies, const PhysicalDeviceProperties &requirements) noexcept;
 };
 
 } // namespace Froth

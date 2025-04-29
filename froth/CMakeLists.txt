@@ -32,6 +32,8 @@ add_library(${PROJECT_NAME}
   platform/window/GLFWWindow.cpp
   platform/window/Window.h
   platform/window/Window.cpp
+  renderer/vulkan/VulkanBuffer.h
+  renderer/vulkan/VulkanBuffer.cpp
   renderer/vulkan/VulkanCommandBuffer.h
   renderer/vulkan/VulkanCommandBuffer.cpp
   renderer/vulkan/VulkanCommandPool.h
@@ -48,6 +50,8 @@ add_library(${PROJECT_NAME}
   renderer/vulkan/VulkanImage.cpp
   renderer/vulkan/VulkanImageView.h
   renderer/vulkan/VulkanImageView.cpp
+  renderer/vulkan/VulkanIndexBuffer.h
+  renderer/vulkan/VulkanIndexBuffer.cpp
   renderer/vulkan/VulkanInstance.h
   renderer/vulkan/VulkanInstance.cpp
   renderer/vulkan/VulkanPipeline.h
@@ -68,6 +72,8 @@ add_library(${PROJECT_NAME}
   renderer/vulkan/VulkanSurface.cpp
   renderer/vulkan/VulkanSwapchain.h
   renderer/vulkan/VulkanSwapchain.cpp
+  renderer/vulkan/VulkanVertexBuffer.h
+  renderer/vulkan/VulkanVertexBuffer.cpp
   renderer/Renderer.h
   renderer/Renderer.cpp
   dependencies/vendor/stb/stb/stb_image.h

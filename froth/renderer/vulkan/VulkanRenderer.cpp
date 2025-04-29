@@ -23,7 +23,8 @@ VulkanRenderer::VulkanRenderer(const Window &window)
       m_Device(s_Ctx, m_Surface),
       m_Swapchain(m_Device, window, m_Surface),
       m_DepthImage(m_Device, VulkanImage::CreateInfo{
-                                 .extent = {.width = m_Swapchain.extent().width, .height = m_Swapchain.extent().height},
+                                 .extent = {.width = m_Swapchain.extent().width,
+                                            .height = m_Swapchain.extent().height},
                                  .format = VK_FORMAT_D32_SFLOAT,
                                  .tiling = VK_IMAGE_TILING_OPTIMAL,
                                  .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
@@ -68,6 +69,17 @@ VulkanRenderer::VulkanRenderer(const Window &window)
     m_RenderFinishedSemaphores.emplace_back(m_Device);
     m_FrameInFlightFences.emplace_back(m_Device, true);
   }
+
+  m_VertexBuffer = std::make_unique<VulkanVertexBuffer>(m_Device, sizeof(Vertex) * 100, m_GraphicsCommandPool);
+  std::vector<Vertex> vData = {
+      {glm::vec3(1, 1, 1), glm::vec3(1.0, 0.0, 0), glm::vec2(1.0, 0.0)},
+      {glm::vec3(1, 1, 1), glm::vec3(1.0, 0.0, 0), glm::vec2(1.0, 0.0)},
+      {glm::vec3(1, 1, 1), glm::vec3(1.0, 0.0, 0), glm::vec2(1.0, 0.0)}};
+  m_VertexBuffer->write(vData.data(), sizeof(Vertex) * vData.size());
+
+  m_IndexBuffer = std::make_unique<VulkanIndexBuffer>(m_Device, sizeof(uint32_t) * 3, m_GraphicsCommandPool);
+  std::vector<uint32_t> iData = {0, 1, 2};
+  m_IndexBuffer->write(iData.data(), sizeof(uint32_t) * iData.size());
 }
 
 VulkanRenderer::~VulkanRenderer() {

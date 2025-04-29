@@ -1,4 +1,5 @@
 #include "VulkanDevice.h"
+#include "vulkan/vulkan_core.h"
 #include <core/logger/Logger.h>
 #include <set>
 #include <string>
@@ -295,7 +296,7 @@ VulkanDevice::SurfaceCapabilities VulkanDevice::physicalDeviceSurfaceSupport(VkP
   return capabilities;
 }
 
-VkDevice VulkanDevice::createLogicalDevice(const VulkanInstance &context, VkPhysicalDevice physicalDevice, const QueueFamilies &queueFamilies, const PhysicalDeviceProperties &requirements) noexcept {
+VkDevice VulkanDevice::createLogicalDevice(const VulkanInstance &context, VkPhysicalDevice physicalDevice, QueueFamilies &queueFamilies, const PhysicalDeviceProperties &requirements) noexcept {
   std::set<uint32_t> uniqueQueueFamilyIndices;
   if (queueFamilies.graphics.valid) {
     uniqueQueueFamilyIndices.emplace(queueFamilies.graphics.index);
@@ -335,6 +336,19 @@ VkDevice VulkanDevice::createLogicalDevice(const VulkanInstance &context, VkPhys
   VkDevice device;
   if (vkCreateDevice(physicalDevice, &deviceCreateInfo, context.allocator(), &device) != VK_SUCCESS) {
     return nullptr;
+  }
+
+  if (queueFamilies.graphics.valid) {
+    vkGetDeviceQueue(device, queueFamilies.graphics.index, 0, &queueFamilies.graphics.queue);
+  }
+  if (queueFamilies.present.valid) {
+    vkGetDeviceQueue(device, queueFamilies.present.index, 0, &queueFamilies.present.queue);
+  }
+  if (queueFamilies.compute.valid) {
+    vkGetDeviceQueue(device, queueFamilies.compute.index, 0, &queueFamilies.compute.queue);
+  }
+  if (queueFamilies.transfer.valid) {
+    vkGetDeviceQueue(device, queueFamilies.transfer.index, 0, &queueFamilies.transfer.queue);
   }
 
   return device;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "renderer/Renderer.h"
+#include "renderer/vulkan/VulkanBuffer.h"
 #include "renderer/vulkan/VulkanCommandBuffer.h"
 #include "renderer/vulkan/VulkanCommandPool.h"
 #include "renderer/vulkan/VulkanDescriptorSetLayout.h"
@@ -9,6 +10,7 @@
 #include "renderer/vulkan/VulkanFramebuffer.h"
 #include "renderer/vulkan/VulkanImage.h"
 #include "renderer/vulkan/VulkanImageView.h"
+#include "renderer/vulkan/VulkanIndexBuffer.h"
 #include "renderer/vulkan/VulkanInstance.h"
 #include "renderer/vulkan/VulkanPipeline.h"
 #include "renderer/vulkan/VulkanPipelineLayout.h"
@@ -16,6 +18,7 @@
 #include "renderer/vulkan/VulkanSemaphore.h"
 #include "renderer/vulkan/VulkanSurface.h"
 #include "renderer/vulkan/VulkanSwapchain.h"
+#include "renderer/vulkan/VulkanVertexBuffer.h"
 #include <memory>
 #include <vector>
 
@@ -56,6 +59,8 @@ private:
   std::vector<VulkanSemaphore> m_ImageAvailableSemaphores;
   std::vector<VulkanSemaphore> m_RenderFinishedSemaphores;
   std::vector<VulkanFence> m_FrameInFlightFences;
+  std::unique_ptr<VulkanVertexBuffer> m_VertexBuffer;
+  std::unique_ptr<VulkanIndexBuffer> m_IndexBuffer;
 
   void shutdown() noexcept;
 };

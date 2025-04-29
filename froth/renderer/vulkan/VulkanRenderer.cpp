@@ -74,9 +74,9 @@ VulkanRenderer::VulkanRenderer(const Window &window)
 
   m_VertexBuffer = std::make_unique<VulkanVertexBuffer>(m_Device, sizeof(Vertex) * 100, m_GraphicsCommandPool);
   std::vector<Vertex> vData = {
-      {glm::vec3(-0.5, 0.5, 0.5), glm::vec3(1.0, 0.0, 0), glm::vec2(1.0, 0.0)},
-      {glm::vec3(0.5, 0.5, 0.5), glm::vec3(1.0, 0.0, 0), glm::vec2(1.0, 0.0)},
-      {glm::vec3(0.0, -0.5, 0.5), glm::vec3(1.0, 0.0, 0), glm::vec2(1.0, 0.0)}};
+      {glm::vec3(-0.5, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
+      {glm::vec3(0.5, 0.5, 0.5), glm::vec3(0.0, 1.0, 0.0), glm::vec2(1.0, 0.0)},
+      {glm::vec3(0.0, -0.5, 0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(1.0, 0.0)}};
   m_VertexBuffer->write(vData.data(), sizeof(Vertex) * vData.size());
 
   m_IndexBuffer = std::make_unique<VulkanIndexBuffer>(m_Device, sizeof(uint32_t) * 3, m_GraphicsCommandPool);

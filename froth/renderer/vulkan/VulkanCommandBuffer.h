@@ -2,7 +2,7 @@
 
 #include "renderer/vulkan/VulkanCommandPool.h"
 #include "renderer/vulkan/VulkanDevice.h"
-#include "vulkan/vulkan_core.h"
+
 namespace Froth {
 
 class VulkanCommandBuffer {

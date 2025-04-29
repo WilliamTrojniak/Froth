@@ -2,20 +2,19 @@
 #include "VulkanDevice.h"
 #include "core/logger/Logger.h"
 #include "renderer/vulkan/VulkanInstance.h"
-#include "vulkan/vulkan_core.h"
 #include <algorithm>
 #include <cstdint>
 
 namespace Froth {
 
-VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const Window &window, const VulkanSurface &surface, const VulkanSwapChain *oldSwapchain)
+VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const VulkanSurface &surface, const VulkanSwapChain *oldSwapchain)
     : m_Device(device) {
   VulkanDevice::SurfaceCapabilities surfaceCapabilities = m_Device.getSurfaceSupport(surface);
 
   // TODO: Maybe this is chosen by the user?
   m_Format = chooseSurfaceFormat(surfaceCapabilities.formats);
   VkPresentModeKHR presentMode = choosePresentMode(surfaceCapabilities.presentModes);
-  m_Extent = chooseExtent(surfaceCapabilities, window);
+  m_Extent = chooseExtent(surface, surfaceCapabilities);
 
   uint32_t imageCount = surfaceCapabilities.capabilities.minImageCount + 1; // To avoid waiting on driver internal operations
 
@@ -138,13 +137,13 @@ VkPresentModeKHR VulkanSwapChain::choosePresentMode(const std::vector<VkPresentM
   return VK_PRESENT_MODE_FIFO_KHR; // Guaranteed to be available
 }
 
-VkExtent2D VulkanSwapChain::chooseExtent(const VulkanDevice::SurfaceCapabilities &capabilities, const Window &window) {
+VkExtent2D VulkanSwapChain::chooseExtent(const VulkanSurface &surface, const VulkanDevice::SurfaceCapabilities &capabilities) {
   if (capabilities.capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
     return capabilities.capabilities.currentExtent;
   }
 
   VkExtent2D actualExtent;
-  window.getFramebufferSize(actualExtent.width, actualExtent.height);
+  surface.getFramebufferSize(actualExtent.width, actualExtent.height);
 
   actualExtent.width = std::clamp(actualExtent.width, capabilities.capabilities.minImageExtent.width, capabilities.capabilities.maxImageExtent.width);
   actualExtent.height = std::clamp(actualExtent.height, capabilities.capabilities.minImageExtent.height, capabilities.capabilities.maxImageExtent.height);

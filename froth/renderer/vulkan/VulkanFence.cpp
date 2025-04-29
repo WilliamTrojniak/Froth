@@ -1,7 +1,6 @@
 #include "VulkanFence.h"
 #include "core/logger/Logger.h"
 #include "renderer/vulkan/VulkanDevice.h"
-#include "vulkan/vulkan_core.h"
 
 namespace Froth {
 

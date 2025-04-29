@@ -2,7 +2,6 @@
 
 #include "renderer/vulkan/VulkanPipeline.h"
 #include "renderer/vulkan/VulkanShaderModule.h"
-#include "vulkan/vulkan_core.h"
 #include <memory>
 #include <vector>
 

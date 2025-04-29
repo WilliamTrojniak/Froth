@@ -1,5 +1,4 @@
 #pragma once
-#include "platform/window/Window.h"
 #include "renderer/vulkan/VulkanDevice.h"
 #include "renderer/vulkan/VulkanSurface.h"
 #include <vector>
@@ -8,7 +7,7 @@ namespace Froth {
 
 class VulkanSwapChain {
 public:
-  VulkanSwapChain(const VulkanDevice &device, const Window &window, const VulkanSurface &surface, const VulkanSwapChain *oldSwapchain);
+  VulkanSwapChain(const VulkanDevice &device, const VulkanSurface &surface, const VulkanSwapChain *oldSwapchain);
   ~VulkanSwapChain();
   VkExtent2D extent() const { return m_Extent; }
   VkSurfaceFormatKHR format() const { return m_Format; }
@@ -27,7 +26,7 @@ private:
 private:
   static VkSurfaceFormatKHR chooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
   static VkPresentModeKHR choosePresentMode(const std::vector<VkPresentModeKHR> &availableModes);
-  static VkExtent2D chooseExtent(const VulkanDevice::SurfaceCapabilities &capabilities, const Window &window);
+  static VkExtent2D chooseExtent(const VulkanSurface &surface, const VulkanDevice::SurfaceCapabilities &capabilities);
 };
 
 } // namespace Froth

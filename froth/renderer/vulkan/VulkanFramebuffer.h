@@ -2,7 +2,6 @@
 
 #include "renderer/vulkan/VulkanDevice.h"
 #include "renderer/vulkan/VulkanRenderPass.h"
-#include "vulkan/vulkan_core.h"
 #include <vector>
 
 namespace Froth {

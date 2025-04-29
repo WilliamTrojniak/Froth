@@ -7,7 +7,6 @@
 #include "renderer/vulkan/VulkanShaderModule.h"
 #include "renderer/vulkan/VulkanSwapchain.h"
 #include "renderer/vulkan/VulkanVertex.h"
-#include "vulkan/vulkan_core.h"
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -23,13 +22,12 @@ bool VulkanRenderer::s_Initialized = false;
 VulkanInstance VulkanRenderer::s_Ctx{};
 
 VulkanRenderer::VulkanRenderer(const Window &window)
-    : m_Window(window),
-      m_Surface(window.createVulkanSurface(s_Ctx)),
+    : m_Surface(window.createVulkanSurface(s_Ctx)),
       m_Device(s_Ctx, m_Surface),
       m_DescriptorSetLayout(m_Device),
       m_GraphicsCommandPool(m_Device, m_Device.getQueueFamilies().graphics.index) {
 
-  m_Swapchain = std::make_unique<VulkanSwapChain>(m_Device, m_Window, m_Surface, nullptr);
+  m_Swapchain = std::make_unique<VulkanSwapChain>(m_Device, m_Surface, nullptr);
   m_DepthImage = std::make_unique<VulkanImage>(m_Device, VulkanImage::CreateInfo{
                                                              .extent = {.width = m_Swapchain->extent().width,
                                                                         .height = m_Swapchain->extent().height},
@@ -230,7 +228,7 @@ void VulkanRenderer::recreateSwapchain() {
   m_Framebuffers.clear();
   m_DepthImageView = nullptr;
   m_DepthImage = nullptr;
-  m_Swapchain = std::make_unique<VulkanSwapChain>(m_Device, m_Window, m_Surface, m_Swapchain.get());
+  m_Swapchain = std::make_unique<VulkanSwapChain>(m_Device, m_Surface, m_Swapchain.get());
   m_DepthImage = std::make_unique<VulkanImage>(m_Device, VulkanImage::CreateInfo{
                                                              .extent = {.width = m_Swapchain->extent().width,
                                                                         .height = m_Swapchain->extent().height},

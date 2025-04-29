@@ -95,7 +95,7 @@ VulkanSurface GLFWWindow::createVulkanSurface(const VulkanInstance &instance) co
   if (glfwCreateWindowSurface(instance.instance(), m_Window, instance.allocator(), &surface) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Vulkan surface for GLFW window");
   }
-  return VulkanSurface(instance, surface);
+  return VulkanSurface(instance, *this, surface);
 };
 
 void GLFWWindow::windowSizeCallback(int width, int height) {

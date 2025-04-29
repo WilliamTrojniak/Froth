@@ -6,8 +6,6 @@
 #include "vulkan/vulkan_core.h"
 #include <cstddef>
 #include <cstdint>
-#include <tuple>
-#include <type_traits>
 #include <vector>
 
 namespace Froth {

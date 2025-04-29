@@ -51,7 +51,7 @@ VulkanRenderPass::VulkanRenderPass(const VulkanDevice &device, const VulkanSwapC
   dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
   VkRenderPassCreateInfo renderPassInfo{};
-  std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
+  std::vector<VkAttachmentDescription> attachments = {colorAttachment, depthAttachment};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
   renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
   renderPassInfo.pAttachments = attachments.data();

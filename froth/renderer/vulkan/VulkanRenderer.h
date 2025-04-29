@@ -46,7 +46,6 @@ protected:
 private:
   static bool s_Initialized;
   static VulkanInstance s_Ctx;
-  const Window &m_Window;
   VulkanSurface m_Surface;
   VulkanDevice m_Device;
   VulkanDescriptorSetLayout m_DescriptorSetLayout;

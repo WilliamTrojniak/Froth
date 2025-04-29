@@ -1,5 +1,4 @@
 #include "VulkanDevice.h"
-#include "vulkan/vulkan_core.h"
 #include <core/logger/Logger.h>
 #include <set>
 #include <string>

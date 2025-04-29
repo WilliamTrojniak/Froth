@@ -1,5 +1,7 @@
 #include "VulkanRenderer.h"
 #include "Defines.h"
+#include "core/events/ApplicationEvent.h"
+#include "core/events/EventDispatcher.h"
 #include "core/logger/Logger.h"
 #include "platform/filesystem/Filesystem.h"
 #include "renderer/vulkan/VulkanPipelineBuilder.h"
@@ -12,6 +14,9 @@
 #include <vector>
 
 namespace Froth {
+
+#define BIND_FUNC(x) std::bind(&VulkanRenderer::x, this, std::placeholders::_1)
+
 const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 
 bool hasExtensions(const std::vector<const char *> &extensions) noexcept;
@@ -70,8 +75,7 @@ void VulkanRenderer::onUpdate(double ts) {
   uint32_t imageIndex;
   VkResult result = vkAcquireNextImageKHR(m_Device, *m_Swapchain, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &imageIndex);
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-    // TODO: Recreate swapchain
-    //      m_FramebufferResized = false;
+    m_WindowResized = false;
     recreateSwapchain();
   } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
     FROTH_ERROR("Failed to acquire swapchain image");
@@ -166,8 +170,8 @@ void VulkanRenderer::onUpdate(double ts) {
   presentInfo.pResults = nullptr;
 
   result = vkQueuePresentKHR(m_Device.getQueueFamilies().present.queue, &presentInfo);
-  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR /* || m_FramebufferResized */) {
-    // TODO: Recreate swapchain
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_WindowResized) {
+    m_WindowResized = false;
     recreateSwapchain();
   } else if (result != VK_SUCCESS) {
     FROTH_ERROR("Failed to present swap chain image");
@@ -232,6 +236,17 @@ void VulkanRenderer::recreateSwapchain() {
                    .setShaders(vertShaderModule, fragShaderModule)
                    .setViewport(viewport, scissor)
                    .build(m_Device, *m_RenderPass, *m_PipelineLayout);
+}
+
+bool VulkanRenderer::onEvent(const Event &e) {
+  EventDispatcher dispatcher = EventDispatcher(e);
+  dispatcher.dispatch<WindowResizeEvent>(BIND_FUNC(onWindowResize));
+  return dispatcher.isHandled();
+}
+
+bool VulkanRenderer::onWindowResize(WindowResizeEvent &e) {
+  m_WindowResized = true;
+  return false;
 }
 
 } // namespace Froth

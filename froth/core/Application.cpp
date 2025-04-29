@@ -47,6 +47,7 @@ void Application::onEvent(const Event &e) {
 
   EventDispatcher dispatcher = EventDispatcher(e);
   dispatcher.dispatch<WindowCloseEvent>(BIND_FUNC(onWindowClose));
+  dispatcher.dispatch<WindowResizeEvent>(BIND_FUNC(onWindowResize));
 }
 
 void Application::pushLayer(std::shared_ptr<Layer> layer) {
@@ -62,6 +63,10 @@ void Application::pushOverlay(std::shared_ptr<Layer> overlay) {
 bool Application::onWindowClose(WindowCloseEvent &e) {
   m_Running = false;
   return true;
+}
+
+bool Application::onWindowResize(WindowResizeEvent &e) {
+  return false;
 }
 
 } // namespace Froth

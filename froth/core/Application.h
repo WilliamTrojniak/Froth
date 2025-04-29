@@ -26,6 +26,7 @@ public:
 
   void onEvent(const Event &e);
   bool onWindowClose(WindowCloseEvent &e);
+  bool onWindowResize(WindowResizeEvent &e);
 
   // TODO: Remove
   const Window &window() { return *m_Window.get(); }

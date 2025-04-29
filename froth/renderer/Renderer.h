@@ -10,7 +10,9 @@ protected:
 
 public:
   virtual ~Renderer() = default;
+
   virtual void onUpdate(double ts) = 0;
+  virtual bool onEvent(const Event &e) = 0;
 
   /* Creates an abstract Renderer backend
    *

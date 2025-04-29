@@ -1,5 +1,6 @@
 #pragma once
 
+#include "core/events/ApplicationEvent.h"
 #include "platform/window/Window.h"
 #include "renderer/Renderer.h"
 #include "renderer/vulkan/VulkanCommandBuffer.h"
@@ -33,6 +34,9 @@ public:
   VulkanRenderer(VulkanRenderer const &) = delete;
   void operator=(VulkanRenderer const &) = delete;
 
+  virtual bool onEvent(const Event &e) override;
+  bool onWindowResize(WindowResizeEvent &e);
+
 protected:
   VulkanRenderer(const Window &window);
 
@@ -64,6 +68,7 @@ private:
   std::unique_ptr<VulkanVertexBuffer> m_VertexBuffer;
   std::unique_ptr<VulkanIndexBuffer> m_IndexBuffer;
   size_t m_CurrentFrame = 0;
+  bool m_WindowResized = false;
 
   void shutdown() noexcept;
 

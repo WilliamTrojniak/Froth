@@ -14,6 +14,7 @@ public:
   VkSurfaceFormatKHR format() const { return m_Format; }
 
   const std::vector<VkImageView> views() const { return m_ImageViews; }
+  operator VkSwapchainKHR() const { return m_Swapchain; }
 
 private:
   const VulkanDevice &m_Device;

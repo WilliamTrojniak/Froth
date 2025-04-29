@@ -2,6 +2,7 @@
 
 #include "renderer/vulkan/VulkanDevice.h"
 #include "renderer/vulkan/VulkanRenderPass.h"
+#include "vulkan/vulkan_core.h"
 #include <vector>
 
 namespace Froth {
@@ -14,6 +15,8 @@ public:
   void operator=(VulkanFramebuffer const &) = delete;
   VulkanFramebuffer(VulkanFramebuffer &&other) noexcept;
   VulkanFramebuffer(const VulkanDevice &device, const VulkanRenderPass &renderPass, const VkExtent2D &extent, const std::vector<VkImageView> &attachments);
+
+  operator VkFramebuffer() const { return m_Framebuffer; }
 
 private:
   const VulkanDevice &m_Device;

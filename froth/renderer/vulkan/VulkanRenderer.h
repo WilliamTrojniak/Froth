@@ -1,7 +1,6 @@
 #pragma once
 
 #include "renderer/Renderer.h"
-#include "renderer/vulkan/VulkanBuffer.h"
 #include "renderer/vulkan/VulkanCommandBuffer.h"
 #include "renderer/vulkan/VulkanCommandPool.h"
 #include "renderer/vulkan/VulkanDescriptorSetLayout.h"
@@ -27,6 +26,8 @@ class VulkanRenderer : public Renderer {
   friend class Renderer;
 
 public:
+  virtual void onUpdate(double ts) override;
+
   ~VulkanRenderer() override;
   VulkanRenderer(VulkanRenderer const &) = delete;
   void operator=(VulkanRenderer const &) = delete;
@@ -61,6 +62,7 @@ private:
   std::vector<VulkanFence> m_FrameInFlightFences;
   std::unique_ptr<VulkanVertexBuffer> m_VertexBuffer;
   std::unique_ptr<VulkanIndexBuffer> m_IndexBuffer;
+  size_t m_CurrentFrame = 0;
 
   void shutdown() noexcept;
 };

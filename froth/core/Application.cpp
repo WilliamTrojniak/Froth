@@ -34,6 +34,7 @@ void Application::Run() {
     for (std::shared_ptr<Layer> layer : m_LayerStack) {
       layer->onUpdate(0);
     }
+    m_Renderer->onUpdate(0);
     Window::pollEvents();
   }
 }

@@ -25,6 +25,8 @@ public:
   VulkanPipeline(VulkanPipeline const &) = delete;
   VulkanPipeline &operator=(VulkanPipeline const &) = delete;
 
+  operator VkPipeline() const { return m_Pipeline; }
+
 private:
   const VulkanDevice &m_Device;
   VkPipeline m_Pipeline;

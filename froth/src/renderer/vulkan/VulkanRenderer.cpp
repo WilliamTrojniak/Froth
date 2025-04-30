@@ -102,8 +102,8 @@ void VulkanRenderer::recreateSwapchain() {
   std::vector<char> vertShaderCode = Filesystem::readFile("../playground/shaders/vert.spv");
   std::vector<char> fragShaderCode = Filesystem::readFile("../playground/shaders/frag.spv");
 
-  VulkanShaderModule vertShaderModule = VulkanShaderModule(vertShaderCode);
-  VulkanShaderModule fragShaderModule = VulkanShaderModule(fragShaderCode);
+  VulkanShaderModule vertShaderModule = VulkanShaderModule(vertShaderCode, VK_SHADER_STAGE_VERTEX_BIT);
+  VulkanShaderModule fragShaderModule = VulkanShaderModule(fragShaderCode, VK_SHADER_STAGE_FRAGMENT_BIT);
 
   VkViewport viewport{};
   viewport.x = 0.0f;

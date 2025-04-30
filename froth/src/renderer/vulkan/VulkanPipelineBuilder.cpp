@@ -89,19 +89,7 @@ std::unique_ptr<VulkanPipeline> VulkanPipelineBuilder::build(const VulkanRenderP
 }
 
 VulkanPipelineBuilder &VulkanPipelineBuilder::setShaders(const VulkanShaderModule &vertexShader, const VulkanShaderModule &fragmentShader) {
-  VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
-  vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-  vertShaderStageInfo.module = vertexShader;
-  vertShaderStageInfo.pName = "main";
-
-  VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
-  fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-  fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-  fragShaderStageInfo.module = fragmentShader;
-  fragShaderStageInfo.pName = "main";
-
-  m_ShaderStages = {vertShaderStageInfo, fragShaderStageInfo};
+  m_ShaderStages = {vertexShader.pipelineStageInfo(), fragmentShader.pipelineStageInfo()};
 
   return *this;
 }

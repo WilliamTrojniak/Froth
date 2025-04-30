@@ -2,6 +2,7 @@
 #include "glm/ext/matrix_float4x4.hpp"
 #include "src/core/events/KeyEvent.h"
 #include "src/platform/keys/Keycodes.h"
+#include "src/renderer/vulkan/VulkanPipelineBuilder.h"
 #define GLFW_INCLUDE_VULKAN
 #define STB_IMAGE_IMPLEMENTATION
 #define GLM_FORCE_RADIANS
@@ -1607,16 +1608,16 @@ class TestLayer : public Froth::Layer {
 public:
   TestLayer(Froth::Renderer &renderer) : m_Renderer(renderer) {
     std::vector<Vertex> vData = {
-        {glm::vec3(-0.5, 0.0, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
+        {glm::vec3(0.0, 0.0, -0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(1.0, 0.0)},
         {glm::vec3(0.5, 0.0, 0.5), glm::vec3(0.0, 1.0, 0.0), glm::vec2(1.0, 0.0)},
-        {glm::vec3(0.0, 0.0, -0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(1.0, 0.0)}};
+        {glm::vec3(-0.5, 0.0, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)}};
     m_VertexBuffer = m_Renderer.createVertexBuffer(sizeof(Vertex) * vData.size());
     m_VertexBuffer->write(sizeof(Vertex) * vData.size(), vData.data());
 
     std::vector<Vertex> vData2 = {
-        {glm::vec3(0.0, 0.5, -0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
+        {glm::vec3(1, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
         {glm::vec3(0.5, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
-        {glm::vec3(1, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)}};
+        {glm::vec3(0.0, 0.5, -0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)}};
     m_VertexBuffer1 = m_Renderer.createVertexBuffer(sizeof(Vertex) * vData.size());
     m_VertexBuffer1->write(sizeof(Vertex) * vData.size(), vData2.data());
 
@@ -1626,8 +1627,9 @@ public:
   }
 
   void onUpdate(double ts) override {
+
     glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, 0));
-    glm::mat4 view = glm::lookAt(glm::vec3(m_X, 5.0f, m_Z), glm::vec3(m_X, 0.0f, m_Z), glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::mat4 view = glm::lookAt(glm::vec3(m_X, -5.0f, m_Z), glm::vec3(m_X, 0.0f, m_Z), glm::vec3(0.0f, 0.0f, 1.0f));
     glm::mat4 proj = glm::perspective(glm::radians(45.0f), m_Width / (float)m_Height, 0.1f, 100.0f);
     proj[1][1] *= -1;
 
@@ -1648,10 +1650,10 @@ public:
   bool onKeyPressed(Froth::KeyPressedEvent &e) {
     switch (e.keyCode()) {
     case Froth::Key::Right:
-      m_X -= 0.1;
+      m_X += 0.1;
       return true;
     case Froth::Key::Left:
-      m_X += 0.1;
+      m_X -= 0.1;
       return true;
     case Froth::Key::Up:
       m_Z += 0.1;

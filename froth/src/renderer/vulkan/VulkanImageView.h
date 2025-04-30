@@ -1,6 +1,5 @@
 #pragma once
 
-#include "src/renderer/vulkan/VulkanDevice.h"
 #include "src/renderer/vulkan/VulkanImage.h"
 
 namespace Froth {
@@ -18,10 +17,9 @@ public:
   operator VkImageView() const { return m_View; }
 
 protected:
-  VulkanImageView(const VulkanDevice &device, const VulkanImage &image, VkFormat format, VkImageAspectFlags aspect);
+  VulkanImageView(const VulkanImage &image, VkFormat format, VkImageAspectFlags aspect);
 
 private:
-  const VulkanDevice &m_Device;
   VkFormat m_Format;
   VkImageView m_View;
 

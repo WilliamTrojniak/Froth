@@ -35,7 +35,7 @@ public:
   virtual void *nativeWindow() const override { return m_Window; }
   virtual void getFramebufferSize(uint32_t &width, uint32_t &height) const override;
   static const char **requiredVulkanExtensions(uint32_t &extensionCount) noexcept;
-  virtual VulkanSurface createVulkanSurface(const VulkanInstance &instance) const override;
+  virtual VulkanSurface createVulkanSurface() const override;
   ~GLFWWindow() override;
 };
 } // namespace Froth

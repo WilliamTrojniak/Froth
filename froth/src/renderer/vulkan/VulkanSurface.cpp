@@ -1,18 +1,20 @@
-#include "VulkanSurface.h"
 #include "src/core/logger/Logger.h"
 #include "src/platform/window/Window.h"
+#include "src/renderer/vulkan/VulkanRenderer.h"
 #include <cstdint>
 
 namespace Froth {
 
 VulkanSurface::VulkanSurface(VulkanSurface &&o)
-    : m_Instance(o.m_Instance), m_Surface(o.m_Surface), m_Window(o.m_Window) {
+    : m_Surface(o.m_Surface), m_Window(o.m_Window) {
   o.m_Surface = nullptr;
 }
 
 VulkanSurface::~VulkanSurface() {
   if (m_Surface != nullptr) {
-    vkDestroySurfaceKHR(m_Instance.instance(), m_Surface, m_Instance.allocator());
+    vkDestroySurfaceKHR(VulkanRenderer::context().instance,
+                        m_Surface,
+                        VulkanRenderer::context().instance.allocator());
     m_Surface = nullptr;
     FROTH_DEBUG("Destroyed Vulkan surface")
   }

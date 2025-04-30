@@ -9,13 +9,18 @@ class VulkanDevice {
   friend class VulkanRenderer;
 
 public:
-  VulkanDevice(const VulkanInstance &instance, const VulkanSurface &surface);
+  VulkanDevice() = default;
+  VulkanDevice(const VulkanSurface &surface);
+
   VulkanDevice(VulkanDevice const &) = delete;
-  void operator=(VulkanDevice const &) = delete;
+  VulkanDevice &operator=(VulkanDevice const &) = delete;
+
+  VulkanDevice(VulkanDevice &&);
+  VulkanDevice &operator=(VulkanDevice &&);
+
   ~VulkanDevice();
 
   operator VkDevice() const noexcept { return m_LogicalDevice; }
-  const VulkanInstance &instance() const noexcept { return m_Instance; }
   VkDeviceMemory allocateMemory(const VkMemoryRequirements &requirements, VkMemoryPropertyFlags properties) const;
 
   struct PhysicalDeviceProperties {
@@ -55,7 +60,6 @@ private:
   VkPhysicalDevice m_PhysicalDevice;
   VkDevice m_LogicalDevice = nullptr;
   QueueFamilies m_QueueFamilies;
-  const VulkanInstance &m_Instance;
 
   uint32_t findMemoryTypeIndex(const VkMemoryRequirements &requirements, VkMemoryPropertyFlags properties) const;
 

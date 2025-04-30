@@ -1,12 +1,11 @@
 #pragma once
 
-#include "src/renderer/vulkan/VulkanCommandPool.h"
-#include "src/renderer/vulkan/VulkanDevice.h"
+#include "VulkanCommandPool.h"
 
 namespace Froth {
 class VulkanBuffer {
 public:
-  VulkanBuffer(const VulkanDevice &device, const VkDeviceSize &size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memProperties);
+  VulkanBuffer(const VkDeviceSize &size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memProperties);
   VulkanBuffer(VulkanBuffer &&) noexcept;
   ~VulkanBuffer();
 
@@ -19,10 +18,7 @@ public:
   void *map() const;
   void unmap() const;
 
-  static void copyBuffer(const VulkanDevice &device, const VulkanBuffer &src, const VulkanBuffer &dest, const VulkanCommandPool &commandPool);
-
-protected:
-  const VulkanDevice &m_Device;
+  static void copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest, const VulkanCommandPool &commandPool);
 
 private:
   void cleanup();

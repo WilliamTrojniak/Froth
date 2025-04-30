@@ -10,7 +10,7 @@ class VulkanImage {
 public:
   struct CreateInfo;
 
-  VulkanImage(const VulkanDevice &device, const CreateInfo &opts);
+  VulkanImage(const CreateInfo &opts);
   VulkanImage(VulkanImage const &) = delete;
   void operator=(VulkanImage const &) = delete;
   ~VulkanImage();
@@ -28,7 +28,6 @@ public:
   };
 
 private:
-  const VulkanDevice &m_Device;
   VkImage m_Image;
   VkDeviceMemory m_Memory;
 

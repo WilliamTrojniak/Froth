@@ -1,21 +1,20 @@
 #include "VulkanSemaphore.h"
+#include "VulkanRenderer.h"
 #include "src/core/logger/Logger.h"
 
 namespace Froth {
 
-VulkanSemaphore::VulkanSemaphore(const VulkanDevice &device)
-    : m_Device(device) {
+VulkanSemaphore::VulkanSemaphore() {
   VkSemaphoreCreateInfo semaphoreInfo{};
   semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-  if (vkCreateSemaphore(device, &semaphoreInfo, m_Device.instance().allocator(), &m_Semaphore) != VK_SUCCESS) {
+  if (vkCreateSemaphore(VulkanRenderer::context().device, &semaphoreInfo, VulkanRenderer::context().instance.allocator(), &m_Semaphore) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create semaphore");
   }
 }
 
 VulkanSemaphore::VulkanSemaphore(VulkanSemaphore &&other)
-    : m_Device(other.m_Device) {
-  m_Semaphore = other.m_Semaphore;
+    : m_Semaphore(other.m_Semaphore) {
   other.m_Semaphore = nullptr;
 }
 
@@ -25,7 +24,7 @@ VulkanSemaphore::~VulkanSemaphore() {
 
 void VulkanSemaphore::cleanup() {
   if (m_Semaphore) {
-    vkDestroySemaphore(m_Device, m_Semaphore, m_Device.instance().allocator());
+    vkDestroySemaphore(VulkanRenderer::context().device, m_Semaphore, VulkanRenderer::context().instance.allocator());
     m_Semaphore = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Semaphore")
   }

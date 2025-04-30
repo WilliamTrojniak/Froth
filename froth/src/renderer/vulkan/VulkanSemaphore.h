@@ -6,7 +6,7 @@ namespace Froth {
 
 class VulkanSemaphore {
 public:
-  VulkanSemaphore(const VulkanDevice &device);
+  VulkanSemaphore();
   VulkanSemaphore(VulkanSemaphore &&);
   ~VulkanSemaphore();
 
@@ -16,7 +16,6 @@ public:
   operator VkSemaphore() const { return m_Semaphore; }
 
 private:
-  const VulkanDevice &m_Device;
   VkSemaphore m_Semaphore;
 
   void cleanup();

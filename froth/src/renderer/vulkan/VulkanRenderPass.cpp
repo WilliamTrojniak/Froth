@@ -1,13 +1,13 @@
 #include "VulkanRenderPass.h"
 #include "VulkanDevice.h"
 #include "VulkanImageView.h"
+#include "VulkanRenderer.h"
 #include "VulkanSwapchain.h"
 #include "src/core/logger/Logger.h"
 
 namespace Froth {
 
-VulkanRenderPass::VulkanRenderPass(const VulkanDevice &device, const VulkanSwapChain &swapchain, const VulkanImageView &depthImageView)
-    : m_Device(device) {
+VulkanRenderPass::VulkanRenderPass(const VulkanSwapChain &swapchain, const VulkanImageView &depthImageView) {
 
   VkAttachmentDescription colorAttachment{};
   colorAttachment.format = swapchain.format().format;
@@ -60,7 +60,7 @@ VulkanRenderPass::VulkanRenderPass(const VulkanDevice &device, const VulkanSwapC
   renderPassInfo.dependencyCount = 1;
   renderPassInfo.pDependencies = &dependency;
 
-  if (vkCreateRenderPass(m_Device, &renderPassInfo, m_Device.instance().allocator(), &m_RenderPass) != VK_SUCCESS) {
+  if (vkCreateRenderPass(VulkanRenderer::context().device, &renderPassInfo, VulkanRenderer::context().instance.allocator(), &m_RenderPass) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Render Pass")
   }
 }
@@ -71,7 +71,7 @@ VulkanRenderPass::~VulkanRenderPass() {
 
 void VulkanRenderPass::cleanup() {
   if (m_RenderPass) {
-    vkDestroyRenderPass(m_Device, m_RenderPass, m_Device.instance().allocator());
+    vkDestroyRenderPass(VulkanRenderer::context().device, m_RenderPass, VulkanRenderer::context().instance.allocator());
     m_RenderPass = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Render Pass")
   }

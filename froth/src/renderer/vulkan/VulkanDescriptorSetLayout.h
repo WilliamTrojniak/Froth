@@ -6,7 +6,7 @@ namespace Froth {
 
 class VulkanDescriptorSetLayout {
 public:
-  VulkanDescriptorSetLayout(const VulkanDevice &device);
+  VulkanDescriptorSetLayout();
   VulkanDescriptorSetLayout(VulkanDescriptorSetLayout const &) = delete;
   void operator=(VulkanDescriptorSetLayout const &) = delete;
   ~VulkanDescriptorSetLayout();
@@ -14,7 +14,6 @@ public:
   VkDescriptorSetLayout data() const { return m_DescriptorSetLayout; }
 
 private:
-  const VulkanDevice &m_Device;
   VkDescriptorSetLayout m_DescriptorSetLayout;
 
   void cleanup();

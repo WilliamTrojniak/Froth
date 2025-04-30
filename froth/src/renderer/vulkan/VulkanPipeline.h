@@ -1,15 +1,13 @@
 #pragma once
 
-#include "src/renderer/vulkan/VulkanDevice.h"
-#include "src/renderer/vulkan/VulkanPipelineLayout.h"
-#include "src/renderer/vulkan/VulkanRenderPass.h"
+#include "VulkanPipelineLayout.h"
+#include "VulkanRenderPass.h"
 
 namespace Froth {
 
 class VulkanPipeline {
 public:
-  VulkanPipeline(const VulkanDevice &device,
-                 const VulkanPipelineLayout &pipelineLayout,
+  VulkanPipeline(const VulkanPipelineLayout &pipelineLayout,
                  const VulkanRenderPass &renderPass,
                  const std::vector<VkPipelineShaderStageCreateInfo> &shaderStages,
                  const VkPipelineVertexInputStateCreateInfo &vertexInputInfo,
@@ -29,7 +27,6 @@ public:
   operator VkPipeline() const { return m_Pipeline; }
 
 private:
-  const VulkanDevice &m_Device;
   VkPipeline m_Pipeline;
 
   void cleanup();

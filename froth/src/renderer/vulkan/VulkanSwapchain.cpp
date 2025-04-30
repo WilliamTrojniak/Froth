@@ -1,15 +1,14 @@
 #include "VulkanSwapchain.h"
 #include "VulkanDevice.h"
-#include "VulkanInstance.h"
+#include "VulkanRenderer.h"
 #include "src/core/logger/Logger.h"
 #include <algorithm>
 #include <cstdint>
 
 namespace Froth {
 
-VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const VulkanSurface &surface, const VulkanSwapChain *oldSwapchain)
-    : m_Device(device) {
-  VulkanDevice::SurfaceCapabilities surfaceCapabilities = m_Device.getSurfaceSupport(surface);
+VulkanSwapChain::VulkanSwapChain(const VulkanSurface &surface, const VulkanSwapChain *oldSwapchain) {
+  VulkanDevice::SurfaceCapabilities surfaceCapabilities = VulkanRenderer::context().device.getSurfaceSupport(surface);
 
   // TODO: Maybe this is chosen by the user?
   m_Format = chooseSurfaceFormat(surfaceCapabilities.formats);
@@ -33,7 +32,7 @@ VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const VulkanSurface
   createInfo.imageArrayLayers = 1;
   createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-  VulkanDevice::QueueFamilies indices = m_Device.getQueueFamilies();
+  VulkanDevice::QueueFamilies indices = VulkanRenderer::context().device.getQueueFamilies();
   uint32_t queueFamilyIndices[] = {indices.graphics.index, indices.present.index};
 
   if (indices.graphics.index != indices.present.index) {
@@ -57,19 +56,19 @@ VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const VulkanSurface
   }
   createInfo.oldSwapchain = oldSwapchainPtr;
 
-  if (vkCreateSwapchainKHR(m_Device, &createInfo, m_Device.instance().allocator(), &m_Swapchain) != VK_SUCCESS) {
+  if (vkCreateSwapchainKHR(VulkanRenderer::context().device, &createInfo, VulkanRenderer::context().instance.allocator(), &m_Swapchain) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create swap chain");
   }
 
-  if (vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &imageCount, nullptr) != VK_SUCCESS) {
-    vkDestroySwapchainKHR(m_Device, m_Swapchain, m_Device.instance().allocator());
+  if (vkGetSwapchainImagesKHR(VulkanRenderer::context().device, m_Swapchain, &imageCount, nullptr) != VK_SUCCESS) {
+    vkDestroySwapchainKHR(VulkanRenderer::context().device, m_Swapchain, VulkanRenderer::context().instance.allocator());
     m_Swapchain = nullptr;
     FROTH_ERROR("Failed to retreive created swap chain images");
   }
 
   m_Images.resize(imageCount);
-  if (vkGetSwapchainImagesKHR(m_Device, m_Swapchain, &imageCount, m_Images.data()) != VK_SUCCESS) {
-    vkDestroySwapchainKHR(m_Device, m_Swapchain, m_Device.instance().allocator());
+  if (vkGetSwapchainImagesKHR(VulkanRenderer::context().device, m_Swapchain, &imageCount, m_Images.data()) != VK_SUCCESS) {
+    vkDestroySwapchainKHR(VulkanRenderer::context().device, m_Swapchain, VulkanRenderer::context().instance.allocator());
     m_Swapchain = nullptr;
     FROTH_ERROR("Failed to retreive created swap chain images");
   }
@@ -91,12 +90,12 @@ VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const VulkanSurface
     createInfo.subresourceRange.baseArrayLayer = 0;
     createInfo.subresourceRange.layerCount = 1;
 
-    if (vkCreateImageView(m_Device, &createInfo, m_Device.instance().allocator(), &m_ImageViews[i]) != VK_SUCCESS) {
+    if (vkCreateImageView(VulkanRenderer::context().device, &createInfo, VulkanRenderer::context().instance.allocator(), &m_ImageViews[i]) != VK_SUCCESS) {
       for (uint32_t k = 0; k < i; k++) {
-        vkDestroyImageView(m_Device, m_ImageViews[k], m_Device.instance().allocator());
+        vkDestroyImageView(VulkanRenderer::context().device, m_ImageViews[k], VulkanRenderer::context().instance.allocator());
         m_ImageViews[i] = nullptr;
       }
-      vkDestroySwapchainKHR(m_Device, m_Swapchain, m_Device.instance().allocator());
+      vkDestroySwapchainKHR(VulkanRenderer::context().device, m_Swapchain, VulkanRenderer::context().instance.allocator());
       m_Swapchain = nullptr;
       FROTH_ERROR("Failed to create swapchain image view");
     }
@@ -105,12 +104,12 @@ VulkanSwapChain::VulkanSwapChain(const VulkanDevice &device, const VulkanSurface
 
 VulkanSwapChain::~VulkanSwapChain() {
   for (auto imageView : m_ImageViews) {
-    vkDestroyImageView(m_Device, imageView, m_Device.instance().allocator());
+    vkDestroyImageView(VulkanRenderer::context().device, imageView, VulkanRenderer::context().instance.allocator());
     FROTH_DEBUG("Destroyed Vulkan Swapchain Image View")
   }
 
   if (m_Swapchain) {
-    vkDestroySwapchainKHR(m_Device, m_Swapchain, m_Device.instance().allocator());
+    vkDestroySwapchainKHR(VulkanRenderer::context().device, m_Swapchain, VulkanRenderer::context().instance.allocator());
     m_Swapchain = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Swapchain");
   }

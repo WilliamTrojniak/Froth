@@ -32,7 +32,7 @@ public:
   VulkanPipelineBuilder &setDepthStencil(const VkPipelineDepthStencilStateCreateInfo &depthStencilInfo);
   VulkanPipelineBuilder &setDynamicStates(const std::vector<VkDynamicState> &states);
 
-  std::unique_ptr<VulkanPipeline> build(const VulkanDevice &device, const VulkanRenderPass &renderPass, const VulkanPipelineLayout &pipelineLayout);
+  std::unique_ptr<VulkanPipeline> build(const VulkanRenderPass &renderPass, const VulkanPipelineLayout &pipelineLayout);
 };
 
 } // namespace Froth

@@ -5,7 +5,7 @@
 namespace Froth {
 class VulkanCommandPool {
 public:
-  VulkanCommandPool(const VulkanDevice &device, uint32_t queueFamilyIndex);
+  VulkanCommandPool(uint32_t queueFamilyIndex);
   ~VulkanCommandPool();
 
   VulkanCommandPool(VulkanCommandPool const &) = delete;
@@ -14,7 +14,6 @@ public:
   operator VkCommandPool() const { return m_Pool; }
 
 private:
-  const VulkanDevice &m_Device;
   VkCommandPool m_Pool;
 
   void cleanup();

@@ -28,6 +28,12 @@ class VulkanRenderer : public Renderer {
   friend class Renderer;
 
 public:
+  struct VulkanContext {
+    VulkanInstance instance;
+    VulkanDevice device;
+  };
+
+  static const VulkanContext &context() { return s_Ctx; }
   virtual void shutdown() override;
 
   ~VulkanRenderer() override;
@@ -49,7 +55,7 @@ public:
   void bindIndexBuffer(const VulkanIndexBuffer &buffer) const;
 
 protected:
-  VulkanRenderer(const Window &window);
+  VulkanRenderer(VulkanSurface &&surface);
 
   /* Creates a Vulkan Renderer backend
    *
@@ -60,9 +66,8 @@ protected:
 
 private:
   static bool s_Initialized;
-  static VulkanInstance s_Ctx;
+  static VulkanContext s_Ctx;
   VulkanSurface m_Surface;
-  VulkanDevice m_Device;
   VulkanDescriptorSetLayout m_DescriptorSetLayout;
   VulkanCommandPool m_GraphicsCommandPool;
   std::unique_ptr<VulkanSwapChain> m_Swapchain;

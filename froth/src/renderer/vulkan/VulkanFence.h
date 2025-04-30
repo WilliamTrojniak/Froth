@@ -6,7 +6,7 @@ namespace Froth {
 
 class VulkanFence {
 public:
-  VulkanFence(const VulkanDevice &device, bool signaled);
+  VulkanFence(bool signaled);
   VulkanFence(VulkanFence &&);
   ~VulkanFence();
 
@@ -16,7 +16,6 @@ public:
   operator VkFence() const { return m_Fence; }
 
 private:
-  const VulkanDevice &m_Device;
   VkFence m_Fence;
 
   void cleanup();

@@ -1,15 +1,15 @@
 #pragma once
 
-#include "src/renderer/vulkan/VulkanInstance.h"
+#include "VulkanInstance.h"
+
 namespace Froth {
 
 class Window;
-
 class VulkanSurface {
 
 public:
-  VulkanSurface(const VulkanInstance &instance, const Window &window, VkSurfaceKHR surface)
-      : m_Instance(instance), m_Surface(surface), m_Window(window) {}
+  VulkanSurface(const Window &window, VkSurfaceKHR surface)
+      : m_Surface(surface), m_Window(window) {}
   VulkanSurface(const VulkanSurface &) = delete;
   VulkanSurface(VulkanSurface &&);
   VulkanSurface &operator=(const VulkanSurface &) = delete;
@@ -19,7 +19,6 @@ public:
   void getFramebufferSize(uint32_t &width, uint32_t &height) const;
 
 private:
-  const VulkanInstance &m_Instance;
   const Window &m_Window;
   VkSurfaceKHR m_Surface;
 };

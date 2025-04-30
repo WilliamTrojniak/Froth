@@ -8,6 +8,7 @@
 #include "src/platform/keys/Keycodes.h"
 #include "src/platform/window/Window.h"
 #include "src/renderer/vulkan/VulkanInstance.h"
+#include "src/renderer/vulkan/VulkanRenderer.h"
 #include "src/renderer/vulkan/VulkanSurface.h"
 #include <cstdint>
 #include <stdexcept>
@@ -88,14 +89,14 @@ void GLFWWindow::windowSizeCallback(GLFWwindow *window, int width, int height) {
   handler->windowSizeCallback(width, height);
 }
 
-VulkanSurface GLFWWindow::createVulkanSurface(const VulkanInstance &instance) const {
+VulkanSurface GLFWWindow::createVulkanSurface() const {
   // TODO: Take into account allocation callback
   // TODO: Should Window own the surface?
   VkSurfaceKHR surface;
-  if (glfwCreateWindowSurface(instance.instance(), m_Window, instance.allocator(), &surface) != VK_SUCCESS) {
+  if (glfwCreateWindowSurface(VulkanRenderer::context().instance, m_Window, VulkanRenderer::context().instance.allocator(), &surface) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Vulkan surface for GLFW window");
   }
-  return VulkanSurface(instance, *this, surface);
+  return VulkanSurface(*this, surface);
 };
 
 void GLFWWindow::windowSizeCallback(int width, int height) {

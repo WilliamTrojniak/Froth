@@ -9,8 +9,7 @@ class VulkanRenderer;
 
 class VulkanVertexBuffer : public VulkanBuffer, public VertexBuffer {
 public:
-  VulkanVertexBuffer(const VulkanDevice &device,
-                     const VulkanRenderer &renderer,
+  VulkanVertexBuffer(const VulkanRenderer &renderer,
                      const VkDeviceSize &size,
                      const VulkanCommandPool &commandPool);
 

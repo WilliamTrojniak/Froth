@@ -1,14 +1,11 @@
 #include "VulkanPipeline.h"
-#include "VulkanDevice.h"
-#include "VulkanPipelineLayout.h"
-#include "VulkanRenderPass.h"
+#include "VulkanRenderer.h"
 #include "src/core/logger/Logger.h"
 #include <vector>
 
 namespace Froth {
 
-VulkanPipeline::VulkanPipeline(const VulkanDevice &device,
-                               const VulkanPipelineLayout &pipelineLayout,
+VulkanPipeline::VulkanPipeline(const VulkanPipelineLayout &pipelineLayout,
                                const VulkanRenderPass &renderPass,
                                const std::vector<VkPipelineShaderStageCreateInfo> &shaderStages,
                                const VkPipelineVertexInputStateCreateInfo &vertexInputInfo,
@@ -19,8 +16,7 @@ VulkanPipeline::VulkanPipeline(const VulkanDevice &device,
                                const VkPipelineMultisampleStateCreateInfo &multisampleInfo,
                                const VkPipelineDepthStencilStateCreateInfo &depthStencilInfo,
                                const VkPipelineColorBlendStateCreateInfo &colorBlendInfo,
-                               const VkPipelineDynamicStateCreateInfo &dynamicState)
-    : m_Device(device) {
+                               const VkPipelineDynamicStateCreateInfo &dynamicState) {
 
   // TODO: Support multiple viewports and scissors
   VkPipelineViewportStateCreateInfo viewportStateInfo{};
@@ -50,7 +46,7 @@ VulkanPipeline::VulkanPipeline(const VulkanDevice &device,
 
   // TODO: Support pipeline cache
   // TODO: Support multiple pipelines?
-  if (vkCreateGraphicsPipelines(m_Device, VK_NULL_HANDLE, 1, &pipelineInfo, m_Device.instance().allocator(), &m_Pipeline) != VK_SUCCESS) {
+  if (vkCreateGraphicsPipelines(VulkanRenderer::context().device, VK_NULL_HANDLE, 1, &pipelineInfo, VulkanRenderer::context().instance.allocator(), &m_Pipeline) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Vulkan Pipeline")
   }
 }
@@ -61,7 +57,7 @@ VulkanPipeline::~VulkanPipeline() {
 
 void VulkanPipeline::cleanup() {
   if (m_Pipeline) {
-    vkDestroyPipeline(m_Device, m_Pipeline, m_Device.instance().allocator());
+    vkDestroyPipeline(VulkanRenderer::context().device, m_Pipeline, VulkanRenderer::context().instance.allocator());
     m_Pipeline = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Pipeline")
   }

@@ -1,12 +1,15 @@
 #include "VulkanDevice.h"
 #include "src/core/logger/Logger.h"
+#include "src/renderer/vulkan/VulkanInstance.h"
+#include "src/renderer/vulkan/VulkanRenderer.h"
 #include <set>
 #include <string>
 #include <vector>
 
 namespace Froth {
 
-VulkanDevice::VulkanDevice(const VulkanInstance &instance, const VulkanSurface &surface) : m_Instance(instance) {
+VulkanDevice::VulkanDevice(const VulkanSurface &surface) {
+
   // TODO: This should be driven by the Engine
   // Device Requirements
   PhysicalDeviceProperties requirements{};
@@ -26,21 +29,47 @@ VulkanDevice::VulkanDevice(const VulkanInstance &instance, const VulkanSurface &
   requirements.samplerAnisotropy = true; // TODO: This can probably be made optional?
   // Device Requirements
 
-  m_PhysicalDevice = pickPhysicalDevice(m_Instance.instance(), surface, requirements);
+  m_PhysicalDevice = pickPhysicalDevice(VulkanRenderer::context().instance, surface, requirements);
   if (m_PhysicalDevice == nullptr) {
     FROTH_ERROR("Failed to find suitable Vulkan physical device")
   }
 
   m_QueueFamilies = getPhysicalDeviceQueueFamilies(m_PhysicalDevice, surface);
-  m_LogicalDevice = createLogicalDevice(m_Instance, m_PhysicalDevice, m_QueueFamilies, requirements);
+  m_LogicalDevice = createLogicalDevice(VulkanRenderer::context().instance, m_PhysicalDevice, m_QueueFamilies, requirements);
   if (m_LogicalDevice == nullptr) {
     FROTH_ERROR("Failed to create Vulkan Logical Device from physical device")
   }
 }
 
+VulkanDevice::VulkanDevice(VulkanDevice &&other)
+    : m_PhysicalDevice(other.m_PhysicalDevice),
+      m_LogicalDevice(other.m_LogicalDevice),
+      m_QueueFamilies(other.m_QueueFamilies) {
+  other.m_PhysicalDevice = nullptr;
+  other.m_LogicalDevice = nullptr;
+  other.m_QueueFamilies.graphics.valid = false;
+  other.m_QueueFamilies.present.valid = false;
+  other.m_QueueFamilies.compute.valid = false;
+  other.m_QueueFamilies.transfer.valid = false;
+}
+
+VulkanDevice &VulkanDevice::operator=(VulkanDevice &&other) {
+  m_PhysicalDevice = other.m_PhysicalDevice;
+  m_LogicalDevice = other.m_LogicalDevice;
+  m_QueueFamilies = other.m_QueueFamilies;
+  other.m_PhysicalDevice = nullptr;
+  other.m_LogicalDevice = nullptr;
+  other.m_QueueFamilies.graphics.valid = false;
+  other.m_QueueFamilies.present.valid = false;
+  other.m_QueueFamilies.compute.valid = false;
+  other.m_QueueFamilies.transfer.valid = false;
+
+  return *this;
+}
+
 VulkanDevice::~VulkanDevice() {
   if (m_LogicalDevice != nullptr) {
-    vkDestroyDevice(m_LogicalDevice, m_Instance.allocator());
+    vkDestroyDevice(m_LogicalDevice, VulkanRenderer::context().instance.allocator());
     m_LogicalDevice = nullptr;
     FROTH_DEBUG("Destroyed Vulkan logical device")
   }

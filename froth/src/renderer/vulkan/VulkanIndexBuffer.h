@@ -2,7 +2,6 @@
 
 #include "VulkanBuffer.h"
 #include "VulkanCommandPool.h"
-#include "VulkanDevice.h"
 #include "src/renderer/IndexBuffer.h"
 
 namespace Froth {
@@ -10,8 +9,7 @@ class VulkanRenderer;
 
 class VulkanIndexBuffer : public VulkanBuffer, public IndexBuffer {
 public:
-  VulkanIndexBuffer(const VulkanDevice &device,
-                    const VulkanRenderer &renderer,
+  VulkanIndexBuffer(const VulkanRenderer &renderer,
                     const VkDeviceSize &size,
                     const VulkanCommandPool &commandPool);
 

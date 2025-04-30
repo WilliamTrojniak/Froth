@@ -24,7 +24,7 @@ public:
 
   virtual void getFramebufferSize(uint32_t &width, uint32_t &height) const = 0;
   static const char **requiredVulkanExtensions(uint32_t &extensionCount) noexcept;
-  virtual VulkanSurface createVulkanSurface(const VulkanInstance &instance) const = 0;
+  virtual VulkanSurface createVulkanSurface() const = 0;
 
   virtual void *
   nativeWindow() const = 0;

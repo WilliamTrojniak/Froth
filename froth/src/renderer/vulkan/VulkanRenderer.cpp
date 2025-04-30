@@ -11,6 +11,8 @@
 #include "src/core/events/EventDispatcher.h"
 #include "src/core/logger/Logger.h"
 #include "src/platform/filesystem/Filesystem.h"
+#include "src/renderer/vulkan/VulkanDevice.h"
+#include "src/renderer/vulkan/VulkanInstance.h"
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -26,22 +28,21 @@ bool getRequiredExtensions(std::vector<const char *> &extensions) noexcept;
 bool hasLayers(const std::vector<const char *> &layers) noexcept;
 
 bool VulkanRenderer::s_Initialized = false;
-VulkanInstance VulkanRenderer::s_Ctx{};
+VulkanRenderer::VulkanContext VulkanRenderer::s_Ctx{};
 
-VulkanRenderer::VulkanRenderer(const Window &window)
-    : m_Surface(window.createVulkanSurface(s_Ctx)),
-      m_Device(s_Ctx, m_Surface),
-      m_DescriptorSetLayout(m_Device),
-      m_GraphicsCommandPool(m_Device, m_Device.getQueueFamilies().graphics.index) {
+VulkanRenderer::VulkanRenderer(VulkanSurface &&surface)
+    : m_Surface(std::forward<VulkanSurface>(surface)),
+      m_DescriptorSetLayout(),
+      m_GraphicsCommandPool(s_Ctx.device.getQueueFamilies().graphics.index) {
 
   std::vector<VkDescriptorSetLayout> descSetLayouts = {m_DescriptorSetLayout.data()};
-  m_PipelineLayout = std::make_unique<VulkanPipelineLayout>(m_Device, descSetLayouts);
+  m_PipelineLayout = std::make_unique<VulkanPipelineLayout>(descSetLayouts);
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    m_CommandBuffers.emplace_back(m_Device, m_GraphicsCommandPool);
-    m_ImageAvailableSemaphores.emplace_back(m_Device);
-    m_RenderFinishedSemaphores.emplace_back(m_Device);
-    m_FrameInFlightFences.emplace_back(m_Device, true);
+    m_CommandBuffers.emplace_back(m_GraphicsCommandPool);
+    m_ImageAvailableSemaphores.emplace_back();
+    m_RenderFinishedSemaphores.emplace_back();
+    m_FrameInFlightFences.emplace_back(true);
   }
 
   recreateSwapchain();
@@ -51,49 +52,56 @@ VulkanRenderer::~VulkanRenderer() {}
 
 std::unique_ptr<VulkanRenderer> VulkanRenderer::create(const Window &window) {
   if (!s_Initialized) {
-    s_Ctx = VulkanInstance(nullptr); // TODO: Configurable allocator
+    s_Ctx.instance = VulkanInstance(nullptr); // TODO: Configurable allocator
+  }
+
+  VulkanSurface surface = window.createVulkanSurface();
+
+  if (!s_Initialized) {
+    s_Ctx.device = VulkanDevice(surface);
     s_Initialized = true;
   }
-  return std::unique_ptr<VulkanRenderer>(new VulkanRenderer(window));
+
+  return std::unique_ptr<VulkanRenderer>(new VulkanRenderer(std::move(surface)));
 }
 
 void VulkanRenderer::shutdown() {
-  vkDeviceWaitIdle(m_Device);
+  vkDeviceWaitIdle(s_Ctx.device);
 }
 
 void VulkanRenderer::recreateSwapchain() {
   FROTH_DEBUG("Recreating swapchain");
-  vkDeviceWaitIdle(m_Device);
+  vkDeviceWaitIdle(s_Ctx.device);
 
   m_Pipeline = nullptr;
   m_Framebuffers.clear();
   m_RenderPass = nullptr;
   m_DepthImageView = nullptr;
   m_DepthImage = nullptr;
-  m_Swapchain = std::make_unique<VulkanSwapChain>(m_Device, m_Surface, m_Swapchain.get());
-  m_DepthImage = std::make_unique<VulkanImage>(m_Device, VulkanImage::CreateInfo{
-                                                             .extent = {.width = m_Swapchain->extent().width,
-                                                                        .height = m_Swapchain->extent().height},
-                                                             .format = VK_FORMAT_D32_SFLOAT,
-                                                             .tiling = VK_IMAGE_TILING_OPTIMAL,
-                                                             .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                                                         });
+  m_Swapchain = std::make_unique<VulkanSwapChain>(m_Surface, m_Swapchain.get());
+  m_DepthImage = std::make_unique<VulkanImage>(VulkanImage::CreateInfo{
+      .extent = {.width = m_Swapchain->extent().width,
+                 .height = m_Swapchain->extent().height},
+      .format = VK_FORMAT_D32_SFLOAT,
+      .tiling = VK_IMAGE_TILING_OPTIMAL,
+      .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+  });
   m_DepthImageView = std::make_unique<VulkanImageView>(m_DepthImage->createView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT));
-  m_RenderPass = std::make_unique<VulkanRenderPass>(m_Device, *m_Swapchain, *m_DepthImageView);
+  m_RenderPass = std::make_unique<VulkanRenderPass>(*m_Swapchain, *m_DepthImageView);
 
   m_Framebuffers.reserve(m_Swapchain->views().size());
   std::vector<VkImageView> framebufferAttachments(2);
   framebufferAttachments[1] = *m_DepthImageView;
   for (size_t i = 0; i < m_Swapchain->views().size(); i++) {
     framebufferAttachments[0] = m_Swapchain->views()[i];
-    m_Framebuffers.emplace_back(m_Device, *m_RenderPass, m_Swapchain->extent(), framebufferAttachments);
+    m_Framebuffers.emplace_back(*m_RenderPass, m_Swapchain->extent(), framebufferAttachments);
   }
 
   std::vector<char> vertShaderCode = Filesystem::readFile("../playground/shaders/vert.spv");
   std::vector<char> fragShaderCode = Filesystem::readFile("../playground/shaders/frag.spv");
 
-  VulkanShaderModule vertShaderModule = VulkanShaderModule(m_Device, vertShaderCode);
-  VulkanShaderModule fragShaderModule = VulkanShaderModule(m_Device, fragShaderCode);
+  VulkanShaderModule vertShaderModule = VulkanShaderModule(vertShaderCode);
+  VulkanShaderModule fragShaderModule = VulkanShaderModule(fragShaderCode);
 
   VkViewport viewport{};
   viewport.x = 0.0f;
@@ -111,7 +119,7 @@ void VulkanRenderer::recreateSwapchain() {
                    .setVertexInput(Vertex::getInputDescription().getInfo())
                    .setShaders(vertShaderModule, fragShaderModule)
                    .setViewport(viewport, scissor)
-                   .build(m_Device, *m_RenderPass, *m_PipelineLayout);
+                   .build(*m_RenderPass, *m_PipelineLayout);
 }
 
 bool VulkanRenderer::onEvent(const Event &e) {
@@ -127,9 +135,9 @@ bool VulkanRenderer::onWindowResize(WindowResizeEvent &e) {
 
 bool VulkanRenderer::beginFrame() {
   VkFence inFlightFence[] = {m_FrameInFlightFences[m_CurrentFrame]};
-  vkWaitForFences(m_Device, 1, inFlightFence, VK_TRUE, UINT64_MAX);
+  vkWaitForFences(s_Ctx.device, 1, inFlightFence, VK_TRUE, UINT64_MAX);
 
-  VkResult result = vkAcquireNextImageKHR(m_Device, *m_Swapchain, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_CurrentImageIndex);
+  VkResult result = vkAcquireNextImageKHR(s_Ctx.device, *m_Swapchain, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_CurrentImageIndex);
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
     m_WindowResized = false;
     recreateSwapchain();
@@ -137,7 +145,7 @@ bool VulkanRenderer::beginFrame() {
     FROTH_ERROR("Failed to acquire swapchain image");
   }
 
-  vkResetFences(m_Device, 1, inFlightFence);
+  vkResetFences(s_Ctx.device, 1, inFlightFence);
   vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
 
   // Record command buffer
@@ -212,7 +220,7 @@ void VulkanRenderer::endFrame() {
   submitInfo.pCommandBuffers = commandBuffer;
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = renderFinishedSemaphore;
-  if (vkQueueSubmit(m_Device.getQueueFamilies().graphics.queue, 1, &submitInfo, m_FrameInFlightFences[m_CurrentFrame]) != VK_SUCCESS) {
+  if (vkQueueSubmit(s_Ctx.device.getQueueFamilies().graphics.queue, 1, &submitInfo, m_FrameInFlightFences[m_CurrentFrame]) != VK_SUCCESS) {
     FROTH_ERROR("Failed to submit draw command buffer");
   }
 
@@ -227,7 +235,7 @@ void VulkanRenderer::endFrame() {
   presentInfo.pImageIndices = &m_CurrentImageIndex;
   presentInfo.pResults = nullptr;
 
-  VkResult result = vkQueuePresentKHR(m_Device.getQueueFamilies().present.queue, &presentInfo);
+  VkResult result = vkQueuePresentKHR(s_Ctx.device.getQueueFamilies().present.queue, &presentInfo);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_WindowResized) {
     m_WindowResized = false;
     recreateSwapchain();
@@ -239,11 +247,11 @@ void VulkanRenderer::endFrame() {
 }
 
 std::unique_ptr<VertexBuffer> VulkanRenderer::createVertexBuffer(size_t sizeBytes) {
-  return std::make_unique<VulkanVertexBuffer>(m_Device, *this, sizeBytes, m_GraphicsCommandPool);
+  return std::make_unique<VulkanVertexBuffer>(*this, sizeBytes, m_GraphicsCommandPool);
 }
 
 std::unique_ptr<IndexBuffer> VulkanRenderer::createIndexBuffer(size_t numIndices) {
-  return std::make_unique<VulkanIndexBuffer>(m_Device, *this, numIndices * sizeof(uint32_t), m_GraphicsCommandPool);
+  return std::make_unique<VulkanIndexBuffer>(*this, numIndices * sizeof(uint32_t), m_GraphicsCommandPool);
 }
 
 void VulkanRenderer::bindVertexBuffer(const VulkanVertexBuffer &vertexBuffer) const {

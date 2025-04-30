@@ -1608,6 +1608,13 @@ public:
     m_VertexBuffer = m_Renderer.createVertexBuffer(sizeof(Vertex) * vData.size());
     m_VertexBuffer->write(sizeof(Vertex) * vData.size(), vData.data());
 
+    std::vector<Vertex> vData2 = {
+        {glm::vec3(-1.0, -0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
+        {glm::vec3(-1.0, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
+        {glm::vec3(-0.5, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)}};
+    m_VertexBuffer1 = m_Renderer.createVertexBuffer(sizeof(Vertex) * vData.size());
+    m_VertexBuffer1->write(sizeof(Vertex) * vData.size(), vData2.data());
+
     std::vector<uint32_t> iData = {0, 1, 2};
     m_IndexBuffer = m_Renderer.createIndexBuffer(iData.size());
     m_IndexBuffer->write(iData.size(), iData.data());
@@ -1616,12 +1623,15 @@ public:
   void onUpdate(double ts) override {
     m_VertexBuffer->bind();
     m_IndexBuffer->bind();
+    m_VertexBuffer1->bind();
+    m_IndexBuffer->bind();
   }
 
 private:
   Froth::Renderer &m_Renderer;
   std::unique_ptr<Froth::VertexBuffer> m_VertexBuffer;
   std::unique_ptr<Froth::IndexBuffer> m_IndexBuffer;
+  std::unique_ptr<Froth::VertexBuffer> m_VertexBuffer1;
 };
 
 class Playground : public Froth::Application {

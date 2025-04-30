@@ -1,8 +1,10 @@
 #pragma once
 
 #include "platform/window/Window.h"
+#include "renderer/IndexBuffer.h"
 #include "renderer/VertexBuffer.h"
 #include <memory>
+
 namespace Froth {
 
 class Renderer {
@@ -11,6 +13,8 @@ protected:
 
 public:
   virtual ~Renderer() = default;
+
+  virtual void shutdown() = 0;
 
   virtual void onUpdate(double ts) = 0;
   virtual bool onEvent(const Event &e) = 0;
@@ -21,6 +25,7 @@ public:
   virtual void endFrame() = 0;
 
   virtual std::unique_ptr<VertexBuffer> createVertexBuffer(size_t sizeBytes) = 0;
+  virtual std::unique_ptr<IndexBuffer> createIndexBuffer(size_t numIndices) = 0;
 
   /* Creates an abstract Renderer backend
    *

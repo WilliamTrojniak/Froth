@@ -26,7 +26,7 @@ Application::Application() {
   m_Renderer = Renderer::create(*m_Window);
 }
 Application::~Application() {
-  /*Renderer::shutdown();*/
+  m_Renderer->shutdown();
 }
 
 void Application::Run() {

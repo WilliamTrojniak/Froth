@@ -29,6 +29,7 @@ class VulkanRenderer : public Renderer {
 
 public:
   virtual void onUpdate(double ts) override;
+  virtual void shutdown() override;
 
   ~VulkanRenderer() override;
   VulkanRenderer(VulkanRenderer const &) = delete;
@@ -43,8 +44,10 @@ public:
   virtual void endFrame() override;
 
   virtual std::unique_ptr<VertexBuffer> createVertexBuffer(size_t sizeBytes) override;
+  virtual std::unique_ptr<IndexBuffer> createIndexBuffer(size_t sizeBytes) override;
 
   void bindVertexBuffer(const VulkanVertexBuffer &buffer) const;
+  void bindIndexBuffer(const VulkanIndexBuffer &buffer) const;
 
 protected:
   VulkanRenderer(const Window &window);
@@ -78,8 +81,6 @@ private:
   size_t m_CurrentFrame = 0;
   uint32_t m_CurrentImageIndex = 0;
   bool m_WindowResized = false;
-
-  void shutdown() noexcept;
 
   void recreateSwapchain();
 };

@@ -4,6 +4,7 @@
 #include "core/events/EventDispatcher.h"
 #include "core/logger/Logger.h"
 #include "platform/filesystem/Filesystem.h"
+#include "renderer/vulkan/VulkanIndexBuffer.h"
 #include "renderer/vulkan/VulkanPipelineBuilder.h"
 #include "renderer/vulkan/VulkanPipelineLayout.h"
 #include "renderer/vulkan/VulkanShaderModule.h"
@@ -43,16 +44,10 @@ VulkanRenderer::VulkanRenderer(const Window &window)
     m_FrameInFlightFences.emplace_back(m_Device, true);
   }
 
-  m_IndexBuffer = std::make_unique<VulkanIndexBuffer>(m_Device, sizeof(uint32_t) * 3, m_GraphicsCommandPool);
-  std::vector<uint32_t> iData = {0, 1, 2};
-  m_IndexBuffer->write(iData.data(), sizeof(uint32_t) * iData.size());
-
   recreateSwapchain();
 }
 
-VulkanRenderer::~VulkanRenderer() {
-  shutdown();
-}
+VulkanRenderer::~VulkanRenderer() {}
 
 std::unique_ptr<VulkanRenderer> VulkanRenderer::create(const Window &window) {
   if (!s_Initialized) {
@@ -64,13 +59,9 @@ std::unique_ptr<VulkanRenderer> VulkanRenderer::create(const Window &window) {
 
 void VulkanRenderer::onUpdate(double ts) {
 
-  vkCmdBindIndexBuffer(m_CommandBuffers[m_CurrentFrame], *m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
-
-  vkCmdDrawIndexed(m_CommandBuffers[m_CurrentFrame], 3, 1, 0, 0, 0);
 } // namespace Froth
 
-void VulkanRenderer::shutdown() noexcept {
-  s_Initialized = false;
+void VulkanRenderer::shutdown() {
   vkDeviceWaitIdle(m_Device);
 }
 
@@ -255,11 +246,23 @@ std::unique_ptr<VertexBuffer> VulkanRenderer::createVertexBuffer(size_t sizeByte
   return std::make_unique<VulkanVertexBuffer>(m_Device, *this, sizeBytes, m_GraphicsCommandPool);
 }
 
+std::unique_ptr<IndexBuffer> VulkanRenderer::createIndexBuffer(size_t numIndices) {
+  return std::make_unique<VulkanIndexBuffer>(m_Device, *this, numIndices * sizeof(uint32_t), m_GraphicsCommandPool);
+}
+
 void VulkanRenderer::bindVertexBuffer(const VulkanVertexBuffer &vertexBuffer) const {
   // TODO: Handle dynamic offsets
   VkDeviceSize offsets[] = {0};
   VkBuffer vertexBuffers[] = {vertexBuffer};
   vkCmdBindVertexBuffers(m_CommandBuffers[m_CurrentFrame], 0, 1, vertexBuffers, offsets);
+}
+
+void VulkanRenderer::bindIndexBuffer(const VulkanIndexBuffer &indexBuffer) const {
+  // TODO: Handle offsets
+  vkCmdBindIndexBuffer(m_CommandBuffers[m_CurrentFrame], indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+
+  // TODO: Seperate into another call?
+  vkCmdDrawIndexed(m_CommandBuffers[m_CurrentFrame], indexBuffer.indexCount(), 1, 0, 0, 0);
 }
 
 } // namespace Froth

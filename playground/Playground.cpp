@@ -1,4 +1,5 @@
 #include "core/Layer.h"
+#include "renderer/IndexBuffer.h"
 #include "renderer/Renderer.h"
 #include <memory>
 #define GLFW_INCLUDE_VULKAN
@@ -1606,16 +1607,21 @@ public:
         {glm::vec3(0.0, -0.5, 0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(1.0, 0.0)}};
     m_VertexBuffer = m_Renderer.createVertexBuffer(sizeof(Vertex) * vData.size());
     m_VertexBuffer->write(sizeof(Vertex) * vData.size(), vData.data());
+
+    std::vector<uint32_t> iData = {0, 1, 2};
+    m_IndexBuffer = m_Renderer.createIndexBuffer(iData.size());
+    m_IndexBuffer->write(iData.size(), iData.data());
   }
 
   void onUpdate(double ts) override {
     m_VertexBuffer->bind();
-    m_Renderer.onUpdate(ts);
+    m_IndexBuffer->bind();
   }
 
 private:
   Froth::Renderer &m_Renderer;
   std::unique_ptr<Froth::VertexBuffer> m_VertexBuffer;
+  std::unique_ptr<Froth::IndexBuffer> m_IndexBuffer;
 };
 
 class Playground : public Froth::Application {

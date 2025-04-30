@@ -1,5 +1,6 @@
 #pragma once
 
+#include "glm/ext/matrix_float4x4.hpp"
 #include "src/core/events/ApplicationEvent.h"
 #include "src/platform/window/Window.h"
 #include "src/renderer/Renderer.h"
@@ -50,6 +51,8 @@ public:
 
   virtual std::unique_ptr<VertexBuffer> createVertexBuffer(size_t sizeBytes) override;
   virtual std::unique_ptr<IndexBuffer> createIndexBuffer(size_t sizeBytes) override;
+
+  virtual void pushConstants(const glm::mat4 &data) const override;
 
   void bindVertexBuffer(const VulkanVertexBuffer &buffer) const;
   void bindIndexBuffer(const VulkanIndexBuffer &buffer) const;

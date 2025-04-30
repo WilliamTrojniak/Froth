@@ -1,3 +1,7 @@
+#include "glm/detail/qualifier.hpp"
+#include "glm/ext/matrix_float4x4.hpp"
+#include "src/core/events/KeyEvent.h"
+#include "src/platform/keys/Keycodes.h"
 #define GLFW_INCLUDE_VULKAN
 #define STB_IMAGE_IMPLEMENTATION
 #define GLM_FORCE_RADIANS
@@ -13,10 +17,11 @@
 
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
+#include "src/platform/window/Window.h"
+
 #include "src/core/events/ApplicationEvent.h"
 #include "src/core/events/Event.h"
 #include "src/core/events/EventDispatcher.h"
-#include "src/platform/window/Window.h"
 #include <GLFW/glfw3.h>
 #include <array>
 #include <fstream>
@@ -1602,16 +1607,16 @@ class TestLayer : public Froth::Layer {
 public:
   TestLayer(Froth::Renderer &renderer) : m_Renderer(renderer) {
     std::vector<Vertex> vData = {
-        {glm::vec3(-0.5, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
-        {glm::vec3(0.5, 0.5, 0.5), glm::vec3(0.0, 1.0, 0.0), glm::vec2(1.0, 0.0)},
-        {glm::vec3(0.0, -0.5, 0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(1.0, 0.0)}};
+        {glm::vec3(-0.5, 0.0, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
+        {glm::vec3(0.5, 0.0, 0.5), glm::vec3(0.0, 1.0, 0.0), glm::vec2(1.0, 0.0)},
+        {glm::vec3(0.0, 0.0, -0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(1.0, 0.0)}};
     m_VertexBuffer = m_Renderer.createVertexBuffer(sizeof(Vertex) * vData.size());
     m_VertexBuffer->write(sizeof(Vertex) * vData.size(), vData.data());
 
     std::vector<Vertex> vData2 = {
-        {glm::vec3(-1.0, -0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
-        {glm::vec3(-1.0, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
-        {glm::vec3(-0.5, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)}};
+        {glm::vec3(0.0, 0.5, -0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
+        {glm::vec3(0.5, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
+        {glm::vec3(1, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)}};
     m_VertexBuffer1 = m_Renderer.createVertexBuffer(sizeof(Vertex) * vData.size());
     m_VertexBuffer1->write(sizeof(Vertex) * vData.size(), vData2.data());
 
@@ -1621,10 +1626,49 @@ public:
   }
 
   void onUpdate(double ts) override {
+    glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, 0));
+    glm::mat4 view = glm::lookAt(glm::vec3(m_X, 5.0f, m_Z), glm::vec3(m_X, 0.0f, m_Z), glm::vec3(0.0f, 0.0f, 1.0f));
+    glm::mat4 proj = glm::perspective(glm::radians(45.0f), m_Width / (float)m_Height, 0.1f, 100.0f);
+    proj[1][1] *= -1;
+
+    glm::mat4 mvp = proj * view * model;
+    m_Renderer.pushConstants(mvp);
     m_VertexBuffer->bind();
     m_IndexBuffer->bind();
     m_VertexBuffer1->bind();
     m_IndexBuffer->bind();
+  }
+
+  bool onWindowResize(Froth::WindowResizeEvent &e) {
+    m_Height = e.height();
+    m_Width = e.width();
+    return false;
+  }
+
+  bool onKeyPressed(Froth::KeyPressedEvent &e) {
+    switch (e.keyCode()) {
+    case Froth::Key::Right:
+      m_X -= 0.1;
+      return true;
+    case Froth::Key::Left:
+      m_X += 0.1;
+      return true;
+    case Froth::Key::Up:
+      m_Z += 0.1;
+      return true;
+    case Froth::Key::Down:
+      m_Z -= 0.1;
+      return true;
+    }
+    return false;
+  }
+
+  virtual bool onEvent(const Froth::Event &e) override {
+    Froth::EventDispatcher d(e);
+    d.dispatch<Froth::WindowResizeEvent>(std::bind(&TestLayer::onWindowResize, this, std::placeholders::_1));
+    d.dispatch<Froth::KeyPressedEvent>(std::bind(&TestLayer::onKeyPressed, this, std::placeholders::_1));
+
+    return d.isHandled();
   }
 
 private:
@@ -1632,6 +1676,10 @@ private:
   std::unique_ptr<Froth::VertexBuffer> m_VertexBuffer;
   std::unique_ptr<Froth::IndexBuffer> m_IndexBuffer;
   std::unique_ptr<Froth::VertexBuffer> m_VertexBuffer1;
+  uint32_t m_Width = 600;
+  uint32_t m_Height = 400;
+  float m_X = 0;
+  float m_Z = 0;
 };
 
 class Playground : public Froth::Application {

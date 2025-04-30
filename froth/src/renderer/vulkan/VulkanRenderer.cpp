@@ -7,12 +7,14 @@
 #include "VulkanSwapchain.h"
 #include "VulkanVertex.h"
 #include "VulkanVertexBuffer.h"
+#include "glm/ext/matrix_float4x4.hpp"
 #include "src/core/events/ApplicationEvent.h"
 #include "src/core/events/EventDispatcher.h"
 #include "src/core/logger/Logger.h"
 #include "src/platform/filesystem/Filesystem.h"
 #include "src/renderer/vulkan/VulkanDevice.h"
 #include "src/renderer/vulkan/VulkanInstance.h"
+#include "vulkan/vulkan_core.h"
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -252,6 +254,10 @@ std::unique_ptr<VertexBuffer> VulkanRenderer::createVertexBuffer(size_t sizeByte
 
 std::unique_ptr<IndexBuffer> VulkanRenderer::createIndexBuffer(size_t numIndices) {
   return std::make_unique<VulkanIndexBuffer>(*this, numIndices * sizeof(uint32_t), m_GraphicsCommandPool);
+}
+
+void VulkanRenderer::pushConstants(const glm::mat4 &mat) const {
+  vkCmdPushConstants(m_CommandBuffers[m_CurrentFrame], *m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mat);
 }
 
 void VulkanRenderer::bindVertexBuffer(const VulkanVertexBuffer &vertexBuffer) const {

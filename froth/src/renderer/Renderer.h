@@ -1,5 +1,6 @@
 #pragma once
 
+#include "glm/ext/matrix_float4x4.hpp"
 #include "src/platform/window/Window.h"
 #include "src/renderer/IndexBuffer.h"
 #include "src/renderer/VertexBuffer.h"
@@ -21,6 +22,8 @@ public:
   virtual void beginRenderPass() = 0;
   virtual void endRenderPass() = 0;
   virtual void endFrame() = 0;
+
+  virtual void pushConstants(const glm::mat4 &data) const = 0;
 
   virtual std::unique_ptr<VertexBuffer> createVertexBuffer(size_t sizeBytes) = 0;
   virtual std::unique_ptr<IndexBuffer> createIndexBuffer(size_t numIndices) = 0;

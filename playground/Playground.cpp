@@ -1,3 +1,6 @@
+#include "core/Layer.h"
+#include "renderer/Renderer.h"
+#include <memory>
 #define GLFW_INCLUDE_VULKAN
 #define STB_IMAGE_IMPLEMENTATION
 #define GLM_FORCE_RADIANS
@@ -36,6 +39,12 @@
 
 const std::string MODEL_PATH = "../playground/models/viking_room.obj";
 const std::string TEXTURE_PATH = "../playground/textures/viking_room.png";
+
+struct Vertex {
+  glm::vec3 pos;
+  glm::vec3 color;
+  glm::vec2 texCoord;
+};
 
 class VulkanTriangle : public Froth::Layer {
 public:
@@ -1588,10 +1597,32 @@ private:
   }
 };
 
+class TestLayer : public Froth::Layer {
+public:
+  TestLayer(Froth::Renderer &renderer) : m_Renderer(renderer) {
+    std::vector<Vertex> vData = {
+        {glm::vec3(-0.5, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
+        {glm::vec3(0.5, 0.5, 0.5), glm::vec3(0.0, 1.0, 0.0), glm::vec2(1.0, 0.0)},
+        {glm::vec3(0.0, -0.5, 0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(1.0, 0.0)}};
+    m_VertexBuffer = m_Renderer.createVertexBuffer(sizeof(Vertex) * vData.size());
+    m_VertexBuffer->write(sizeof(Vertex) * vData.size(), vData.data());
+  }
+
+  void onUpdate(double ts) override {
+    m_VertexBuffer->bind();
+    m_Renderer.onUpdate(ts);
+  }
+
+private:
+  Froth::Renderer &m_Renderer;
+  std::unique_ptr<Froth::VertexBuffer> m_VertexBuffer;
+};
+
 class Playground : public Froth::Application {
 public:
   Playground() {
     /*pushLayer(std::make_unique<VulkanTriangle>(window()));*/
+    pushLayer(std::make_unique<TestLayer>(renderer()));
   }
 };
 

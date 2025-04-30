@@ -9,6 +9,7 @@
 #include "renderer/vulkan/VulkanShaderModule.h"
 #include "renderer/vulkan/VulkanSwapchain.h"
 #include "renderer/vulkan/VulkanVertex.h"
+#include "renderer/vulkan/VulkanVertexBuffer.h"
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -42,13 +43,6 @@ VulkanRenderer::VulkanRenderer(const Window &window)
     m_FrameInFlightFences.emplace_back(m_Device, true);
   }
 
-  m_VertexBuffer = std::make_unique<VulkanVertexBuffer>(m_Device, sizeof(Vertex) * 100, m_GraphicsCommandPool);
-  std::vector<Vertex> vData = {
-      {glm::vec3(-0.5, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
-      {glm::vec3(0.5, 0.5, 0.5), glm::vec3(0.0, 1.0, 0.0), glm::vec2(1.0, 0.0)},
-      {glm::vec3(0.0, -0.5, 0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(1.0, 0.0)}};
-  m_VertexBuffer->write(vData.data(), sizeof(Vertex) * vData.size());
-
   m_IndexBuffer = std::make_unique<VulkanIndexBuffer>(m_Device, sizeof(uint32_t) * 3, m_GraphicsCommandPool);
   std::vector<uint32_t> iData = {0, 1, 2};
   m_IndexBuffer->write(iData.data(), sizeof(uint32_t) * iData.size());
@@ -70,10 +64,6 @@ std::unique_ptr<VulkanRenderer> VulkanRenderer::create(const Window &window) {
 
 void VulkanRenderer::onUpdate(double ts) {
 
-  // Bind vertex and index buffers
-  VkDeviceSize offsets[] = {0};
-  VkBuffer vertexBuffers[] = {*m_VertexBuffer};
-  vkCmdBindVertexBuffers(m_CommandBuffers[m_CurrentFrame], 0, 1, vertexBuffers, offsets);
   vkCmdBindIndexBuffer(m_CommandBuffers[m_CurrentFrame], *m_IndexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
   vkCmdDrawIndexed(m_CommandBuffers[m_CurrentFrame], 3, 1, 0, 0, 0);
@@ -259,6 +249,17 @@ void VulkanRenderer::endFrame() {
   }
 
   m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+std::unique_ptr<VertexBuffer> VulkanRenderer::createVertexBuffer(size_t sizeBytes) {
+  return std::make_unique<VulkanVertexBuffer>(m_Device, *this, sizeBytes, m_GraphicsCommandPool);
+}
+
+void VulkanRenderer::bindVertexBuffer(const VulkanVertexBuffer &vertexBuffer) const {
+  // TODO: Handle dynamic offsets
+  VkDeviceSize offsets[] = {0};
+  VkBuffer vertexBuffers[] = {vertexBuffer};
+  vkCmdBindVertexBuffers(m_CommandBuffers[m_CurrentFrame], 0, 1, vertexBuffers, offsets);
 }
 
 } // namespace Froth

@@ -42,6 +42,10 @@ public:
   virtual void endRenderPass() override;
   virtual void endFrame() override;
 
+  virtual std::unique_ptr<VertexBuffer> createVertexBuffer(size_t sizeBytes) override;
+
+  void bindVertexBuffer(const VulkanVertexBuffer &buffer) const;
+
 protected:
   VulkanRenderer(const Window &window);
 
@@ -70,7 +74,6 @@ private:
   std::vector<VulkanSemaphore> m_ImageAvailableSemaphores;
   std::vector<VulkanSemaphore> m_RenderFinishedSemaphores;
   std::vector<VulkanFence> m_FrameInFlightFences;
-  std::unique_ptr<VulkanVertexBuffer> m_VertexBuffer;
   std::unique_ptr<VulkanIndexBuffer> m_IndexBuffer;
   size_t m_CurrentFrame = 0;
   uint32_t m_CurrentImageIndex = 0;

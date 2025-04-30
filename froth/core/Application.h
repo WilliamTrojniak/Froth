@@ -12,9 +12,9 @@ namespace Froth {
 class Application {
 private:
   bool m_Running = true;
-  LayerStack m_LayerStack;
   std::unique_ptr<Window> m_Window;
   std::unique_ptr<Renderer> m_Renderer;
+  LayerStack m_LayerStack;
 
 public:
   Application();
@@ -30,6 +30,7 @@ public:
 
   // TODO: Remove
   const Window &window() { return *m_Window.get(); }
+  Renderer &renderer() { return *m_Renderer.get(); }
 };
 Application *CreateApplication();
 } // namespace Froth

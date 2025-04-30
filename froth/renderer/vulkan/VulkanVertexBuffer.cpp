@@ -2,12 +2,17 @@
 #include "renderer/vulkan/VulkanBuffer.h"
 #include "renderer/vulkan/VulkanCommandPool.h"
 #include "renderer/vulkan/VulkanDevice.h"
+#include "renderer/vulkan/VulkanRenderer.h"
 #include <algorithm>
 
 namespace Froth {
 
-VulkanVertexBuffer::VulkanVertexBuffer(const VulkanDevice &device, const VkDeviceSize &size, const VulkanCommandPool &commandPool)
-    : m_CommandPool(commandPool),
+VulkanVertexBuffer::VulkanVertexBuffer(const VulkanDevice &device,
+                                       const VulkanRenderer &renderer,
+                                       const VkDeviceSize &size,
+                                       const VulkanCommandPool &commandPool)
+    : m_Renderer(renderer),
+      m_CommandPool(commandPool),
       VulkanBuffer(device,
                    size,
                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
@@ -18,7 +23,7 @@ VulkanVertexBuffer::VulkanVertexBuffer(const VulkanDevice &device, const VkDevic
                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
 }
 
-void VulkanVertexBuffer::write(const void *vertexData, size_t vertexDataSize) {
+void VulkanVertexBuffer::write(size_t vertexDataSize, const void *vertexData) {
   vertexDataSize = std::min(vertexDataSize, static_cast<size_t>(size()));
 
   void *data = m_StagingBuffer.map();
@@ -26,6 +31,10 @@ void VulkanVertexBuffer::write(const void *vertexData, size_t vertexDataSize) {
   m_StagingBuffer.unmap();
 
   VulkanBuffer::copyBuffer(m_Device, m_StagingBuffer, *this, m_CommandPool);
+}
+
+void VulkanVertexBuffer::bind() {
+  m_Renderer.bindVertexBuffer(*this);
 }
 
 } // namespace Froth

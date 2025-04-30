@@ -15,8 +15,6 @@ public:
   virtual ~Renderer() = default;
 
   virtual void shutdown() = 0;
-
-  virtual void onUpdate(double ts) = 0;
   virtual bool onEvent(const Event &e) = 0;
 
   virtual bool beginFrame() = 0;
@@ -32,8 +30,7 @@ public:
    * @returns  Renderer Backend
    * @throws std::runtime_error if Window Surface cannot be created
    */
-  static std::unique_ptr<Renderer>
-  create(const Window &window);
+  static std::unique_ptr<Renderer> create(const Window &window);
 };
 
 } // namespace Froth

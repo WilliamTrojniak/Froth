@@ -57,10 +57,6 @@ std::unique_ptr<VulkanRenderer> VulkanRenderer::create(const Window &window) {
   return std::unique_ptr<VulkanRenderer>(new VulkanRenderer(window));
 }
 
-void VulkanRenderer::onUpdate(double ts) {
-
-} // namespace Froth
-
 void VulkanRenderer::shutdown() {
   vkDeviceWaitIdle(m_Device);
 }

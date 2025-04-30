@@ -8,74 +8,11 @@ set(HOME "$ENV{HOME}")
 project(Froth VERSION 0.0.1)
 configure_file(Defines.h.in Defines.h)
 
+file(GLOB_RECURSE ENGINE_SOURCES src/**.cpp)
+file(GLOB_RECURSE ENGINE_HEADERS src/**.h)
+
 add_library(${PROJECT_NAME}
-  core/events/ApplicationEvent.h
-  core/events/Event.h
-  core/events/EventDispatcher.h
-  core/events/KeyEvent.h
-  core/logger/Logger.h
-  core/logger/Logger.cpp
-  core/Application.h
-  core/Application.cpp
-  core/Entrypoint.h
-  core/Entrypoint.cpp
-  core/Layer.h
-  core/LayerStack.h
-  core/LayerStack.cpp
-  platform/filesystem/Filesystem.h
-  platform/filesystem/Filesystem.cpp
-  platform/keys/GLFWCodes.h
-  platform/keys/GLFWCodes.cpp
-  platform/keys/Keycodes.h
-  platform/keys/Mousecodes.h
-  platform/window/GLFWWindow.h
-  platform/window/GLFWWindow.cpp
-  platform/window/Window.h
-  platform/window/Window.cpp
-  renderer/vulkan/VulkanBuffer.h
-  renderer/vulkan/VulkanBuffer.cpp
-  renderer/vulkan/VulkanCommandBuffer.h
-  renderer/vulkan/VulkanCommandBuffer.cpp
-  renderer/vulkan/VulkanCommandPool.h
-  renderer/vulkan/VulkanCommandPool.cpp
-  renderer/vulkan/VulkanDescriptorSetLayout.h
-  renderer/vulkan/VulkanDescriptorSetLayout.cpp
-  renderer/vulkan/VulkanDevice.h
-  renderer/vulkan/VulkanDevice.cpp
-  renderer/vulkan/VulkanFence.h
-  renderer/vulkan/VulkanFence.cpp
-  renderer/vulkan/VulkanFramebuffer.h
-  renderer/vulkan/VulkanFramebuffer.cpp
-  renderer/vulkan/VulkanImage.h
-  renderer/vulkan/VulkanImage.cpp
-  renderer/vulkan/VulkanImageView.h
-  renderer/vulkan/VulkanImageView.cpp
-  renderer/vulkan/VulkanIndexBuffer.h
-  renderer/vulkan/VulkanIndexBuffer.cpp
-  renderer/vulkan/VulkanInstance.h
-  renderer/vulkan/VulkanInstance.cpp
-  renderer/vulkan/VulkanPipeline.h
-  renderer/vulkan/VulkanPipeline.cpp
-  renderer/vulkan/VulkanPipelineBuilder.h
-  renderer/vulkan/VulkanPipelineBuilder.cpp
-  renderer/vulkan/VulkanPipelineLayout.h
-  renderer/vulkan/VulkanPipelineLayout.cpp
-  renderer/vulkan/VulkanRenderer.h
-  renderer/vulkan/VulkanRenderer.cpp
-  renderer/vulkan/VulkanRenderPass.h
-  renderer/vulkan/VulkanRenderPass.cpp
-  renderer/vulkan/VulkanSemaphore.h
-  renderer/vulkan/VulkanSemaphore.cpp
-  renderer/vulkan/VulkanShaderModule.h
-  renderer/vulkan/VulkanShaderModule.cpp
-  renderer/vulkan/VulkanSurface.h
-  renderer/vulkan/VulkanSurface.cpp
-  renderer/vulkan/VulkanSwapchain.h
-  renderer/vulkan/VulkanSwapchain.cpp
-  renderer/vulkan/VulkanVertexBuffer.h
-  renderer/vulkan/VulkanVertexBuffer.cpp
-  renderer/Renderer.h
-  renderer/Renderer.cpp
+  ${ENGINE_SOURCES} ${ENGINE_HEADERS}
   dependencies/vendor/stb/stb/stb_image.h
   dependencies/vendor/tiny_obj_loader/tiny_obj_loader.h
 )

@@ -1,7 +1,3 @@
-#include "core/Layer.h"
-#include "renderer/IndexBuffer.h"
-#include "renderer/Renderer.h"
-#include <memory>
 #define GLFW_INCLUDE_VULKAN
 #define STB_IMAGE_IMPLEMENTATION
 #define GLM_FORCE_RADIANS
@@ -9,14 +5,18 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
+#include "src/core/Layer.h"
+#include "src/renderer/IndexBuffer.h"
+#include "src/renderer/Renderer.h"
+#include <memory>
 #include <stb/stb_image.h>
 
-#include "core/events/ApplicationEvent.h"
-#include "core/events/Event.h"
-#include "core/events/EventDispatcher.h"
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
-#include "platform/window/Window.h"
+#include "src/core/events/ApplicationEvent.h"
+#include "src/core/events/Event.h"
+#include "src/core/events/EventDispatcher.h"
+#include "src/platform/window/Window.h"
 #include <GLFW/glfw3.h>
 #include <array>
 #include <fstream>
@@ -36,7 +36,7 @@
 #include <stdexcept>
 #include <vector>
 
-#include "core/Entrypoint.h"
+#include "src/core/Entrypoint.h"
 
 const std::string MODEL_PATH = "../playground/models/viking_room.obj";
 const std::string TEXTURE_PATH = "../playground/textures/viking_room.png";

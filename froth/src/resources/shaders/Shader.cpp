@@ -1,6 +1,5 @@
 #include "Shader.h"
 #include "src/renderer/vulkan/VulkanShaderModule.h"
-#include "vulkan/vulkan_core.h"
 #include <vector>
 
 namespace Froth {
@@ -9,7 +8,7 @@ Shader::Shader(const std::vector<char> &code, Stage stage)
     : m_Code(code), m_Stage(stage) {
 }
 
-VulkanShaderModule &Shader::getVulkanShaderModule() {
+const VulkanShaderModule &Shader::getVulkanShaderModule() {
   if (!m_VulkanShaderModule.has_value()) {
     VkShaderStageFlagBits stage;
     switch (m_Stage) {

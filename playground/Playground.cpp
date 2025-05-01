@@ -1,45 +1,47 @@
-#include "glm/detail/qualifier.hpp"
-#include "glm/ext/matrix_float4x4.hpp"
-#include "src/core/events/KeyEvent.h"
-#include "src/platform/keys/Keycodes.h"
-#include "src/renderer/vulkan/VulkanPipelineBuilder.h"
+#include <cstdio>
 #define GLFW_INCLUDE_VULKAN
 #define STB_IMAGE_IMPLEMENTATION
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
+#include <GLFW/glfw3.h>
+
+#include "src/renderer/vulkan/VulkanInstance.h"
+
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
-#include "src/core/Layer.h"
-#include "src/renderer/IndexBuffer.h"
-#include "src/renderer/Renderer.h"
-#include <memory>
-#include <stb/stb_image.h>
-
+#include "glm/detail/qualifier.hpp"
 #include "glm/ext/matrix_clip_space.hpp"
+#include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/matrix_transform.hpp"
-#include "src/platform/window/Window.h"
-
+#include "src/core/Layer.h"
 #include "src/core/events/ApplicationEvent.h"
 #include "src/core/events/Event.h"
 #include "src/core/events/EventDispatcher.h"
-#include <GLFW/glfw3.h>
-#include <array>
-#include <fstream>
-#include <functional>
-#include <limits>
-#include <optional>
-#include <set>
-#include <string>
-#include <sys/types.h>
-
+#include "src/core/events/KeyEvent.h"
+#include "src/platform/filesystem/Filesystem.h"
+#include "src/platform/keys/Keycodes.h"
+#include "src/platform/window/Window.h"
+#include "src/renderer/IndexBuffer.h"
+#include "src/renderer/Renderer.h"
+#include "src/resources/materials/Material.h"
 #include <algorithm>
+#include <array>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <fstream>
+#include <functional>
 #include <iostream>
+#include <limits>
+#include <memory>
+#include <optional>
+#include <set>
+#include <stb/stb_image.h>
 #include <stdexcept>
+#include <string>
+#include <sys/types.h>
 #include <vector>
 
 #include "src/core/Entrypoint.h"
@@ -1624,6 +1626,14 @@ public:
     std::vector<uint32_t> iData = {0, 1, 2};
     m_IndexBuffer = m_Renderer.createIndexBuffer(iData.size());
     m_IndexBuffer->write(iData.size(), iData.data());
+
+    std::vector<char> vertShaderCode = Froth::Filesystem::readFile("../playground/shaders/vert.spv");
+    std::vector<char> fragShaderCode = Froth::Filesystem::readFile("../playground/shaders/frag.spv");
+
+    std::shared_ptr<Froth::Shader> vertShaderModule = std::make_shared<Froth::Shader>(vertShaderCode, Froth::Shader::Stage::VERTEX);
+    std::shared_ptr<Froth::Shader> fragShaderModule = std::make_shared<Froth::Shader>(fragShaderCode, Froth::Shader::Stage::FRAGMENT);
+
+    m_Material = Froth::Material(vertShaderModule, fragShaderModule);
   }
 
   void onUpdate(double ts) override {
@@ -1634,6 +1644,7 @@ public:
     proj[1][1] *= -1;
 
     glm::mat4 mvp = proj * view * model;
+    m_Renderer.bindMaterial(m_Material);
     m_Renderer.pushConstants(mvp);
     m_VertexBuffer->bind();
     m_IndexBuffer->bind();
@@ -1678,6 +1689,7 @@ private:
   std::unique_ptr<Froth::VertexBuffer> m_VertexBuffer;
   std::unique_ptr<Froth::IndexBuffer> m_IndexBuffer;
   std::unique_ptr<Froth::VertexBuffer> m_VertexBuffer1;
+  Froth::Material m_Material;
   uint32_t m_Width = 600;
   uint32_t m_Height = 400;
   float m_X = 0;

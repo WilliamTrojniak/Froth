@@ -21,6 +21,7 @@
 #include "src/renderer/vulkan/VulkanSurface.h"
 #include "src/renderer/vulkan/VulkanSwapchain.h"
 #include "src/renderer/vulkan/VulkanVertexBuffer.h"
+#include "src/resources/materials/Material.h"
 #include <memory>
 #include <vector>
 
@@ -53,6 +54,7 @@ public:
   virtual std::unique_ptr<IndexBuffer> createIndexBuffer(size_t sizeBytes) override;
 
   virtual void pushConstants(const glm::mat4 &data) const override;
+  virtual void bindMaterial(const Material &mat) override;
 
   void bindVertexBuffer(const VulkanVertexBuffer &buffer) const;
   void bindIndexBuffer(const VulkanIndexBuffer &buffer) const;
@@ -87,7 +89,9 @@ private:
   uint32_t m_CurrentFrame = 0;
   uint32_t m_CurrentImageIndex = 0;
   bool m_WindowResized = false;
+  Material m_Mat;
 
   void recreateSwapchain();
+  std::unique_ptr<VulkanPipeline> buildPipeline(const Material &mat);
 };
 } // namespace Froth

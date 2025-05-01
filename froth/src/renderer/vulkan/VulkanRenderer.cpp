@@ -14,6 +14,7 @@
 #include "src/platform/filesystem/Filesystem.h"
 #include "src/renderer/vulkan/VulkanDevice.h"
 #include "src/renderer/vulkan/VulkanInstance.h"
+#include "src/resources/materials/Material.h"
 #include "vulkan/vulkan_core.h"
 #include <cstdint>
 #include <memory>
@@ -98,30 +99,6 @@ void VulkanRenderer::recreateSwapchain() {
     framebufferAttachments[0] = m_Swapchain->views()[i];
     m_Framebuffers.emplace_back(*m_RenderPass, m_Swapchain->extent(), framebufferAttachments);
   }
-
-  std::vector<char> vertShaderCode = Filesystem::readFile("../playground/shaders/vert.spv");
-  std::vector<char> fragShaderCode = Filesystem::readFile("../playground/shaders/frag.spv");
-
-  VulkanShaderModule vertShaderModule = VulkanShaderModule(vertShaderCode, VK_SHADER_STAGE_VERTEX_BIT);
-  VulkanShaderModule fragShaderModule = VulkanShaderModule(fragShaderCode, VK_SHADER_STAGE_FRAGMENT_BIT);
-
-  VkViewport viewport{};
-  viewport.x = 0.0f;
-  viewport.y = 0.0f;
-  viewport.width = m_Swapchain->extent().width;
-  viewport.height = m_Swapchain->extent().height;
-  viewport.minDepth = 0.0f;
-  viewport.maxDepth = 1.0f;
-
-  VkRect2D scissor{};
-  scissor.offset = {0, 0};
-  scissor.extent = m_Swapchain->extent();
-
-  m_Pipeline = VulkanPipelineBuilder()
-                   .setVertexInput(Vertex::getInputDescription().getInfo())
-                   .setShaders(vertShaderModule, fragShaderModule)
-                   .setViewport(viewport, scissor)
-                   .build(*m_RenderPass, *m_PipelineLayout);
 }
 
 bool VulkanRenderer::onEvent(const Event &e) {
@@ -177,26 +154,6 @@ void VulkanRenderer::beginRenderPass() {
   renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
   renderPassInfo.pClearValues = clearValues.data();
   vkCmdBeginRenderPass(m_CommandBuffers[m_CurrentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-  // Bind pipeline
-  vkCmdBindPipeline(m_CommandBuffers[m_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, *m_Pipeline);
-
-  // TODO: Should this move elsewhere?
-  // Viewport
-  VkViewport viewport{};
-  viewport.x = 0.0f;
-  viewport.y = 0.0f;
-  viewport.width = m_Swapchain->extent().width;
-  viewport.height = m_Swapchain->extent().height;
-  viewport.minDepth = 0.0f;
-  viewport.maxDepth = 1.0f;
-  vkCmdSetViewport(m_CommandBuffers[m_CurrentFrame], 0, 1, &viewport);
-
-  // Scissor
-  VkRect2D scissor{};
-  scissor.offset = {0, 0};
-  scissor.extent = m_Swapchain->extent();
-  vkCmdSetScissor(m_CommandBuffers[m_CurrentFrame], 0, 1, &scissor);
 }
 
 void VulkanRenderer::endRenderPass() {
@@ -260,6 +217,32 @@ void VulkanRenderer::pushConstants(const glm::mat4 &mat) const {
   vkCmdPushConstants(m_CommandBuffers[m_CurrentFrame], *m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mat);
 }
 
+void VulkanRenderer::bindMaterial(const Material &mat) {
+  // FIXME: This assumes only one material
+  if (!m_Pipeline) {
+    m_Pipeline = buildPipeline(mat);
+  }
+  // Bind pipeline
+  vkCmdBindPipeline(m_CommandBuffers[m_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, *m_Pipeline);
+
+  // TODO: Should this move elsewhere?
+  // Viewport
+  VkViewport viewport{};
+  viewport.x = 0.0f;
+  viewport.y = 0.0f;
+  viewport.width = m_Swapchain->extent().width;
+  viewport.height = m_Swapchain->extent().height;
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+  vkCmdSetViewport(m_CommandBuffers[m_CurrentFrame], 0, 1, &viewport);
+
+  // Scissor
+  VkRect2D scissor{};
+  scissor.offset = {0, 0};
+  scissor.extent = m_Swapchain->extent();
+  vkCmdSetScissor(m_CommandBuffers[m_CurrentFrame], 0, 1, &scissor);
+}
+
 void VulkanRenderer::bindVertexBuffer(const VulkanVertexBuffer &vertexBuffer) const {
   // TODO: Handle dynamic offsets
   VkDeviceSize offsets[] = {0};
@@ -273,6 +256,26 @@ void VulkanRenderer::bindIndexBuffer(const VulkanIndexBuffer &indexBuffer) const
 
   // TODO: Seperate into another call?
   vkCmdDrawIndexed(m_CommandBuffers[m_CurrentFrame], indexBuffer.indexCount(), 1, 0, 0, 0);
+}
+
+std::unique_ptr<VulkanPipeline> VulkanRenderer::buildPipeline(const Material &mat) {
+  VkViewport viewport{};
+  viewport.x = 0.0f;
+  viewport.y = 0.0f;
+  viewport.width = m_Swapchain->extent().width;
+  viewport.height = m_Swapchain->extent().height;
+  viewport.minDepth = 0.0f;
+  viewport.maxDepth = 1.0f;
+
+  VkRect2D scissor{};
+  scissor.offset = {0, 0};
+  scissor.extent = m_Swapchain->extent();
+
+  return VulkanPipelineBuilder()
+      .setVertexInput(Vertex::getInputDescription().getInfo())
+      .setShaders(mat.frag().getVulkanShaderModule(), mat.vert().getVulkanShaderModule())
+      .setViewport(viewport, scissor)
+      .build(*m_RenderPass, *m_PipelineLayout);
 }
 
 } // namespace Froth

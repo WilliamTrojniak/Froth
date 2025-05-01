@@ -14,7 +14,7 @@ public:
 
   Shader(const std::vector<char> &code, Stage stage);
 
-  VulkanShaderModule &getVulkanShaderModule();
+  const VulkanShaderModule &getVulkanShaderModule();
 
 private:
   const std::vector<char> m_Code;

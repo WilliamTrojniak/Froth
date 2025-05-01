@@ -4,6 +4,7 @@
 #include "src/platform/window/Window.h"
 #include "src/renderer/IndexBuffer.h"
 #include "src/renderer/VertexBuffer.h"
+#include "src/resources/materials/Material.h"
 #include <memory>
 
 namespace Froth {
@@ -24,6 +25,7 @@ public:
   virtual void endFrame() = 0;
 
   virtual void pushConstants(const glm::mat4 &data) const = 0;
+  virtual void bindMaterial(const Material &mat) = 0;
 
   virtual std::unique_ptr<VertexBuffer> createVertexBuffer(size_t sizeBytes) = 0;
   virtual std::unique_ptr<IndexBuffer> createIndexBuffer(size_t numIndices) = 0;

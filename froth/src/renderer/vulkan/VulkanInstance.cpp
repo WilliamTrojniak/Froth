@@ -2,18 +2,19 @@
 #include "Defines.h"
 #include "src/core/logger/Logger.h"
 #include "src/platform/window/Window.h"
+#include "vulkan/vulkan_core.h"
 #include <set>
 #include <vector>
 
 namespace Froth {
 
-const char *VK_LAYER_KHRONOS_validation = "VK_LAYER_KHRONOS_validation";
+static const char *VK_LAYER_KHRONOS_validation = "VK_LAYER_KHRONOS_validation";
 
 bool hasExtensions(const std::vector<const char *> &extensions) noexcept;
 bool getRequiredExtensions(std::vector<const char *> &extensions) noexcept;
 bool hasLayers(const std::vector<const char *> &layers) noexcept;
 
-VulkanInstance::VulkanInstance(const VkAllocationCallbacks *allocator) : m_Allocator(allocator) {
+VulkanInstance::VulkanInstance(const VkAllocationCallbacks *allocator) {
   VkApplicationInfo appInfo{VK_STRUCTURE_TYPE_APPLICATION_INFO};
   appInfo.pApplicationName = "App Name";                 // TODO: Make configurable
   appInfo.applicationVersion = VK_MAKE_VERSION(0, 1, 0); // TODO: Make configurable
@@ -32,11 +33,10 @@ VulkanInstance::VulkanInstance(const VkAllocationCallbacks *allocator) : m_Alloc
   }
 
   // Validation Layers
-  // TODO: Only in debug builds
-  const std::vector<const char *> validationLayers = {
-      VK_LAYER_KHRONOS_validation,
-  };
-
+  std::vector<const char *> validationLayers{};
+#ifndef FROTH_DEBUG
+  validationLayers.emplace_back(VK_LAYER_KHRONOS_validation);
+#endif // FROTH_DEBUG
   if (!hasLayers(validationLayers)) {
     FROTH_ERROR("Vulkan does not support required layers");
   }
@@ -50,16 +50,30 @@ VulkanInstance::VulkanInstance(const VkAllocationCallbacks *allocator) : m_Alloc
   createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
   createInfo.ppEnabledLayerNames = validationLayers.data();
 
-  if (vkCreateInstance(&createInfo, m_Allocator, &m_Instance) != VK_SUCCESS) {
+  if (vkCreateInstance(&createInfo, allocator, &m_Instance) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Vulkan instance")
   };
 }
 
+VulkanInstance::VulkanInstance(VulkanInstance &&o) noexcept
+    : m_Instance(o.m_Instance) {
+  o.m_Instance = nullptr;
+}
+VulkanInstance &VulkanInstance::operator=(VulkanInstance &&o) noexcept {
+  m_Instance = o.m_Instance;
+  o.m_Instance = nullptr;
+  return *this;
+}
+
+void VulkanInstance::cleanup(const VkAllocationCallbacks *allocator) {
+  vkDestroyInstance(m_Instance, allocator);
+  m_Instance = nullptr;
+  FROTH_DEBUG("Cleaned up Vulkan Instance");
+}
+
 VulkanInstance::~VulkanInstance() {
   if (m_Instance != nullptr) {
-    vkDestroyInstance(m_Instance, m_Allocator);
-    m_Instance = nullptr;
-    FROTH_DEBUG("Destroyed Vulkan Instance");
+    FROTH_WARN("Vulkan Instance was never cleaned up");
   }
 }
 
@@ -79,13 +93,6 @@ bool getRequiredExtensions(std::vector<const char *> &extensions) noexcept {
   extensions.emplace_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 
   return true;
-}
-
-void VulkanInstance::operator=(VulkanInstance &&other) {
-  m_Instance = other.m_Instance;
-  m_Allocator = other.m_Allocator;
-  other.m_Instance = nullptr;
-  other.m_Allocator = nullptr;
 }
 
 bool hasExtensions(const std::vector<const char *> &extensions) noexcept {

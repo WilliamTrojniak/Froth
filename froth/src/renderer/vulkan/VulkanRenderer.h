@@ -6,6 +6,7 @@
 #include "src/renderer/Renderer.h"
 #include "src/renderer/vulkan/VulkanCommandBuffer.h"
 #include "src/renderer/vulkan/VulkanCommandPool.h"
+#include "src/renderer/vulkan/VulkanContext.h"
 #include "src/renderer/vulkan/VulkanDescriptorSetLayout.h"
 #include "src/renderer/vulkan/VulkanDevice.h"
 #include "src/renderer/vulkan/VulkanFence.h"
@@ -28,15 +29,13 @@
 namespace Froth {
 class VulkanRenderer : public Renderer {
   friend class Renderer;
-
-public:
-  struct VulkanContext {
-    VulkanInstance instance;
-    VulkanDevice device;
+  struct _tag {
+    explicit _tag() = default;
   };
 
-  static const VulkanContext &context() { return s_Ctx; }
-  virtual void shutdown() override;
+public:
+  VulkanRenderer(const Window &window, _tag);
+  static void shutdown();
 
   ~VulkanRenderer() override;
   VulkanRenderer(VulkanRenderer const &) = delete;
@@ -44,6 +43,7 @@ public:
 
   virtual bool onEvent(const Event &e) override;
   bool onWindowResize(WindowResizeEvent &e);
+  bool onFramebufferResize(FramebufferResizeEvent &e);
 
   virtual bool beginFrame() override;
   virtual void beginRenderPass() override;
@@ -60,18 +60,15 @@ public:
   void bindIndexBuffer(const VulkanIndexBuffer &buffer) const;
 
 protected:
-  VulkanRenderer(VulkanSurface &&surface);
-
   /* Creates a Vulkan Renderer backend
    *
    * @returns Vulkan Renderer Backend
    * @throws std::runtime_error if Window Surface cannot be created
    */
   static std::unique_ptr<VulkanRenderer> create(const Window &window);
+  static void init(const Window &window) { VulkanContext::get().init(window); };
 
 private:
-  static bool s_Initialized;
-  static VulkanContext s_Ctx;
   VulkanSurface m_Surface;
   VulkanDescriptorSetLayout m_DescriptorSetLayout;
   VulkanCommandPool m_GraphicsCommandPool;

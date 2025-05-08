@@ -1,0 +1,58 @@
+#include "VulkanContext.h"
+#include "src/core/logger/Logger.h"
+#include "src/renderer/vulkan/VulkanDevice.h"
+#include "src/renderer/vulkan/VulkanInstance.h"
+#include "src/renderer/vulkan/VulkanSurface.h"
+#include "vulkan/vulkan_core.h"
+
+namespace Froth {
+
+VulkanContext::VulkanContext()
+    : m_Instance(nullptr) {
+}
+
+void VulkanContext::cleanup() {
+  m_Device.cleanup();
+  m_Instance.cleanup(m_Allocator);
+  m_PhysicalDevice = nullptr;
+  m_Allocator = nullptr;
+}
+
+void VulkanContext::init(const Window &window) {
+  m_Allocator = nullptr; // TODO: Configurable
+  m_Instance = VulkanInstance(m_Allocator);
+
+  // Physical Device Selection & Logical Device Creation
+  {
+    VulkanSurface surface = window.createVulkanSurface();
+
+    // Physical Device
+    VulkanDevice::PhysicalDeviceProperties requirements{};
+    requirements.graphics = true;
+    requirements.present = true;
+    requirements.compute = true;
+    requirements.transfer = true;
+
+    requirements.extensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+    requirements.extensions.emplace_back("VK_KHR_portability_subset"); // TODO: Only enable on MacOS
+
+#ifdef FROTH_BUILD_DEBUG
+    requirements.layers.emplace_back("VK_LAYER_KHRONOS_validation");
+#endif // FROTH_BUILD_DEBUG
+
+    requirements.samplerAnisotropy = true; // TODO: This can probably be made optional?
+    // Device Requirements
+
+    m_PhysicalDevice = VulkanDevice::pickPhysicalDevice(m_Instance, surface, requirements);
+    if (m_PhysicalDevice == nullptr) {
+      FROTH_ERROR("Failed to find suitable Vulkan phyiscal device")
+    }
+
+    // Logical Device Creation
+    VulkanDevice::QueueFamilies queueFamilies = VulkanDevice::getPhysicalDeviceQueueFamilies(m_PhysicalDevice, surface);
+    m_Device = VulkanDevice(m_Allocator, m_PhysicalDevice, queueFamilies, requirements);
+    FROTH_DEBUG("Initialized Vulkan Context")
+  }
+}
+
+} // namespace Froth

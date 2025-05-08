@@ -23,10 +23,12 @@ Application::Application() {
     return;
   }
   m_Window->setEventCallbackFunction(BIND_FUNC(onEvent));
+
+  Renderer::init(*m_Window);
   m_Renderer = Renderer::create(*m_Window);
 }
 Application::~Application() {
-  m_Renderer->shutdown();
+  Renderer::shutdown();
 }
 
 void Application::Run() {

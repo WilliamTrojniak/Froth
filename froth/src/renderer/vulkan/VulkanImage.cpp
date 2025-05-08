@@ -1,7 +1,7 @@
 #include "VulkanImage.h"
 #include "VulkanImageView.h"
-#include "VulkanRenderer.h"
 #include "src/core/logger/Logger.h"
+#include "src/renderer/vulkan/VulkanContext.h"
 
 namespace Froth {
 
@@ -24,16 +24,17 @@ VulkanImage::VulkanImage(const CreateInfo &opts) {
   createInfo.samples = VK_SAMPLE_COUNT_1_BIT;
   createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-  if (vkCreateImage(VulkanRenderer::context().device, &createInfo, VulkanRenderer::context().instance.allocator(), &m_Image) != VK_SUCCESS) {
+  VulkanContext &vctx = VulkanContext::get();
+  if (vkCreateImage(vctx.device(), &createInfo, vctx.allocator(), &m_Image) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Vulkan Image");
   }
 
   VkMemoryRequirements memRequirements;
-  vkGetImageMemoryRequirements(VulkanRenderer::context().device, m_Image, &memRequirements);
+  vkGetImageMemoryRequirements(vctx.device(), m_Image, &memRequirements);
 
   // TODO: Property flag will need to be brought to part of the constructor
-  m_Memory = VulkanRenderer::context().device.allocateMemory(memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-  if (vkBindImageMemory(VulkanRenderer::context().device, m_Image, m_Memory, 0) != VK_SUCCESS) {
+  m_Memory = vctx.device().allocateMemory(memRequirements, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+  if (vkBindImageMemory(vctx.device(), m_Image, m_Memory, 0) != VK_SUCCESS) {
     cleanup();
     FROTH_ERROR("Failed to bind Vulkan Image memory");
   }
@@ -48,14 +49,16 @@ VulkanImageView VulkanImage::createView(VkFormat format, VkImageAspectFlags aspe
 }
 
 void VulkanImage::cleanup() {
+  VulkanContext &vctx = VulkanContext::get();
   if (m_Memory) {
-    vkFreeMemory(VulkanRenderer::context().device, m_Memory, VulkanRenderer::context().instance.allocator());
+
+    vkFreeMemory(vctx.device(), m_Memory, vctx.allocator());
     m_Memory = nullptr;
     FROTH_DEBUG("Freed Vulkan Image memory")
   }
 
   if (m_Image) {
-    vkDestroyImage(VulkanRenderer::context().device, m_Image, VulkanRenderer::context().instance.allocator());
+    vkDestroyImage(vctx.device(), m_Image, vctx.allocator());
     m_Image = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Image")
   }

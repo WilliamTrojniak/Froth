@@ -1,9 +1,8 @@
 #include "VulkanRenderPass.h"
-#include "VulkanDevice.h"
 #include "VulkanImageView.h"
-#include "VulkanRenderer.h"
 #include "VulkanSwapchain.h"
 #include "src/core/logger/Logger.h"
+#include "src/renderer/vulkan/VulkanContext.h"
 
 namespace Froth {
 
@@ -60,7 +59,8 @@ VulkanRenderPass::VulkanRenderPass(const VulkanSwapChain &swapchain, const Vulka
   renderPassInfo.dependencyCount = 1;
   renderPassInfo.pDependencies = &dependency;
 
-  if (vkCreateRenderPass(VulkanRenderer::context().device, &renderPassInfo, VulkanRenderer::context().instance.allocator(), &m_RenderPass) != VK_SUCCESS) {
+  VulkanContext &vctx = VulkanContext::get();
+  if (vkCreateRenderPass(vctx.device(), &renderPassInfo, vctx.allocator(), &m_RenderPass) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Render Pass")
   }
 }
@@ -71,7 +71,8 @@ VulkanRenderPass::~VulkanRenderPass() {
 
 void VulkanRenderPass::cleanup() {
   if (m_RenderPass) {
-    vkDestroyRenderPass(VulkanRenderer::context().device, m_RenderPass, VulkanRenderer::context().instance.allocator());
+    VulkanContext &vctx = VulkanContext::get();
+    vkDestroyRenderPass(vctx.device(), m_RenderPass, vctx.allocator());
     m_RenderPass = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Render Pass")
   }

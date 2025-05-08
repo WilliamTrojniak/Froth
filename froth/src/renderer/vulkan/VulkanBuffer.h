@@ -18,13 +18,13 @@ public:
   void *map() const;
   void unmap() const;
 
-  static void copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest, const VulkanCommandPool &commandPool);
+  static void copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest, const VulkanCommandPool &pool);
 
 private:
-  void cleanup();
   VkDeviceMemory m_Memory;
   VkBuffer m_Buffer;
   VkDeviceSize m_Size;
+  void cleanup();
 };
 
 } // namespace Froth

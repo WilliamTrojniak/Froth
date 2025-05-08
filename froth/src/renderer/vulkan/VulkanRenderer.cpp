@@ -3,7 +3,6 @@
 #include "VulkanIndexBuffer.h"
 #include "VulkanPipelineBuilder.h"
 #include "VulkanPipelineLayout.h"
-#include "VulkanShaderModule.h"
 #include "VulkanSwapchain.h"
 #include "VulkanVertex.h"
 #include "VulkanVertexBuffer.h"
@@ -11,8 +10,7 @@
 #include "src/core/events/ApplicationEvent.h"
 #include "src/core/events/EventDispatcher.h"
 #include "src/core/logger/Logger.h"
-#include "src/platform/filesystem/Filesystem.h"
-#include "src/renderer/vulkan/VulkanDevice.h"
+#include "src/renderer/vulkan/VulkanContext.h"
 #include "src/renderer/vulkan/VulkanInstance.h"
 #include "src/resources/materials/Material.h"
 #include "vulkan/vulkan_core.h"
@@ -30,19 +28,17 @@ bool hasExtensions(const std::vector<const char *> &extensions) noexcept;
 bool getRequiredExtensions(std::vector<const char *> &extensions) noexcept;
 bool hasLayers(const std::vector<const char *> &layers) noexcept;
 
-bool VulkanRenderer::s_Initialized = false;
-VulkanRenderer::VulkanContext VulkanRenderer::s_Ctx{};
-
-VulkanRenderer::VulkanRenderer(VulkanSurface &&surface)
-    : m_Surface(std::forward<VulkanSurface>(surface)),
+VulkanRenderer::VulkanRenderer(const Window &window, _tag)
+    : m_Surface(window.createVulkanSurface()),
       m_DescriptorSetLayout(),
-      m_GraphicsCommandPool(s_Ctx.device.getQueueFamilies().graphics.index) {
+      m_GraphicsCommandPool(VulkanContext::get().device().getQueueFamilies().graphics.index) {
 
-  std::vector<VkDescriptorSetLayout> descSetLayouts = {m_DescriptorSetLayout.data()};
+  std::vector<VkDescriptorSetLayout>
+      descSetLayouts = {m_DescriptorSetLayout.data()};
   m_PipelineLayout = std::make_unique<VulkanPipelineLayout>(descSetLayouts);
 
   for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    m_CommandBuffers.emplace_back(m_GraphicsCommandPool);
+    m_CommandBuffers.push_back(m_GraphicsCommandPool.AllocateCommandBuffer());
     m_ImageAvailableSemaphores.emplace_back();
     m_RenderFinishedSemaphores.emplace_back();
     m_FrameInFlightFences.emplace_back(true);
@@ -51,44 +47,42 @@ VulkanRenderer::VulkanRenderer(VulkanSurface &&surface)
   recreateSwapchain();
 }
 
-VulkanRenderer::~VulkanRenderer() {}
+VulkanRenderer::~VulkanRenderer() {
+  VulkanContext &vctx = VulkanContext::get();
+  for (auto &commandBuffer : m_CommandBuffers) {
+    commandBuffer.cleanup(m_GraphicsCommandPool);
+  }
+}
 
 std::unique_ptr<VulkanRenderer> VulkanRenderer::create(const Window &window) {
-  if (!s_Initialized) {
-    s_Ctx.instance = VulkanInstance(nullptr); // TODO: Configurable allocator
-  }
-
-  VulkanSurface surface = window.createVulkanSurface();
-
-  if (!s_Initialized) {
-    s_Ctx.device = VulkanDevice(surface);
-    s_Initialized = true;
-  }
-
-  return std::unique_ptr<VulkanRenderer>(new VulkanRenderer(std::move(surface)));
+  return std::make_unique<VulkanRenderer>(window, _tag{});
 }
 
 void VulkanRenderer::shutdown() {
-  vkDeviceWaitIdle(s_Ctx.device);
+  VulkanContext &vctx = VulkanContext::get();
+  vkDeviceWaitIdle(vctx.device());
+  vctx.cleanup();
 }
 
 void VulkanRenderer::recreateSwapchain() {
   FROTH_DEBUG("Recreating swapchain");
-  vkDeviceWaitIdle(s_Ctx.device);
+  VulkanContext &vctx = VulkanContext::get();
+  vkDeviceWaitIdle(vctx.device());
 
   m_Pipeline = nullptr;
   m_Framebuffers.clear();
   m_RenderPass = nullptr;
   m_DepthImageView = nullptr;
   m_DepthImage = nullptr;
-  m_Swapchain = std::make_unique<VulkanSwapChain>(m_Surface, m_Swapchain.get());
-  m_DepthImage = std::make_unique<VulkanImage>(VulkanImage::CreateInfo{
-      .extent = {.width = m_Swapchain->extent().width,
-                 .height = m_Swapchain->extent().height},
-      .format = VK_FORMAT_D32_SFLOAT,
-      .tiling = VK_IMAGE_TILING_OPTIMAL,
-      .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-  });
+  m_Swapchain = VulkanSwapChain::create(m_Surface, m_Swapchain.get());
+  m_DepthImage = std::make_unique<VulkanImage>(
+      VulkanImage::CreateInfo{
+          .extent = {.width = m_Swapchain->extent().width,
+                     .height = m_Swapchain->extent().height},
+          .format = VK_FORMAT_D32_SFLOAT,
+          .tiling = VK_IMAGE_TILING_OPTIMAL,
+          .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+      });
   m_DepthImageView = std::make_unique<VulkanImageView>(m_DepthImage->createView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT));
   m_RenderPass = std::make_unique<VulkanRenderPass>(*m_Swapchain, *m_DepthImageView);
 
@@ -104,6 +98,7 @@ void VulkanRenderer::recreateSwapchain() {
 bool VulkanRenderer::onEvent(const Event &e) {
   EventDispatcher dispatcher = EventDispatcher(e);
   dispatcher.dispatch<WindowResizeEvent>(BIND_FUNC(onWindowResize));
+  dispatcher.dispatch<FramebufferResizeEvent>(BIND_FUNC(onFramebufferResize));
   return dispatcher.isHandled();
 }
 
@@ -111,12 +106,18 @@ bool VulkanRenderer::onWindowResize(WindowResizeEvent &e) {
   m_WindowResized = true;
   return false;
 }
+bool VulkanRenderer::onFramebufferResize(FramebufferResizeEvent &e) {
+  m_Surface.onFramebufferResize(e);
+  return false;
+}
 
 bool VulkanRenderer::beginFrame() {
-  VkFence inFlightFence[] = {m_FrameInFlightFences[m_CurrentFrame]};
-  vkWaitForFences(s_Ctx.device, 1, inFlightFence, VK_TRUE, UINT64_MAX);
+  VulkanContext &vctx = VulkanContext::get();
 
-  VkResult result = vkAcquireNextImageKHR(s_Ctx.device, *m_Swapchain, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_CurrentImageIndex);
+  VkFence inFlightFence[] = {m_FrameInFlightFences[m_CurrentFrame]};
+  vkWaitForFences(vctx.device(), 1, inFlightFence, VK_TRUE, UINT64_MAX);
+
+  VkResult result = vkAcquireNextImageKHR(vctx.device(), *m_Swapchain, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_CurrentImageIndex);
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
     m_WindowResized = false;
     recreateSwapchain();
@@ -124,7 +125,7 @@ bool VulkanRenderer::beginFrame() {
     FROTH_ERROR("Failed to acquire swapchain image");
   }
 
-  vkResetFences(s_Ctx.device, 1, inFlightFence);
+  vkResetFences(vctx.device(), 1, inFlightFence);
   vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
 
   // Record command buffer
@@ -164,6 +165,7 @@ void VulkanRenderer::endFrame() {
   if (vkEndCommandBuffer(m_CommandBuffers[m_CurrentFrame]) != VK_SUCCESS) {
     FROTH_ERROR("Failed to record command buffer");
   }
+  VulkanContext &vctx = VulkanContext::get();
 
   // Submit draw command buffer
   VkSubmitInfo submitInfo{};
@@ -179,7 +181,7 @@ void VulkanRenderer::endFrame() {
   submitInfo.pCommandBuffers = commandBuffer;
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores = renderFinishedSemaphore;
-  if (vkQueueSubmit(s_Ctx.device.getQueueFamilies().graphics.queue, 1, &submitInfo, m_FrameInFlightFences[m_CurrentFrame]) != VK_SUCCESS) {
+  if (vkQueueSubmit(vctx.device().getQueueFamilies().graphics.queue, 1, &submitInfo, m_FrameInFlightFences[m_CurrentFrame]) != VK_SUCCESS) {
     FROTH_ERROR("Failed to submit draw command buffer");
   }
 
@@ -194,7 +196,7 @@ void VulkanRenderer::endFrame() {
   presentInfo.pImageIndices = &m_CurrentImageIndex;
   presentInfo.pResults = nullptr;
 
-  VkResult result = vkQueuePresentKHR(s_Ctx.device.getQueueFamilies().present.queue, &presentInfo);
+  VkResult result = vkQueuePresentKHR(vctx.device().getQueueFamilies().present.queue, &presentInfo);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_WindowResized) {
     m_WindowResized = false;
     recreateSwapchain();

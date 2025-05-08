@@ -45,4 +45,28 @@ private:
   size_t m_Width, m_Height;
 };
 
+class FramebufferResizeEvent : public Event {
+public:
+  FramebufferResizeEvent(size_t width, size_t height)
+      : m_Width(width), m_Height(height) {}
+  static inline EventType staticEventType() { return EventType::FramebufferResize; }
+  virtual inline EventType eventType() const override {
+    return staticEventType();
+  }
+  virtual inline int categoryFlags() const override {
+    return EventCategoryApplication;
+  }
+  virtual std::string ToString() const override {
+    std::stringstream ss;
+    ss << "FramebufferResizeEvent: " << m_Width << ", " << m_Height;
+    return ss.str();
+  }
+
+  size_t width() { return m_Width; }
+  size_t height() { return m_Height; }
+
+private:
+  size_t m_Width, m_Height;
+};
+
 } // namespace Froth

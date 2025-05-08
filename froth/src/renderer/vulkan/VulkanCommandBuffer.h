@@ -1,12 +1,13 @@
 #pragma once
 
-#include "VulkanCommandPool.h"
+#include "VulkanDevice.h"
 
 namespace Froth {
 
 class VulkanCommandBuffer {
+  friend class VulkanCommandPool;
+
 public:
-  VulkanCommandBuffer(const VulkanCommandPool &pool);
   ~VulkanCommandBuffer();
 
   VulkanCommandBuffer(VulkanCommandBuffer const &) = delete;
@@ -14,12 +15,14 @@ public:
 
   VulkanCommandBuffer(VulkanCommandBuffer &&);
   operator VkCommandBuffer() const { return m_Buffer; }
+  void cleanup(VkCommandPool pool);
+
+protected:
+  VulkanCommandBuffer() = default;
+  VkCommandBuffer &data() { return m_Buffer; }
 
 private:
-  const VulkanCommandPool &m_Pool;
-  VkCommandBuffer m_Buffer;
-
-  void cleanup();
+  VkCommandBuffer m_Buffer = nullptr;
 };
 
 } // namespace Froth

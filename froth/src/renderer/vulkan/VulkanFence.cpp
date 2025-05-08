@@ -1,6 +1,6 @@
 #include "VulkanFence.h"
-#include "VulkanRenderer.h"
 #include "src/core/logger/Logger.h"
+#include "src/renderer/vulkan/VulkanContext.h"
 
 namespace Froth {
 
@@ -11,7 +11,8 @@ VulkanFence::VulkanFence(bool signaled) {
     semaphoreInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
   }
 
-  if (vkCreateFence(VulkanRenderer::context().device, &semaphoreInfo, VulkanRenderer::context().instance.allocator(), &m_Fence) != VK_SUCCESS) {
+  VulkanContext &vctx = VulkanContext::get();
+  if (vkCreateFence(vctx.device(), &semaphoreInfo, vctx.allocator(), &m_Fence) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Fence");
   }
 }
@@ -27,7 +28,8 @@ VulkanFence::~VulkanFence() {
 
 void VulkanFence::cleanup() {
   if (m_Fence) {
-    vkDestroyFence(VulkanRenderer::context().device, m_Fence, VulkanRenderer::context().instance.allocator());
+    VulkanContext &vctx = VulkanContext::get();
+    vkDestroyFence(vctx.device(), m_Fence, vctx.allocator());
     m_Fence = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Fence")
   }

@@ -1,7 +1,6 @@
 #pragma once
 
-#include "src/renderer/vulkan/VulkanDevice.h"
-#include "src/renderer/vulkan/VulkanRenderPass.h"
+#include "VulkanRenderPass.h"
 #include <vector>
 
 namespace Froth {

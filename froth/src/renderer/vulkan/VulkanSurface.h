@@ -1,6 +1,7 @@
 #pragma once
 
-#include "VulkanInstance.h"
+#include "src/core/events/ApplicationEvent.h"
+#include "vulkan/vulkan_core.h"
 
 namespace Froth {
 
@@ -8,18 +9,18 @@ class Window;
 class VulkanSurface {
 
 public:
-  VulkanSurface(const Window &window, VkSurfaceKHR surface)
-      : m_Surface(surface), m_Window(window) {}
+  VulkanSurface(VkSurfaceKHR surface, const VkExtent2D &extent)
+      : m_Surface(surface), m_Extent(extent) {}
   VulkanSurface(const VulkanSurface &) = delete;
   VulkanSurface(VulkanSurface &&);
   VulkanSurface &operator=(const VulkanSurface &) = delete;
   ~VulkanSurface();
   operator VkSurfaceKHR() const { return m_Surface; }
-
-  void getFramebufferSize(uint32_t &width, uint32_t &height) const;
+  bool onFramebufferResize(FramebufferResizeEvent &e);
+  const VkExtent2D &extent() const { return m_Extent; }
 
 private:
-  const Window &m_Window;
   VkSurfaceKHR m_Surface;
+  VkExtent2D m_Extent;
 };
 } // namespace Froth

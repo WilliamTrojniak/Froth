@@ -1,6 +1,6 @@
 #include "VulkanFramebuffer.h"
-#include "VulkanRenderer.h"
 #include "src/core/logger/Logger.h"
+#include "src/renderer/vulkan/VulkanContext.h"
 
 namespace Froth {
 
@@ -15,7 +15,8 @@ VulkanFramebuffer::VulkanFramebuffer(const VulkanRenderPass &renderPass, const V
   framebufferInfo.height = extent.height;
   framebufferInfo.layers = 1;
 
-  if (vkCreateFramebuffer(VulkanRenderer::context().device, &framebufferInfo, VulkanRenderer::context().instance.allocator(), &m_Framebuffer) != VK_SUCCESS) {
+  VulkanContext &vctx = VulkanContext::get();
+  if (vkCreateFramebuffer(vctx.device(), &framebufferInfo, vctx.allocator(), &m_Framebuffer) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create framebuffer")
   }
 }
@@ -31,7 +32,8 @@ VulkanFramebuffer::~VulkanFramebuffer() {
 
 void VulkanFramebuffer::cleanup() {
   if (m_Framebuffer) {
-    vkDestroyFramebuffer(VulkanRenderer::context().device, m_Framebuffer, VulkanRenderer::context().instance.allocator());
+    VulkanContext &vctx = VulkanContext::get();
+    vkDestroyFramebuffer(vctx.device(), m_Framebuffer, vctx.allocator());
     m_Framebuffer = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Framebuffer")
   }

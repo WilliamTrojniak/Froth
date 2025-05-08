@@ -1,6 +1,6 @@
 #include "VulkanPipeline.h"
-#include "VulkanRenderer.h"
 #include "src/core/logger/Logger.h"
+#include "src/renderer/vulkan/VulkanContext.h"
 #include <vector>
 
 namespace Froth {
@@ -46,7 +46,8 @@ VulkanPipeline::VulkanPipeline(const VulkanPipelineLayout &pipelineLayout,
 
   // TODO: Support pipeline cache
   // TODO: Support multiple pipelines?
-  if (vkCreateGraphicsPipelines(VulkanRenderer::context().device, VK_NULL_HANDLE, 1, &pipelineInfo, VulkanRenderer::context().instance.allocator(), &m_Pipeline) != VK_SUCCESS) {
+  VulkanContext &vctx = VulkanContext::get();
+  if (vkCreateGraphicsPipelines(vctx.device(), VK_NULL_HANDLE, 1, &pipelineInfo, vctx.allocator(), &m_Pipeline) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Vulkan Pipeline")
   }
 }
@@ -56,8 +57,9 @@ VulkanPipeline::~VulkanPipeline() {
 }
 
 void VulkanPipeline::cleanup() {
+  VulkanContext &vctx = VulkanContext::get();
   if (m_Pipeline) {
-    vkDestroyPipeline(VulkanRenderer::context().device, m_Pipeline, VulkanRenderer::context().instance.allocator());
+    vkDestroyPipeline(vctx.device(), m_Pipeline, vctx.allocator());
     m_Pipeline = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Pipeline")
   }

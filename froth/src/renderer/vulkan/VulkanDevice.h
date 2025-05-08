@@ -1,17 +1,13 @@
 #pragma once
 
-#include "src/renderer/vulkan/VulkanInstance.h"
-#include "src/renderer/vulkan/VulkanSurface.h"
+#include "VulkanSurface.h"
 #include <vector>
 
 namespace Froth {
 class VulkanDevice {
-  friend class VulkanRenderer;
+  friend class VulkanContext;
 
 public:
-  VulkanDevice() = default;
-  VulkanDevice(const VulkanSurface &surface);
-
   VulkanDevice(VulkanDevice const &) = delete;
   VulkanDevice &operator=(VulkanDevice const &) = delete;
 
@@ -19,6 +15,7 @@ public:
   VulkanDevice &operator=(VulkanDevice &&);
 
   ~VulkanDevice();
+  void cleanup();
 
   operator VkDevice() const noexcept { return m_LogicalDevice; }
   VkDeviceMemory allocateMemory(const VkMemoryRequirements &requirements, VkMemoryPropertyFlags properties) const;
@@ -53,11 +50,14 @@ public:
     std::vector<VkPresentModeKHR> presentModes;
   };
 
-  SurfaceCapabilities getSurfaceSupport(const VulkanSurface &surface) const;
   const QueueFamilies getQueueFamilies() const noexcept;
+  static SurfaceCapabilities physicalDeviceSurfaceSupport(VkPhysicalDevice device, VkSurfaceKHR surface) noexcept;
+
+protected:
+  VulkanDevice() = default;
+  VulkanDevice(const VkAllocationCallbacks *allocator, VkPhysicalDevice physicalDevice, const QueueFamilies &queueFamilies, const PhysicalDeviceProperties &requirements);
 
 private:
-  VkPhysicalDevice m_PhysicalDevice;
   VkDevice m_LogicalDevice = nullptr;
   QueueFamilies m_QueueFamilies;
 
@@ -69,9 +69,6 @@ private:
   static QueueFamilies getPhysicalDeviceQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) noexcept;
   static bool physicalDeviceSupportsExtensions(VkPhysicalDevice device, const std::vector<const char *> &extensions) noexcept;
   static bool physicalDeviceSupportsLayers(VkPhysicalDevice device, const std::vector<const char *> &layers) noexcept;
-  static SurfaceCapabilities physicalDeviceSurfaceSupport(VkPhysicalDevice device, VkSurfaceKHR surface) noexcept;
-
-  static VkDevice createLogicalDevice(const VulkanInstance &context, VkPhysicalDevice physicalDevice, QueueFamilies &queueFamilies, const PhysicalDeviceProperties &requirements) noexcept;
 };
 
 } // namespace Froth

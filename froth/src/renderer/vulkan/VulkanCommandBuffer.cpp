@@ -1,35 +1,24 @@
 #include "VulkanCommandBuffer.h"
-#include "VulkanRenderer.h"
 #include "src/core/logger/Logger.h"
+#include "src/renderer/vulkan/VulkanContext.h"
 
 namespace Froth {
 
-VulkanCommandBuffer::VulkanCommandBuffer(const VulkanCommandPool &pool)
-    : m_Pool(pool) {
-  VkCommandBufferAllocateInfo allocInfo{};
-  allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-  allocInfo.commandPool = m_Pool;
-  allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-  allocInfo.commandBufferCount = 1;
-
-  if (vkAllocateCommandBuffers(VulkanRenderer::context().device, &allocInfo, &m_Buffer) != VK_SUCCESS) {
-    FROTH_ERROR("Failed to allocate command buffer");
+VulkanCommandBuffer::~VulkanCommandBuffer() {
+  if (m_Buffer) {
+    FROTH_WARN("Command buffer not freed")
   }
 }
 
-VulkanCommandBuffer::~VulkanCommandBuffer() {
-  cleanup();
+VulkanCommandBuffer::VulkanCommandBuffer(VulkanCommandBuffer &&o)
+    : m_Buffer(o.m_Buffer) {
+  o.m_Buffer = nullptr;
 }
 
-VulkanCommandBuffer::VulkanCommandBuffer(VulkanCommandBuffer &&other)
-    : m_Pool(other.m_Pool) {
-  m_Buffer = other.m_Buffer;
-  other.m_Buffer = nullptr;
-}
-
-void VulkanCommandBuffer::cleanup() {
+void VulkanCommandBuffer::cleanup(VkCommandPool pool) {
   if (m_Buffer) {
-    vkFreeCommandBuffers(VulkanRenderer::context().device, m_Pool, 1, &m_Buffer);
+    vkFreeCommandBuffers(VulkanContext::get().device(), pool, 1, &m_Buffer);
+    m_Buffer = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Command Buffer");
   }
 }

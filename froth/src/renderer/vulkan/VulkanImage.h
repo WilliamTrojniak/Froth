@@ -28,8 +28,8 @@ public:
   };
 
 private:
-  VkImage m_Image;
-  VkDeviceMemory m_Memory;
+  VkImage m_Image = nullptr;
+  VkDeviceMemory m_Memory = nullptr;
 
   void cleanup();
 };

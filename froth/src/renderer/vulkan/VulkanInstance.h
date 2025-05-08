@@ -1,23 +1,30 @@
 #pragma once
 #define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
+#include <memory>
 
 namespace Froth {
 class VulkanInstance {
+  friend class VulkanContext;
+
 public:
-  VulkanInstance() : m_Instance(VK_NULL_HANDLE) {};
-  VulkanInstance(const VkAllocationCallbacks *allocator);
   ~VulkanInstance();
 
   VulkanInstance(VulkanInstance const &) = delete;
   void operator=(VulkanInstance const &) = delete;
-  void operator=(VulkanInstance &&);
+  VulkanInstance(VulkanInstance &&) noexcept;
+  VulkanInstance &operator=(VulkanInstance &&) noexcept;
+
   operator VkInstance() const noexcept { return m_Instance; };
-  const VkAllocationCallbacks *allocator() const noexcept { return m_Allocator; }
+
+  void cleanup(const VkAllocationCallbacks *allocator);
+
+protected:
+  VulkanInstance() = default;
+  VulkanInstance(const VkAllocationCallbacks *allocator);
 
 private:
-  const VkAllocationCallbacks *m_Allocator;
-  VkInstance m_Instance;
+  VkInstance m_Instance = nullptr;
 };
 
 } // namespace Froth

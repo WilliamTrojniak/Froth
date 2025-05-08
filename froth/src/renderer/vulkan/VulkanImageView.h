@@ -20,8 +20,8 @@ protected:
   VulkanImageView(const VulkanImage &image, VkFormat format, VkImageAspectFlags aspect);
 
 private:
-  VkFormat m_Format;
-  VkImageView m_View;
+  VkFormat m_Format = VK_FORMAT_MAX_ENUM;
+  VkImageView m_View = nullptr;
 
   void cleanup();
 };

@@ -1,13 +1,16 @@
 #pragma once
-#include "src/renderer/vulkan/VulkanDevice.h"
-#include "src/renderer/vulkan/VulkanSurface.h"
+#include "VulkanDevice.h"
+#include "VulkanSurface.h"
+#include <memory>
 #include <vector>
 
 namespace Froth {
 
 class VulkanSwapChain {
 public:
-  VulkanSwapChain(const VulkanSurface &surface, const VulkanSwapChain *oldSwapchain);
+  static std::unique_ptr<VulkanSwapChain> create(const VulkanSurface &surface, const VulkanSwapChain *oldSwapChainPtr);
+
+  VulkanSwapChain(const VulkanSurface &surface, const VkSurfaceFormatKHR &format, const VkExtent2D &extent, VkPresentModeKHR presentMode, VkSurfaceTransformFlagBitsKHR transform, uint32_t imageCount, const VulkanSwapChain *oldSwapchain);
   ~VulkanSwapChain();
   VkExtent2D extent() const { return m_Extent; }
   VkSurfaceFormatKHR format() const { return m_Format; }

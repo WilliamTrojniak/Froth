@@ -9,4 +9,11 @@ std::unique_ptr<Renderer> Renderer::create(const Window &window) {
   return VulkanRenderer::create(window);
 }
 
+void Renderer::init(const Window &window) {
+  return VulkanRenderer::init(window);
+}
+void Renderer::shutdown() {
+  return VulkanRenderer::shutdown();
+}
+
 } // namespace Froth

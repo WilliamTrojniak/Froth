@@ -1,13 +1,14 @@
 
 #include "VulkanBuffer.h"
 #include "VulkanCommandBuffer.h"
-#include "VulkanDevice.h"
 #include "src/core/logger/Logger.h"
-#include "src/renderer/vulkan/VulkanRenderer.h"
+#include "src/renderer/vulkan/VulkanCommandPool.h"
+#include "src/renderer/vulkan/VulkanContext.h"
 
 namespace Froth {
 
 VulkanBuffer::VulkanBuffer(const VkDeviceSize &size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memProperties) {
+  VulkanContext &vctx = VulkanContext::get();
 
   VkBufferCreateInfo bufferInfo{};
   bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -15,16 +16,16 @@ VulkanBuffer::VulkanBuffer(const VkDeviceSize &size, VkBufferUsageFlags usage, V
   bufferInfo.usage = usage;
   bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-  if (vkCreateBuffer(VulkanRenderer::context().device, &bufferInfo, VulkanRenderer::context().instance.allocator(), &m_Buffer) != VK_SUCCESS) {
+  if (vkCreateBuffer(vctx.device(), &bufferInfo, vctx.allocator(), &m_Buffer) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create vertex buffer");
   }
   m_Size = size;
 
   VkMemoryRequirements memRequirements;
-  vkGetBufferMemoryRequirements(VulkanRenderer::context().device, m_Buffer, &memRequirements);
-  m_Memory = VulkanRenderer::context().device.allocateMemory(memRequirements, memProperties);
+  vkGetBufferMemoryRequirements(vctx.device(), m_Buffer, &memRequirements);
+  m_Memory = vctx.device().allocateMemory(memRequirements, memProperties);
 
-  if (vkBindBufferMemory(VulkanRenderer::context().device, m_Buffer, m_Memory, 0) != VK_SUCCESS) {
+  if (vkBindBufferMemory(vctx.device(), m_Buffer, m_Memory, 0) != VK_SUCCESS) {
     FROTH_ERROR("Failed to bind buffer memory");
     // FIXME: Improper cleanup
   }
@@ -39,12 +40,12 @@ VulkanBuffer::VulkanBuffer(VulkanBuffer &&other) noexcept
 
 void *VulkanBuffer::map() const {
   void *data;
-  vkMapMemory(VulkanRenderer::context().device, m_Memory, 0, m_Size, 0, &data);
+  vkMapMemory(VulkanContext::get().device(), m_Memory, 0, m_Size, 0, &data);
   return data;
 }
 
 void VulkanBuffer::unmap() const {
-  vkUnmapMemory(VulkanRenderer::context().device, m_Memory);
+  vkUnmapMemory(VulkanContext::get().device(), m_Memory);
 }
 
 VulkanBuffer::~VulkanBuffer() {
@@ -52,26 +53,29 @@ VulkanBuffer::~VulkanBuffer() {
 }
 
 void VulkanBuffer::cleanup() {
+  VulkanContext &vctx = VulkanContext::get();
   if (m_Memory) {
-    vkFreeMemory(VulkanRenderer::context().device, m_Memory, VulkanRenderer::context().instance.allocator());
+    vkFreeMemory(vctx.device(), m_Memory, vctx.allocator());
     m_Memory = nullptr;
     FROTH_DEBUG("Freed Vulkan Buffer Memory");
   }
 
   if (m_Buffer) {
-    vkDestroyBuffer(VulkanRenderer::context().device, m_Buffer, VulkanRenderer::context().instance.allocator());
+    vkDestroyBuffer(vctx.device(), m_Buffer, vctx.allocator());
     m_Buffer = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Buffer");
   }
 }
 
-void VulkanBuffer::copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest, const VulkanCommandPool &commandPool) {
-  VulkanCommandBuffer commandBuffer(commandPool);
+void VulkanBuffer::copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest, const VulkanCommandPool &pool) {
+  VulkanContext &vctx = VulkanContext::get();
+  VulkanCommandBuffer commandBuffer = pool.AllocateCommandBuffer();
 
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+    commandBuffer.cleanup(pool);
     FROTH_ERROR("Failed to begin command buffer");
   }
 
@@ -82,6 +86,7 @@ void VulkanBuffer::copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest,
   vkCmdCopyBuffer(commandBuffer, src, dest, 1, &copyRegion);
 
   if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+    commandBuffer.cleanup(pool);
     FROTH_ERROR("Failed to end command buffer");
   }
 
@@ -90,13 +95,14 @@ void VulkanBuffer::copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest,
   submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &b;
-  if (vkQueueSubmit(VulkanRenderer::context().device.getQueueFamilies().graphics.queue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+  if (vkQueueSubmit(vctx.device().getQueueFamilies().graphics.queue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
     FROTH_ERROR("Failed to submit to queue");
   }
 
-  if (vkQueueWaitIdle(VulkanRenderer::context().device.getQueueFamilies().graphics.queue) != VK_SUCCESS) {
+  if (vkQueueWaitIdle(vctx.device().getQueueFamilies().graphics.queue) != VK_SUCCESS) {
     FROTH_ERROR("Failed to wait for queue idle");
   }
+  commandBuffer.cleanup(pool);
 }
 
 } // namespace Froth

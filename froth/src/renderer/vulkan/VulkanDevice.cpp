@@ -1,51 +1,71 @@
 #include "VulkanDevice.h"
 #include "src/core/logger/Logger.h"
-#include "src/renderer/vulkan/VulkanInstance.h"
-#include "src/renderer/vulkan/VulkanRenderer.h"
+#include "src/renderer/vulkan/VulkanContext.h"
 #include <set>
 #include <string>
 #include <vector>
 
 namespace Froth {
 
-VulkanDevice::VulkanDevice(const VulkanSurface &surface) {
-
-  // TODO: This should be driven by the Engine
-  // Device Requirements
-  PhysicalDeviceProperties requirements{};
-  requirements.graphics = true;
-  requirements.present = true;
-  requirements.compute = false;
-  requirements.transfer = true;
-
-  requirements.extensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-  requirements.extensions.emplace_back("VK_KHR_portability_subset"); // TODO: Only enable on MacOS
-
-#ifdef FROTH_BUILD_DEBUG
-  requirements.layers.emplace_back("VK_LAYER_KHRONOS_validation");
-#endif // FROTH_BUILD_DEBUG
-
-  requirements.layers.emplace_back("VK_LAYER_KHRONOS_validation");
-  requirements.samplerAnisotropy = true; // TODO: This can probably be made optional?
-  // Device Requirements
-
-  m_PhysicalDevice = pickPhysicalDevice(VulkanRenderer::context().instance, surface, requirements);
-  if (m_PhysicalDevice == nullptr) {
-    FROTH_ERROR("Failed to find suitable Vulkan physical device")
+VulkanDevice::VulkanDevice(const VkAllocationCallbacks *allocator, VkPhysicalDevice physicalDevice, const QueueFamilies &queueFamilies, const PhysicalDeviceProperties &requirements) {
+  std::set<uint32_t> uniqueQueueFamilyIndices;
+  if (queueFamilies.graphics.valid) {
+    uniqueQueueFamilyIndices.emplace(queueFamilies.graphics.index);
+  }
+  if (queueFamilies.present.valid) {
+    uniqueQueueFamilyIndices.emplace(queueFamilies.present.index);
+  }
+  if (queueFamilies.compute.valid) {
+    uniqueQueueFamilyIndices.emplace(queueFamilies.compute.index);
+  }
+  if (queueFamilies.transfer.valid) {
+    uniqueQueueFamilyIndices.emplace(queueFamilies.transfer.index);
   }
 
-  m_QueueFamilies = getPhysicalDeviceQueueFamilies(m_PhysicalDevice, surface);
-  m_LogicalDevice = createLogicalDevice(VulkanRenderer::context().instance, m_PhysicalDevice, m_QueueFamilies, requirements);
-  if (m_LogicalDevice == nullptr) {
-    FROTH_ERROR("Failed to create Vulkan Logical Device from physical device")
+  float queuePriority = 1.0f; // TODO: make dynamic
+  std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+  for (const auto &index : uniqueQueueFamilyIndices) {
+    VkDeviceQueueCreateInfo queueCreateInfo{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
+    queueCreateInfo.queueFamilyIndex = index;
+    queueCreateInfo.queueCount = 1; // TODO: Dynamic
+    queueCreateInfo.pQueuePriorities = &queuePriority;
+    queueCreateInfos.push_back(queueCreateInfo);
+  }
+
+  VkPhysicalDeviceFeatures deviceFeatures{};
+  deviceFeatures.samplerAnisotropy = requirements.samplerAnisotropy;
+
+  VkDeviceCreateInfo deviceCreateInfo{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+  deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+  deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
+  deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
+  deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(requirements.extensions.size());
+  deviceCreateInfo.ppEnabledExtensionNames = requirements.extensions.data();
+  deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(requirements.layers.size());
+  deviceCreateInfo.ppEnabledLayerNames = requirements.layers.data();
+
+  if (vkCreateDevice(physicalDevice, &deviceCreateInfo, allocator, &m_LogicalDevice) != VK_SUCCESS) {
+    FROTH_ERROR("Failed to create Vulkan Logical Device")
+  }
+  m_QueueFamilies = queueFamilies;
+
+  if (queueFamilies.graphics.valid) {
+    vkGetDeviceQueue(m_LogicalDevice, queueFamilies.graphics.index, 0, &m_QueueFamilies.graphics.queue);
+  }
+  if (queueFamilies.present.valid) {
+    vkGetDeviceQueue(m_LogicalDevice, queueFamilies.present.index, 0, &m_QueueFamilies.present.queue);
+  }
+  if (queueFamilies.compute.valid) {
+    vkGetDeviceQueue(m_LogicalDevice, queueFamilies.compute.index, 0, &m_QueueFamilies.compute.queue);
+  }
+  if (queueFamilies.transfer.valid) {
+    vkGetDeviceQueue(m_LogicalDevice, queueFamilies.transfer.index, 0, &m_QueueFamilies.transfer.queue);
   }
 }
 
 VulkanDevice::VulkanDevice(VulkanDevice &&other)
-    : m_PhysicalDevice(other.m_PhysicalDevice),
-      m_LogicalDevice(other.m_LogicalDevice),
-      m_QueueFamilies(other.m_QueueFamilies) {
-  other.m_PhysicalDevice = nullptr;
+    : m_LogicalDevice(other.m_LogicalDevice),
+      m_QueueFamilies(std::move(other.m_QueueFamilies)) {
   other.m_LogicalDevice = nullptr;
   other.m_QueueFamilies.graphics.valid = false;
   other.m_QueueFamilies.present.valid = false;
@@ -53,30 +73,29 @@ VulkanDevice::VulkanDevice(VulkanDevice &&other)
   other.m_QueueFamilies.transfer.valid = false;
 }
 
-VulkanDevice &VulkanDevice::operator=(VulkanDevice &&other) {
-  m_PhysicalDevice = other.m_PhysicalDevice;
-  m_LogicalDevice = other.m_LogicalDevice;
-  m_QueueFamilies = other.m_QueueFamilies;
-  other.m_PhysicalDevice = nullptr;
-  other.m_LogicalDevice = nullptr;
-  other.m_QueueFamilies.graphics.valid = false;
-  other.m_QueueFamilies.present.valid = false;
-  other.m_QueueFamilies.compute.valid = false;
-  other.m_QueueFamilies.transfer.valid = false;
+VulkanDevice &VulkanDevice::operator=(VulkanDevice &&o) {
+  m_LogicalDevice = o.m_LogicalDevice;
+  m_QueueFamilies = o.m_QueueFamilies;
 
+  o.m_LogicalDevice = nullptr;
+  o.m_QueueFamilies.graphics.valid = false;
+  o.m_QueueFamilies.present.valid = false;
+  o.m_QueueFamilies.compute.valid = false;
+  o.m_QueueFamilies.transfer.valid = false;
   return *this;
 }
 
-VulkanDevice::~VulkanDevice() {
+void VulkanDevice::cleanup() {
   if (m_LogicalDevice != nullptr) {
-    vkDestroyDevice(m_LogicalDevice, VulkanRenderer::context().instance.allocator());
+    VulkanContext &vctx = VulkanContext::get();
+    vkDestroyDevice(m_LogicalDevice, vctx.allocator());
     m_LogicalDevice = nullptr;
     FROTH_DEBUG("Destroyed Vulkan logical device")
   }
 }
 
-VulkanDevice::SurfaceCapabilities VulkanDevice::getSurfaceSupport(const VulkanSurface &surface) const {
-  return VulkanDevice::physicalDeviceSurfaceSupport(m_PhysicalDevice, surface);
+VulkanDevice::~VulkanDevice() {
+  cleanup();
 }
 
 VkDeviceMemory VulkanDevice::allocateMemory(const VkMemoryRequirements &requirements, VkMemoryPropertyFlags properties) const {
@@ -94,8 +113,9 @@ VkDeviceMemory VulkanDevice::allocateMemory(const VkMemoryRequirements &requirem
 }
 
 uint32_t VulkanDevice::findMemoryTypeIndex(const VkMemoryRequirements &requirements, VkMemoryPropertyFlags properties) const {
+  VulkanContext &vctx = VulkanContext::get();
   VkPhysicalDeviceMemoryProperties memProperties;
-  vkGetPhysicalDeviceMemoryProperties(m_PhysicalDevice, &memProperties);
+  vkGetPhysicalDeviceMemoryProperties(vctx.physicalDevice(), &memProperties);
 
   for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
     if (requirements.memoryTypeBits & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
@@ -322,64 +342,6 @@ VulkanDevice::SurfaceCapabilities VulkanDevice::physicalDeviceSurfaceSupport(VkP
   }
 
   return capabilities;
-}
-
-VkDevice VulkanDevice::createLogicalDevice(const VulkanInstance &context, VkPhysicalDevice physicalDevice, QueueFamilies &queueFamilies, const PhysicalDeviceProperties &requirements) noexcept {
-  std::set<uint32_t> uniqueQueueFamilyIndices;
-  if (queueFamilies.graphics.valid) {
-    uniqueQueueFamilyIndices.emplace(queueFamilies.graphics.index);
-  }
-  if (queueFamilies.present.valid) {
-    uniqueQueueFamilyIndices.emplace(queueFamilies.present.index);
-  }
-  if (queueFamilies.compute.valid) {
-    uniqueQueueFamilyIndices.emplace(queueFamilies.compute.index);
-  }
-  if (queueFamilies.transfer.valid) {
-    uniqueQueueFamilyIndices.emplace(queueFamilies.transfer.index);
-  }
-
-  float queuePriority = 1.0f; // TODO: make dynamic
-  std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-  for (const auto &index : uniqueQueueFamilyIndices) {
-    VkDeviceQueueCreateInfo queueCreateInfo{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
-    queueCreateInfo.queueFamilyIndex = index;
-    queueCreateInfo.queueCount = 1; // TODO: Dynamic
-    queueCreateInfo.pQueuePriorities = &queuePriority;
-    queueCreateInfos.push_back(queueCreateInfo);
-  }
-
-  VkPhysicalDeviceFeatures deviceFeatures{};
-  deviceFeatures.samplerAnisotropy = requirements.samplerAnisotropy;
-
-  VkDeviceCreateInfo deviceCreateInfo{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
-  deviceCreateInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
-  deviceCreateInfo.pQueueCreateInfos = queueCreateInfos.data();
-  deviceCreateInfo.pEnabledFeatures = &deviceFeatures;
-  deviceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(requirements.extensions.size());
-  deviceCreateInfo.ppEnabledExtensionNames = requirements.extensions.data();
-  deviceCreateInfo.enabledLayerCount = static_cast<uint32_t>(requirements.layers.size());
-  deviceCreateInfo.ppEnabledLayerNames = requirements.layers.data();
-
-  VkDevice device;
-  if (vkCreateDevice(physicalDevice, &deviceCreateInfo, context.allocator(), &device) != VK_SUCCESS) {
-    return nullptr;
-  }
-
-  if (queueFamilies.graphics.valid) {
-    vkGetDeviceQueue(device, queueFamilies.graphics.index, 0, &queueFamilies.graphics.queue);
-  }
-  if (queueFamilies.present.valid) {
-    vkGetDeviceQueue(device, queueFamilies.present.index, 0, &queueFamilies.present.queue);
-  }
-  if (queueFamilies.compute.valid) {
-    vkGetDeviceQueue(device, queueFamilies.compute.index, 0, &queueFamilies.compute.queue);
-  }
-  if (queueFamilies.transfer.valid) {
-    vkGetDeviceQueue(device, queueFamilies.transfer.index, 0, &queueFamilies.transfer.queue);
-  }
-
-  return device;
 }
 
 } // namespace Froth

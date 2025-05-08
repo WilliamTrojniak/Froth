@@ -1,6 +1,6 @@
 #include "VulkanImageView.h"
-#include "VulkanRenderer.h"
 #include "src/core/logger/Logger.h"
+#include "src/renderer/vulkan/VulkanContext.h"
 
 namespace Froth {
 
@@ -19,7 +19,8 @@ VulkanImageView::VulkanImageView(const VulkanImage &image, VkFormat format, VkIm
   createInfo.subresourceRange.baseArrayLayer = 0;
   createInfo.subresourceRange.layerCount = 1;
 
-  if (vkCreateImageView(VulkanRenderer::context().device, &createInfo, VulkanRenderer::context().instance.allocator(), &m_View) != VK_SUCCESS) {
+  VulkanContext &vctx = VulkanContext::get();
+  if (vkCreateImageView(vctx.device(), &createInfo, vctx.allocator(), &m_View) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Image View")
   }
 }
@@ -27,6 +28,7 @@ VulkanImageView::VulkanImageView(const VulkanImage &image, VkFormat format, VkIm
 VulkanImageView::VulkanImageView(VulkanImageView &&other)
     : m_Format(other.m_Format), m_View(other.m_View) {
   other.m_View = nullptr;
+  other.m_Format = VK_FORMAT_MAX_ENUM;
 }
 
 VulkanImageView::~VulkanImageView() {
@@ -35,7 +37,8 @@ VulkanImageView::~VulkanImageView() {
 
 void VulkanImageView::cleanup() {
   if (m_View) {
-    vkDestroyImageView(VulkanRenderer::context().device, m_View, VulkanRenderer::context().instance.allocator());
+    VulkanContext &vctx = VulkanContext::get();
+    vkDestroyImageView(vctx.device(), m_View, vctx.allocator());
     m_View = nullptr;
     FROTH_DEBUG("Destroyed Vulkan Image View")
   }

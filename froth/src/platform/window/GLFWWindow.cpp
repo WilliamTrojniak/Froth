@@ -7,10 +7,13 @@
 #include "src/platform/keys/GLFWCodes.h"
 #include "src/platform/keys/Keycodes.h"
 #include "src/platform/window/Window.h"
+#include "src/renderer/vulkan/VulkanContext.h"
 #include "src/renderer/vulkan/VulkanInstance.h"
 #include "src/renderer/vulkan/VulkanRenderer.h"
 #include "src/renderer/vulkan/VulkanSurface.h"
+#include "vulkan/vulkan_core.h"
 #include <cstdint>
+#include <memory>
 #include <stdexcept>
 
 namespace Froth {
@@ -43,6 +46,9 @@ GLFWWindow::GLFWWindow(int width, int height, const char *title)
   // Window Callbacks
   glfwSetWindowCloseCallback(m_Window, GLFWWindow::windowCloseCallback);
   glfwSetWindowSizeCallback(m_Window, GLFWWindow::windowSizeCallback);
+
+  // Framebuffer Callbacks
+  glfwSetFramebufferSizeCallback(m_Window, GLFWWindow::framebufferSizeCallback);
 
   // Keyboard Callbacks
   glfwSetKeyCallback(m_Window, GLFWWindow::keyCallback);
@@ -89,22 +95,34 @@ void GLFWWindow::windowSizeCallback(GLFWwindow *window, int width, int height) {
   handler->windowSizeCallback(width, height);
 }
 
-VulkanSurface GLFWWindow::createVulkanSurface() const {
-  // TODO: Take into account allocation callback
-  // TODO: Should Window own the surface?
-  VkSurfaceKHR surface;
-  if (glfwCreateWindowSurface(VulkanRenderer::context().instance, m_Window, VulkanRenderer::context().instance.allocator(), &surface) != VK_SUCCESS) {
-    FROTH_ERROR("Failed to create Vulkan surface for GLFW window");
-  }
-  return VulkanSurface(*this, surface);
-};
-
 void GLFWWindow::windowSizeCallback(int width, int height) {
   m_Width = width;
   m_Height = height;
 
   onEvent(WindowResizeEvent(width, height));
 }
+
+void GLFWWindow::framebufferSizeCallback(GLFWwindow *window, int width, int height) {
+  auto handler = static_cast<GLFWWindow *>(glfwGetWindowUserPointer(window));
+  handler->framebufferSizeCallback(width, height);
+}
+
+void GLFWWindow::framebufferSizeCallback(int width, int height) {
+  onEvent(FramebufferResizeEvent(width, height));
+}
+
+VulkanSurface GLFWWindow::createVulkanSurface() const {
+  VulkanContext &vctx = VulkanContext::get();
+  // TODO: Take into account allocation callback
+  // TODO: Should Window own the surface?
+  VkSurfaceKHR surface;
+  if (glfwCreateWindowSurface(vctx.instance(), m_Window, vctx.allocator(), &surface) != VK_SUCCESS) {
+    FROTH_ERROR("Failed to create Vulkan surface for GLFW window");
+  }
+  VkExtent2D e;
+  getFramebufferSize(e.width, e.height);
+  return VulkanSurface(surface, e);
+};
 
 void GLFWWindow::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
   auto handler = static_cast<GLFWWindow *>(glfwGetWindowUserPointer(window));

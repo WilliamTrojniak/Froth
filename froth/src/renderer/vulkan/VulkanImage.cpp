@@ -40,6 +40,22 @@ VulkanImage::VulkanImage(const CreateInfo &opts) {
   }
 }
 
+VulkanImage::VulkanImage(VulkanImage &&o)
+    : m_Image(o.m_Image),
+      m_Memory(o.m_Memory) {
+  o.m_Image = nullptr;
+  o.m_Memory = nullptr;
+}
+
+VulkanImage &VulkanImage::operator=(VulkanImage &&o) {
+  m_Image = o.m_Image;
+  m_Memory = o.m_Memory;
+  o.m_Image = nullptr;
+  o.m_Memory = nullptr;
+
+  return *this;
+}
+
 VulkanImage::~VulkanImage() {
   cleanup();
 }

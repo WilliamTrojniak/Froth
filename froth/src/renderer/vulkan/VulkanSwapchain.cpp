@@ -4,11 +4,10 @@
 #include "src/renderer/vulkan/VulkanDevice.h"
 #include <algorithm>
 #include <cstdint>
-#include <memory>
 
 namespace Froth {
 
-std::unique_ptr<VulkanSwapChain> VulkanSwapChain::create(const VulkanSurface &surface, const VulkanSwapChain *oldSwapChainPtr) {
+VulkanSwapchain VulkanSwapchain::create(const VulkanSurface &surface, const VulkanSwapchain *oldSwapchainPtr) {
   VulkanContext &vctx = VulkanContext::get();
 
   VulkanDevice::SurfaceCapabilities surfaceCapabilities = VulkanDevice::physicalDeviceSurfaceSupport(vctx.physicalDevice(), surface);
@@ -25,10 +24,10 @@ std::unique_ptr<VulkanSwapChain> VulkanSwapChain::create(const VulkanSurface &su
     imageCount = surfaceCapabilities.capabilities.maxImageCount;
   }
 
-  return std::make_unique<VulkanSwapChain>(surface, format, extent, presentMode, surfaceCapabilities.capabilities.currentTransform, imageCount, oldSwapChainPtr);
+  return VulkanSwapchain(surface, format, extent, presentMode, surfaceCapabilities.capabilities.currentTransform, imageCount, oldSwapchainPtr);
 }
 
-VulkanSwapChain::VulkanSwapChain(const VulkanSurface &surface, const VkSurfaceFormatKHR &format, const VkExtent2D &extent, VkPresentModeKHR presentMode, VkSurfaceTransformFlagBitsKHR transform, uint32_t imageCount, const VulkanSwapChain *oldSwapchain)
+VulkanSwapchain::VulkanSwapchain(const VulkanSurface &surface, const VkSurfaceFormatKHR &format, const VkExtent2D &extent, VkPresentModeKHR presentMode, VkSurfaceTransformFlagBitsKHR transform, uint32_t imageCount, const VulkanSwapchain *oldSwapchain)
     : m_Format(format), m_Extent(extent) {
   VulkanContext &vctx = VulkanContext::get();
 
@@ -112,7 +111,33 @@ VulkanSwapChain::VulkanSwapChain(const VulkanSurface &surface, const VkSurfaceFo
   }
 }
 
-VulkanSwapChain::~VulkanSwapChain() {
+VulkanSwapchain::VulkanSwapchain(VulkanSwapchain &&o)
+    : m_Format(o.m_Format),
+      m_Swapchain(o.m_Swapchain),
+      m_Extent(o.m_Extent),
+      m_Images(std::move(o.m_Images)),
+      m_ImageViews(std::move(o.m_ImageViews)) {
+  o.m_Swapchain = nullptr;
+  o.m_Extent = {0, 0};
+  o.m_Images.clear();
+  o.m_ImageViews.clear();
+}
+
+VulkanSwapchain &VulkanSwapchain::operator=(VulkanSwapchain &&o) {
+  m_Format = o.m_Format;
+  m_Swapchain = o.m_Swapchain;
+  m_Extent = o.m_Extent;
+  m_Images = std::move(o.m_Images);
+  m_ImageViews = std::move(o.m_ImageViews);
+  o.m_Swapchain = nullptr;
+  o.m_Extent = {0, 0};
+  o.m_Images.clear();
+  o.m_ImageViews.clear();
+
+  return *this;
+}
+
+VulkanSwapchain::~VulkanSwapchain() {
   VulkanContext &vctx = VulkanContext::get();
   for (auto imageView : m_ImageViews) {
     vkDestroyImageView(vctx.device(), imageView, vctx.allocator());
@@ -126,7 +151,7 @@ VulkanSwapChain::~VulkanSwapChain() {
   }
 }
 
-VkSurfaceFormatKHR VulkanSwapChain::chooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
+VkSurfaceFormatKHR VulkanSwapchain::chooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats) {
   // TODO: Improve the selection algorithm
   // This is very rudimentary right now
   for (const auto &format : availableFormats) {
@@ -137,7 +162,7 @@ VkSurfaceFormatKHR VulkanSwapChain::chooseSurfaceFormat(const std::vector<VkSurf
   return availableFormats[0];
 }
 
-VkPresentModeKHR VulkanSwapChain::choosePresentMode(const std::vector<VkPresentModeKHR> &availableModes) {
+VkPresentModeKHR VulkanSwapchain::choosePresentMode(const std::vector<VkPresentModeKHR> &availableModes) {
   // TODO: Improve the selection algorithm
   for (const auto &mode : availableModes) {
     if (mode == VK_PRESENT_MODE_MAILBOX_KHR)
@@ -147,7 +172,7 @@ VkPresentModeKHR VulkanSwapChain::choosePresentMode(const std::vector<VkPresentM
   return VK_PRESENT_MODE_FIFO_KHR; // Guaranteed to be available
 }
 
-VkExtent2D VulkanSwapChain::chooseExtent(const VulkanSurface &surface, const VulkanDevice::SurfaceCapabilities &capabilities) {
+VkExtent2D VulkanSwapchain::chooseExtent(const VulkanSurface &surface, const VulkanDevice::SurfaceCapabilities &capabilities) {
   if (capabilities.capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
     return capabilities.capabilities.currentExtent;
   }

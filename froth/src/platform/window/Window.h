@@ -1,7 +1,6 @@
 #pragma once
 
 #include "src/core/events/Event.h"
-#include "src/renderer/vulkan/VulkanInstance.h"
 #include "src/renderer/vulkan/VulkanSurface.h"
 #include <functional>
 #include <memory>

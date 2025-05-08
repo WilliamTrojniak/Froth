@@ -1,14 +1,14 @@
 #pragma once
 
 #include "VulkanImageView.h"
-#include "VulkanSwapchain.h"
 
 namespace Froth {
 class VulkanRenderPass {
   friend class VulkanRenderer;
 
 public:
-  VulkanRenderPass(const VulkanSwapChain &swapchain, const VulkanImageView &depthImageView);
+  VulkanRenderPass() = default;
+  VulkanRenderPass(VkFormat swapchainFormat, VkFormat depthImageViewFormat);
   ~VulkanRenderPass();
   VulkanRenderPass(VulkanRenderPass const &) = delete;
   void operator=(VulkanImageView const &) = delete;
@@ -16,7 +16,7 @@ public:
   operator VkRenderPass() const { return m_RenderPass; }
 
 private:
-  VkRenderPass m_RenderPass;
+  VkRenderPass m_RenderPass = nullptr;
 
   void cleanup();
 };

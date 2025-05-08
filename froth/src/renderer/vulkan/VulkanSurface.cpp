@@ -1,7 +1,7 @@
 #include "VulkanSurface.h"
-#include "src/core/events/ApplicationEvent.h"
 #include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
+#include <cstdint>
 
 namespace Froth {
 
@@ -10,11 +10,9 @@ VulkanSurface::VulkanSurface(VulkanSurface &&o)
   o.m_Surface = nullptr;
 }
 
-bool VulkanSurface::onFramebufferResize(FramebufferResizeEvent &e) {
-  m_Extent.width = e.width();
-  m_Extent.height = e.height();
-
-  return false;
+void VulkanSurface::resize(uint32_t width, uint32_t height) {
+  m_Extent.width = width;
+  m_Extent.height = height;
 }
 
 VulkanSurface::~VulkanSurface() {

@@ -30,6 +30,14 @@ VulkanImageView::VulkanImageView(VulkanImageView &&other)
   other.m_View = nullptr;
   other.m_Format = VK_FORMAT_MAX_ENUM;
 }
+VulkanImageView &VulkanImageView::operator=(VulkanImageView &&other) {
+  m_Format = other.m_Format;
+  m_View = other.m_View;
+  other.m_View = nullptr;
+  other.m_Format = VK_FORMAT_MAX_ENUM;
+
+  return *this;
+}
 
 VulkanImageView::~VulkanImageView() {
   cleanup();

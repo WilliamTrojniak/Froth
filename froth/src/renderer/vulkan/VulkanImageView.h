@@ -7,14 +7,16 @@ class VulkanImageView {
   friend class VulkanImage;
 
 public:
+  VulkanImageView() = default;
   VulkanImageView(VulkanImageView const &) = delete;
-  void operator=(VulkanImageView const &) = delete;
-  ~VulkanImageView();
-
+  VulkanImageView &operator=(VulkanImageView const &) = delete;
   VulkanImageView(VulkanImageView &&);
+  VulkanImageView &operator=(VulkanImageView &&);
+  ~VulkanImageView();
 
   VkFormat format() const { return m_Format; }
   operator VkImageView() const { return m_View; }
+  void cleanup();
 
 protected:
   VulkanImageView(const VulkanImage &image, VkFormat format, VkImageAspectFlags aspect);
@@ -22,8 +24,6 @@ protected:
 private:
   VkFormat m_Format = VK_FORMAT_MAX_ENUM;
   VkImageView m_View = nullptr;
-
-  void cleanup();
 };
 
 } // namespace Froth

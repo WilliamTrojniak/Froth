@@ -1,15 +1,13 @@
 #include "VulkanRenderPass.h"
-#include "VulkanImageView.h"
-#include "VulkanSwapchain.h"
+#include "VulkanContext.h"
 #include "src/core/logger/Logger.h"
-#include "src/renderer/vulkan/VulkanContext.h"
 
 namespace Froth {
 
-VulkanRenderPass::VulkanRenderPass(const VulkanSwapChain &swapchain, const VulkanImageView &depthImageView) {
+VulkanRenderPass::VulkanRenderPass(VkFormat swapchainFormat, VkFormat depthImageViewFormat) {
 
   VkAttachmentDescription colorAttachment{};
-  colorAttachment.format = swapchain.format().format;
+  colorAttachment.format = swapchainFormat;
   colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -23,7 +21,7 @@ VulkanRenderPass::VulkanRenderPass(const VulkanSwapChain &swapchain, const Vulka
   colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
   VkAttachmentDescription depthAttachment{};
-  depthAttachment.format = depthImageView.format();
+  depthAttachment.format = depthImageViewFormat;
   depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
   depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
   depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;

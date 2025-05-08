@@ -1,5 +1,5 @@
 #pragma once
-#include "VulkanDevice.h"
+#include "vulkan/vulkan_core.h"
 
 namespace Froth {
 class VulkanImageView;
@@ -10,18 +10,20 @@ class VulkanImage {
 public:
   struct CreateInfo;
 
+  VulkanImage() = default;
   VulkanImage(const CreateInfo &opts);
   VulkanImage(VulkanImage const &) = delete;
-  void operator=(VulkanImage const &) = delete;
+  VulkanImage &operator=(VulkanImage const &) = delete;
+  VulkanImage(VulkanImage &&);
+  VulkanImage &operator=(VulkanImage &&);
   ~VulkanImage();
+
   VkImage image() const { return m_Image; }
+  void cleanup();
   VulkanImageView createView(VkFormat format, VkImageAspectFlags aspect) const;
 
   struct CreateInfo {
-    struct {
-      uint32_t width;
-      uint32_t height;
-    } extent;
+    VkExtent2D extent;
     VkFormat format;
     VkImageTiling tiling;
     VkImageUsageFlags usage;
@@ -30,8 +32,6 @@ public:
 private:
   VkImage m_Image = nullptr;
   VkDeviceMemory m_Memory = nullptr;
-
-  void cleanup();
 };
 
 } // namespace Froth

@@ -3,7 +3,6 @@
 #include "VulkanIndexBuffer.h"
 #include "VulkanPipelineBuilder.h"
 #include "VulkanPipelineLayout.h"
-#include "VulkanSwapchain.h"
 #include "VulkanVertex.h"
 #include "VulkanVertexBuffer.h"
 #include "glm/ext/matrix_float4x4.hpp"
@@ -11,7 +10,6 @@
 #include "src/core/events/EventDispatcher.h"
 #include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
-#include "src/renderer/vulkan/VulkanInstance.h"
 #include "src/resources/materials/Material.h"
 #include "vulkan/vulkan_core.h"
 #include <cstdint>
@@ -29,7 +27,7 @@ bool getRequiredExtensions(std::vector<const char *> &extensions) noexcept;
 bool hasLayers(const std::vector<const char *> &layers) noexcept;
 
 VulkanRenderer::VulkanRenderer(const Window &window, _tag)
-    : m_Surface(window.createVulkanSurface()),
+    : m_SwapchainManager(window),
       m_DescriptorSetLayout(),
       m_GraphicsCommandPool(VulkanContext::get().device().getQueueFamilies().graphics.index) {
 
@@ -43,8 +41,6 @@ VulkanRenderer::VulkanRenderer(const Window &window, _tag)
     m_RenderFinishedSemaphores.emplace_back();
     m_FrameInFlightFences.emplace_back(true);
   }
-
-  recreateSwapchain();
 }
 
 VulkanRenderer::~VulkanRenderer() {
@@ -64,50 +60,15 @@ void VulkanRenderer::shutdown() {
   vctx.cleanup();
 }
 
-void VulkanRenderer::recreateSwapchain() {
-  FROTH_DEBUG("Recreating swapchain");
-  VulkanContext &vctx = VulkanContext::get();
-  vkDeviceWaitIdle(vctx.device());
-
-  m_Pipeline = nullptr;
-  m_Framebuffers.clear();
-  m_RenderPass = nullptr;
-  m_DepthImageView = nullptr;
-  m_DepthImage = nullptr;
-  m_Swapchain = VulkanSwapChain::create(m_Surface, m_Swapchain.get());
-  m_DepthImage = std::make_unique<VulkanImage>(
-      VulkanImage::CreateInfo{
-          .extent = {.width = m_Swapchain->extent().width,
-                     .height = m_Swapchain->extent().height},
-          .format = VK_FORMAT_D32_SFLOAT,
-          .tiling = VK_IMAGE_TILING_OPTIMAL,
-          .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-      });
-  m_DepthImageView = std::make_unique<VulkanImageView>(m_DepthImage->createView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT));
-  m_RenderPass = std::make_unique<VulkanRenderPass>(*m_Swapchain, *m_DepthImageView);
-
-  m_Framebuffers.reserve(m_Swapchain->views().size());
-  std::vector<VkImageView> framebufferAttachments(2);
-  framebufferAttachments[1] = *m_DepthImageView;
-  for (size_t i = 0; i < m_Swapchain->views().size(); i++) {
-    framebufferAttachments[0] = m_Swapchain->views()[i];
-    m_Framebuffers.emplace_back(*m_RenderPass, m_Swapchain->extent(), framebufferAttachments);
-  }
-}
-
 bool VulkanRenderer::onEvent(const Event &e) {
   EventDispatcher dispatcher = EventDispatcher(e);
-  dispatcher.dispatch<WindowResizeEvent>(BIND_FUNC(onWindowResize));
   dispatcher.dispatch<FramebufferResizeEvent>(BIND_FUNC(onFramebufferResize));
   return dispatcher.isHandled();
 }
 
-bool VulkanRenderer::onWindowResize(WindowResizeEvent &e) {
-  m_WindowResized = true;
-  return false;
-}
 bool VulkanRenderer::onFramebufferResize(FramebufferResizeEvent &e) {
-  m_Surface.onFramebufferResize(e);
+  m_SwapchainManager.onWindowFramebufferResize(e.width(), e.height());
+  m_WindowResized = true;
   return false;
 }
 
@@ -117,10 +78,9 @@ bool VulkanRenderer::beginFrame() {
   VkFence inFlightFence[] = {m_FrameInFlightFences[m_CurrentFrame]};
   vkWaitForFences(vctx.device(), 1, inFlightFence, VK_TRUE, UINT64_MAX);
 
-  VkResult result = vkAcquireNextImageKHR(vctx.device(), *m_Swapchain, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_CurrentImageIndex);
+  VkResult result = vkAcquireNextImageKHR(vctx.device(), m_SwapchainManager.swapchain(), UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_CurrentImageIndex);
   if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-    m_WindowResized = false;
-    recreateSwapchain();
+    m_SwapchainManager.rebuild();
   } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
     FROTH_ERROR("Failed to acquire swapchain image");
   }
@@ -148,10 +108,10 @@ void VulkanRenderer::beginRenderPass() {
 
   VkRenderPassBeginInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-  renderPassInfo.renderPass = *m_RenderPass;
-  renderPassInfo.framebuffer = m_Framebuffers[m_CurrentImageIndex];
+  renderPassInfo.renderPass = m_SwapchainManager.renderpass();
+  renderPassInfo.framebuffer = m_SwapchainManager.framebuffers()[m_CurrentImageIndex];
   renderPassInfo.renderArea.offset = {0, 0};
-  renderPassInfo.renderArea.extent = m_Swapchain->extent();
+  renderPassInfo.renderArea.extent = m_SwapchainManager.swapchain().extent();
   renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
   renderPassInfo.pClearValues = clearValues.data();
   vkCmdBeginRenderPass(m_CommandBuffers[m_CurrentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
@@ -190,7 +150,7 @@ void VulkanRenderer::endFrame() {
   presentInfo.waitSemaphoreCount = 1;
   presentInfo.pWaitSemaphores = renderFinishedSemaphore;
 
-  VkSwapchainKHR swapchains[] = {*m_Swapchain};
+  VkSwapchainKHR swapchains[] = {m_SwapchainManager.swapchain()};
   presentInfo.swapchainCount = 1;
   presentInfo.pSwapchains = swapchains;
   presentInfo.pImageIndices = &m_CurrentImageIndex;
@@ -198,8 +158,7 @@ void VulkanRenderer::endFrame() {
 
   VkResult result = vkQueuePresentKHR(vctx.device().getQueueFamilies().present.queue, &presentInfo);
   if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_WindowResized) {
-    m_WindowResized = false;
-    recreateSwapchain();
+    m_SwapchainManager.rebuild();
   } else if (result != VK_SUCCESS) {
     FROTH_ERROR("Failed to present swap chain image");
   }
@@ -232,8 +191,8 @@ void VulkanRenderer::bindMaterial(const Material &mat) {
   VkViewport viewport{};
   viewport.x = 0.0f;
   viewport.y = 0.0f;
-  viewport.width = m_Swapchain->extent().width;
-  viewport.height = m_Swapchain->extent().height;
+  viewport.width = m_SwapchainManager.swapchain().extent().width;
+  viewport.height = m_SwapchainManager.swapchain().extent().height;
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
   vkCmdSetViewport(m_CommandBuffers[m_CurrentFrame], 0, 1, &viewport);
@@ -241,7 +200,7 @@ void VulkanRenderer::bindMaterial(const Material &mat) {
   // Scissor
   VkRect2D scissor{};
   scissor.offset = {0, 0};
-  scissor.extent = m_Swapchain->extent();
+  scissor.extent = m_SwapchainManager.swapchain().extent();
   vkCmdSetScissor(m_CommandBuffers[m_CurrentFrame], 0, 1, &scissor);
 }
 
@@ -264,20 +223,20 @@ std::unique_ptr<VulkanPipeline> VulkanRenderer::buildPipeline(const Material &ma
   VkViewport viewport{};
   viewport.x = 0.0f;
   viewport.y = 0.0f;
-  viewport.width = m_Swapchain->extent().width;
-  viewport.height = m_Swapchain->extent().height;
+  viewport.width = m_SwapchainManager.swapchain().extent().width;
+  viewport.height = m_SwapchainManager.swapchain().extent().height;
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
 
   VkRect2D scissor{};
   scissor.offset = {0, 0};
-  scissor.extent = m_Swapchain->extent();
+  scissor.extent = m_SwapchainManager.swapchain().extent();
 
   return VulkanPipelineBuilder()
       .setVertexInput(Vertex::getInputDescription().getInfo())
       .setShaders(mat.frag().getVulkanShaderModule(), mat.vert().getVulkanShaderModule())
       .setViewport(viewport, scissor)
-      .build(*m_RenderPass, *m_PipelineLayout);
+      .build(m_SwapchainManager.renderpass(), *m_PipelineLayout);
 }
 
 } // namespace Froth

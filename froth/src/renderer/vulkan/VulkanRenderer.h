@@ -10,17 +10,13 @@
 #include "src/renderer/vulkan/VulkanDescriptorSetLayout.h"
 #include "src/renderer/vulkan/VulkanDevice.h"
 #include "src/renderer/vulkan/VulkanFence.h"
-#include "src/renderer/vulkan/VulkanFramebuffer.h"
 #include "src/renderer/vulkan/VulkanImage.h"
-#include "src/renderer/vulkan/VulkanImageView.h"
 #include "src/renderer/vulkan/VulkanIndexBuffer.h"
-#include "src/renderer/vulkan/VulkanInstance.h"
 #include "src/renderer/vulkan/VulkanPipeline.h"
 #include "src/renderer/vulkan/VulkanPipelineLayout.h"
-#include "src/renderer/vulkan/VulkanRenderPass.h"
 #include "src/renderer/vulkan/VulkanSemaphore.h"
 #include "src/renderer/vulkan/VulkanSurface.h"
-#include "src/renderer/vulkan/VulkanSwapchain.h"
+#include "src/renderer/vulkan/VulkanSwapchainManager.h"
 #include "src/renderer/vulkan/VulkanVertexBuffer.h"
 #include "src/resources/materials/Material.h"
 #include <memory>
@@ -42,7 +38,6 @@ public:
   void operator=(VulkanRenderer const &) = delete;
 
   virtual bool onEvent(const Event &e) override;
-  bool onWindowResize(WindowResizeEvent &e);
   bool onFramebufferResize(FramebufferResizeEvent &e);
 
   virtual bool beginFrame() override;
@@ -69,16 +64,11 @@ protected:
   static void init(const Window &window) { VulkanContext::get().init(window); };
 
 private:
-  VulkanSurface m_Surface;
   VulkanDescriptorSetLayout m_DescriptorSetLayout;
   VulkanCommandPool m_GraphicsCommandPool;
-  std::unique_ptr<VulkanSwapChain> m_Swapchain;
-  std::unique_ptr<VulkanImage> m_DepthImage;
-  std::unique_ptr<VulkanImageView> m_DepthImageView;
-  std::unique_ptr<VulkanRenderPass> m_RenderPass;
+  VulkanSwapchainManager m_SwapchainManager;
   std::unique_ptr<VulkanPipelineLayout> m_PipelineLayout;
   std::unique_ptr<VulkanPipeline> m_Pipeline;
-  std::vector<VulkanFramebuffer> m_Framebuffers;
   std::vector<VulkanCommandBuffer> m_CommandBuffers;
   std::vector<VulkanSemaphore> m_ImageAvailableSemaphores;
   std::vector<VulkanSemaphore> m_RenderFinishedSemaphores;
@@ -88,7 +78,6 @@ private:
   bool m_WindowResized = false;
   Material m_Mat;
 
-  void recreateSwapchain();
   std::unique_ptr<VulkanPipeline> buildPipeline(const Material &mat);
 };
 } // namespace Froth

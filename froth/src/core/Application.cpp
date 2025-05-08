@@ -33,14 +33,16 @@ Application::~Application() {
 
 void Application::Run() {
   while (m_Running) {
+    Window::pollEvents();
+
     m_Renderer->beginFrame();
     m_Renderer->beginRenderPass();
+    // TODO: Seperate onUpdate into onUpdate and onDraw for example
     for (std::shared_ptr<Layer> layer : m_LayerStack) {
       layer->onUpdate(0);
     }
     m_Renderer->endRenderPass();
     m_Renderer->endFrame();
-    Window::pollEvents();
   }
 }
 

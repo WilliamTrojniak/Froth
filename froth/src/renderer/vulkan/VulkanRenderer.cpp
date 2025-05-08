@@ -8,7 +8,6 @@
 #include "glm/ext/matrix_float4x4.hpp"
 #include "src/core/events/ApplicationEvent.h"
 #include "src/core/events/EventDispatcher.h"
-#include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
 #include "src/resources/materials/Material.h"
 #include "vulkan/vulkan_core.h"
@@ -34,20 +33,9 @@ VulkanRenderer::VulkanRenderer(const Window &window, _tag)
   std::vector<VkDescriptorSetLayout>
       descSetLayouts = {m_DescriptorSetLayout.data()};
   m_PipelineLayout = std::make_unique<VulkanPipelineLayout>(descSetLayouts);
-
-  for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-    m_CommandBuffers.push_back(m_GraphicsCommandPool.AllocateCommandBuffer());
-    m_ImageAvailableSemaphores.emplace_back();
-    m_RenderFinishedSemaphores.emplace_back();
-    m_FrameInFlightFences.emplace_back(true);
-  }
 }
 
 VulkanRenderer::~VulkanRenderer() {
-  VulkanContext &vctx = VulkanContext::get();
-  for (auto &commandBuffer : m_CommandBuffers) {
-    commandBuffer.cleanup(m_GraphicsCommandPool);
-  }
 }
 
 std::unique_ptr<VulkanRenderer> VulkanRenderer::create(const Window &window) {
@@ -68,36 +56,11 @@ bool VulkanRenderer::onEvent(const Event &e) {
 
 bool VulkanRenderer::onFramebufferResize(FramebufferResizeEvent &e) {
   m_SwapchainManager.onWindowFramebufferResize(e.width(), e.height());
-  m_WindowResized = true;
   return false;
 }
 
 bool VulkanRenderer::beginFrame() {
-  VulkanContext &vctx = VulkanContext::get();
-
-  VkFence inFlightFence[] = {m_FrameInFlightFences[m_CurrentFrame]};
-  vkWaitForFences(vctx.device(), 1, inFlightFence, VK_TRUE, UINT64_MAX);
-
-  VkResult result = vkAcquireNextImageKHR(vctx.device(), m_SwapchainManager.swapchain(), UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_CurrentImageIndex);
-  if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-    m_SwapchainManager.rebuild();
-  } else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-    FROTH_ERROR("Failed to acquire swapchain image");
-  }
-
-  vkResetFences(vctx.device(), 1, inFlightFence);
-  vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrame], 0);
-
-  // Record command buffer
-  VkCommandBufferBeginInfo beginInfo{};
-  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-  beginInfo.flags = 0;
-  beginInfo.pInheritanceInfo = nullptr;
-  if (vkBeginCommandBuffer(m_CommandBuffers[m_CurrentFrame], &beginInfo) != VK_SUCCESS) {
-    return false;
-  }
-
-  return true;
+  return m_SwapchainManager.beginFrame();
 }
 
 void VulkanRenderer::beginRenderPass() {
@@ -109,61 +72,20 @@ void VulkanRenderer::beginRenderPass() {
   VkRenderPassBeginInfo renderPassInfo{};
   renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
   renderPassInfo.renderPass = m_SwapchainManager.renderpass();
-  renderPassInfo.framebuffer = m_SwapchainManager.framebuffers()[m_CurrentImageIndex];
+  renderPassInfo.framebuffer = m_SwapchainManager.currentFramebuffer();
   renderPassInfo.renderArea.offset = {0, 0};
   renderPassInfo.renderArea.extent = m_SwapchainManager.swapchain().extent();
   renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
   renderPassInfo.pClearValues = clearValues.data();
-  vkCmdBeginRenderPass(m_CommandBuffers[m_CurrentFrame], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+  vkCmdBeginRenderPass(m_SwapchainManager.currentCommandBuffer(), &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void VulkanRenderer::endRenderPass() {
-  vkCmdEndRenderPass(m_CommandBuffers[m_CurrentFrame]);
+  vkCmdEndRenderPass(m_SwapchainManager.currentCommandBuffer());
 }
 
 void VulkanRenderer::endFrame() {
-  if (vkEndCommandBuffer(m_CommandBuffers[m_CurrentFrame]) != VK_SUCCESS) {
-    FROTH_ERROR("Failed to record command buffer");
-  }
-  VulkanContext &vctx = VulkanContext::get();
-
-  // Submit draw command buffer
-  VkSubmitInfo submitInfo{};
-  VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-  VkSemaphore imageAvailableSemaphore[] = {m_ImageAvailableSemaphores[m_CurrentFrame]};
-  VkSemaphore renderFinishedSemaphore[] = {m_RenderFinishedSemaphores[m_CurrentFrame]};
-  VkCommandBuffer commandBuffer[] = {m_CommandBuffers[m_CurrentFrame]};
-  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-  submitInfo.waitSemaphoreCount = 1;
-  submitInfo.pWaitSemaphores = imageAvailableSemaphore;
-  submitInfo.pWaitDstStageMask = waitStages;
-  submitInfo.commandBufferCount = 1;
-  submitInfo.pCommandBuffers = commandBuffer;
-  submitInfo.signalSemaphoreCount = 1;
-  submitInfo.pSignalSemaphores = renderFinishedSemaphore;
-  if (vkQueueSubmit(vctx.device().getQueueFamilies().graphics.queue, 1, &submitInfo, m_FrameInFlightFences[m_CurrentFrame]) != VK_SUCCESS) {
-    FROTH_ERROR("Failed to submit draw command buffer");
-  }
-
-  VkPresentInfoKHR presentInfo{};
-  presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-  presentInfo.waitSemaphoreCount = 1;
-  presentInfo.pWaitSemaphores = renderFinishedSemaphore;
-
-  VkSwapchainKHR swapchains[] = {m_SwapchainManager.swapchain()};
-  presentInfo.swapchainCount = 1;
-  presentInfo.pSwapchains = swapchains;
-  presentInfo.pImageIndices = &m_CurrentImageIndex;
-  presentInfo.pResults = nullptr;
-
-  VkResult result = vkQueuePresentKHR(vctx.device().getQueueFamilies().present.queue, &presentInfo);
-  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_WindowResized) {
-    m_SwapchainManager.rebuild();
-  } else if (result != VK_SUCCESS) {
-    FROTH_ERROR("Failed to present swap chain image");
-  }
-
-  m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+  m_SwapchainManager.endFrame();
 }
 
 std::unique_ptr<VertexBuffer> VulkanRenderer::createVertexBuffer(size_t sizeBytes) {
@@ -175,7 +97,7 @@ std::unique_ptr<IndexBuffer> VulkanRenderer::createIndexBuffer(size_t numIndices
 }
 
 void VulkanRenderer::pushConstants(const glm::mat4 &mat) const {
-  vkCmdPushConstants(m_CommandBuffers[m_CurrentFrame], *m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mat);
+  vkCmdPushConstants(m_SwapchainManager.currentCommandBuffer(), *m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mat);
 }
 
 void VulkanRenderer::bindMaterial(const Material &mat) {
@@ -184,7 +106,7 @@ void VulkanRenderer::bindMaterial(const Material &mat) {
     m_Pipeline = buildPipeline(mat);
   }
   // Bind pipeline
-  vkCmdBindPipeline(m_CommandBuffers[m_CurrentFrame], VK_PIPELINE_BIND_POINT_GRAPHICS, *m_Pipeline);
+  vkCmdBindPipeline(m_SwapchainManager.currentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, *m_Pipeline);
 
   // TODO: Should this move elsewhere?
   // Viewport
@@ -195,28 +117,28 @@ void VulkanRenderer::bindMaterial(const Material &mat) {
   viewport.height = m_SwapchainManager.swapchain().extent().height;
   viewport.minDepth = 0.0f;
   viewport.maxDepth = 1.0f;
-  vkCmdSetViewport(m_CommandBuffers[m_CurrentFrame], 0, 1, &viewport);
+  vkCmdSetViewport(m_SwapchainManager.currentCommandBuffer(), 0, 1, &viewport);
 
   // Scissor
   VkRect2D scissor{};
   scissor.offset = {0, 0};
   scissor.extent = m_SwapchainManager.swapchain().extent();
-  vkCmdSetScissor(m_CommandBuffers[m_CurrentFrame], 0, 1, &scissor);
+  vkCmdSetScissor(m_SwapchainManager.currentCommandBuffer(), 0, 1, &scissor);
 }
 
 void VulkanRenderer::bindVertexBuffer(const VulkanVertexBuffer &vertexBuffer) const {
   // TODO: Handle dynamic offsets
   VkDeviceSize offsets[] = {0};
   VkBuffer vertexBuffers[] = {vertexBuffer};
-  vkCmdBindVertexBuffers(m_CommandBuffers[m_CurrentFrame], 0, 1, vertexBuffers, offsets);
+  vkCmdBindVertexBuffers(m_SwapchainManager.currentCommandBuffer(), 0, 1, vertexBuffers, offsets);
 }
 
 void VulkanRenderer::bindIndexBuffer(const VulkanIndexBuffer &indexBuffer) const {
   // TODO: Handle offsets
-  vkCmdBindIndexBuffer(m_CommandBuffers[m_CurrentFrame], indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+  vkCmdBindIndexBuffer(m_SwapchainManager.currentCommandBuffer(), indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 
   // TODO: Seperate into another call?
-  vkCmdDrawIndexed(m_CommandBuffers[m_CurrentFrame], indexBuffer.indexCount(), 1, 0, 0, 0);
+  vkCmdDrawIndexed(m_SwapchainManager.currentCommandBuffer(), indexBuffer.indexCount(), 1, 0, 0, 0);
 }
 
 std::unique_ptr<VulkanPipeline> VulkanRenderer::buildPipeline(const Material &mat) {

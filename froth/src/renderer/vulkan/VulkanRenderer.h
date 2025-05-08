@@ -69,13 +69,6 @@ private:
   VulkanSwapchainManager m_SwapchainManager;
   std::unique_ptr<VulkanPipelineLayout> m_PipelineLayout;
   std::unique_ptr<VulkanPipeline> m_Pipeline;
-  std::vector<VulkanCommandBuffer> m_CommandBuffers;
-  std::vector<VulkanSemaphore> m_ImageAvailableSemaphores;
-  std::vector<VulkanSemaphore> m_RenderFinishedSemaphores;
-  std::vector<VulkanFence> m_FrameInFlightFences;
-  uint32_t m_CurrentFrame = 0;
-  uint32_t m_CurrentImageIndex = 0;
-  bool m_WindowResized = false;
   Material m_Mat;
 
   std::unique_ptr<VulkanPipeline> buildPipeline(const Material &mat);

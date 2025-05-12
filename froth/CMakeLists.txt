@@ -6,6 +6,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(HOME "$ENV{HOME}")
 
 project(Froth VERSION 0.0.1)
+
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  set(FROTH_PLATFORM_MACOS TRUE)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+  set(FROTH_PLATFORM_LINUX TRUE)
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+  set(FROTH_PLATFORM_WIN TRUE)
+else()
+  message("WARNING: Target platform '${CMAKE_SYSTEM_NAME}' not supported")
+endif()
+
 configure_file(Defines.h.in Defines.h)
 
 file(GLOB_RECURSE ENGINE_SOURCES src/**.cpp)
@@ -21,6 +32,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
   $<$<CONFIG:Debug>:${PROJECT_NAME}_BUILD_DEBUG=1>
 )
 
+
 target_include_directories(${PROJECT_NAME} PUBLIC 
   ${PROJECT_BINARY_DIR}
   ./ 
@@ -28,7 +40,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
   dependencies/vendor/glfw/include
   dependencies/vendor/stb
   dependencies/vendor/tiny_obj_loader
-  ${HOME}/VulkanSDK/1.3.296.0/macOS/include
 )
 
 add_subdirectory(dependencies/vendor/glm)
@@ -37,8 +48,12 @@ add_subdirectory(dependencies/vendor/glfw)
 target_link_libraries(${PROJECT_NAME} PUBLIC glm)
 target_link_libraries(${PROJECT_NAME} PUBLIC glfw)
 
-add_library(vulkan1 SHARED IMPORTED GLOBAL)
-add_library(vulkan1xx SHARED IMPORTED GLOBAL)
-set_target_properties(vulkan1 PROPERTIES IMPORTED_LOCATION ${HOME}/VulkanSDK/1.3.296.0/macOS/lib/libvulkan.1.dylib)
-set_target_properties(vulkan1xx PROPERTIES IMPORTED_LOCATION ${HOME}/VulkanSDK/1.3.296.0/macOS/lib/libvulkan.1.3.296.dylib)
-target_link_libraries(${PROJECT_NAME} PUBLIC vulkan1 vulkan1xx)
+find_package(Vulkan REQUIRED)
+
+if(Vulkan_FOUND)
+  target_include_directories(${PROJECT_NAME} PUBLIC ${Vulkan_INCLUDE_DIRS})
+  target_link_libraries(${PROJECT_NAME} PUBLIC ${Vulkan_LIBRARIES})
+else()
+  message(STATUS "Vulkan not found")
+endif()
+

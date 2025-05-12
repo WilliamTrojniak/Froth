@@ -34,7 +34,10 @@ void VulkanContext::init(const Window &window) {
     requirements.transfer = true;
 
     requirements.extensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-    requirements.extensions.emplace_back("VK_KHR_portability_subset"); // TODO: Only enable on MacOS
+
+#ifdef FROTH_PLATFORM_MACOS
+    requirements.extensions.emplace_back("VK_KHR_portability_subset");
+#endif // FROTH_PLATFORM_MACOS
 
 #ifdef FROTH_BUILD_DEBUG
     requirements.layers.emplace_back("VK_LAYER_KHRONOS_validation");

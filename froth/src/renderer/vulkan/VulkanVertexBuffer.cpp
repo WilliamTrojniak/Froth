@@ -1,6 +1,7 @@
 #include "VulkanVertexBuffer.h"
 #include "VulkanRenderer.h"
 #include <algorithm>
+#include <string.h>
 
 namespace Froth {
 

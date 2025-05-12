@@ -3,6 +3,7 @@
 #include "VulkanRenderer.h"
 #include <algorithm>
 #include <cstdint>
+#include <string.h>
 
 namespace Froth {
 

@@ -4,6 +4,7 @@
 #include "src/renderer/vulkan/VulkanDevice.h"
 #include <algorithm>
 #include <cstdint>
+#include <limits>
 
 namespace Froth {
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "VulkanDevice.h"
+#include <vulkan/vulkan.h>
 
 namespace Froth {
 
@@ -16,6 +16,8 @@ public:
   VulkanCommandBuffer(VulkanCommandBuffer &&);
   operator VkCommandBuffer() const { return m_Buffer; }
 
+  bool beginSingleTime();
+  bool end();
   bool reset();
 
   void cleanup(VkCommandPool pool);

@@ -1,6 +1,7 @@
 #include "VulkanCommandBuffer.h"
 #include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
+#include <vulkan/vulkan_core.h>
 
 namespace Froth {
 
@@ -13,6 +14,25 @@ VulkanCommandBuffer::~VulkanCommandBuffer() {
 VulkanCommandBuffer::VulkanCommandBuffer(VulkanCommandBuffer &&o)
     : m_Buffer(o.m_Buffer) {
   o.m_Buffer = nullptr;
+}
+
+bool VulkanCommandBuffer::beginSingleTime() {
+  VkCommandBufferBeginInfo beginInfo{};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+  if (vkBeginCommandBuffer(m_Buffer, &beginInfo) != VK_SUCCESS) {
+    FROTH_WARN("Failed to begin single time command buffer")
+    return false;
+  }
+  return true;
+};
+
+bool VulkanCommandBuffer::end() {
+  if (vkEndCommandBuffer(m_Buffer) != VK_SUCCESS) {
+    FROTH_WARN("Failed to end command buffer")
+    return false;
+  }
+  return true;
 }
 
 bool VulkanCommandBuffer::reset() {

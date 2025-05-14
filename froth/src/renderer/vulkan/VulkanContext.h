@@ -3,7 +3,7 @@
 #include "src/platform/window/Window.h"
 #include "src/renderer/vulkan/VulkanDevice.h"
 #include "src/renderer/vulkan/VulkanInstance.h"
-#include "vulkan/vulkan_core.h"
+
 namespace Froth {
 
 class VulkanContext {

@@ -12,10 +12,11 @@ VulkanSwapchainManager::VulkanSwapchainManager(const Window &win)
     : m_Surface(win.createVulkanSurface()),
       m_Swapchain(VulkanSwapchain::create(m_Surface, nullptr)),
       m_DepthImage(VulkanImage::CreateInfo{
-          .extent = m_Swapchain.extent(),
+          .extent = {.width = m_Swapchain.extent().width, .height = m_Swapchain.extent().height, .depth = 1},
           .format = VK_FORMAT_D32_SFLOAT,
           .tiling = VK_IMAGE_TILING_OPTIMAL,
           .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+          .memPropFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
       }),
       m_DepthImageView(m_DepthImage.createView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT)),
       m_RenderPass(m_Swapchain.format().format, m_DepthImageView.format()) {
@@ -83,10 +84,11 @@ void VulkanSwapchainManager::rebuild() {
   VulkanSwapchain oldSwapchain = std::move(m_Swapchain);
   m_Swapchain = VulkanSwapchain::create(m_Surface, &oldSwapchain);
   m_DepthImage = VulkanImage(VulkanImage::CreateInfo{
-      .extent = m_Swapchain.extent(),
+      .extent = {.width = m_Swapchain.extent().width, .height = m_Swapchain.extent().height, .depth = 1},
       .format = VK_FORMAT_D32_SFLOAT,
       .tiling = VK_IMAGE_TILING_OPTIMAL,
       .usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+      .memPropFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
   });
 
   m_DepthImageView = m_DepthImage.createView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT);

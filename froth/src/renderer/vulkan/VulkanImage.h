@@ -1,4 +1,5 @@
 #pragma once
+#include "src/renderer/vulkan/VulkanCommandBuffer.h"
 #include "vulkan/vulkan_core.h"
 
 namespace Froth {
@@ -18,19 +19,24 @@ public:
   VulkanImage &operator=(VulkanImage &&);
   ~VulkanImage();
 
-  VkImage image() const { return m_Image; }
+  operator VkImage() const { return m_Image; }
+  const VkExtent3D &extent() const { return m_Extent; }
   void cleanup();
   VulkanImageView createView(VkFormat format, VkImageAspectFlags aspect) const;
 
+  bool transitionLayout(VulkanCommandBuffer &commandBuffer, VkImageLayout oldLayout, VkImageLayout newLayout);
+
   struct CreateInfo {
-    VkExtent2D extent;
+    VkExtent3D extent;
     VkFormat format;
     VkImageTiling tiling;
     VkImageUsageFlags usage;
+    VkMemoryPropertyFlags memPropFlags;
   };
 
 private:
   VkImage m_Image = nullptr;
+  VkExtent3D m_Extent{};
   VkDeviceMemory m_Memory = nullptr;
 };
 

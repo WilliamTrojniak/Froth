@@ -1,6 +1,7 @@
 #pragma once
 
 #include "VulkanCommandBuffer.h"
+#include "VulkanImage.h"
 
 namespace Froth {
 class VulkanBuffer {
@@ -21,6 +22,7 @@ public:
   void unmap() const;
 
   static bool copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest, const VulkanCommandBuffer &commandBuffer);
+  static bool copyBufferToImage(VulkanCommandBuffer &commandBuffer, const VulkanBuffer &src, const VulkanImage &dst);
 
   virtual void cleanup();
 

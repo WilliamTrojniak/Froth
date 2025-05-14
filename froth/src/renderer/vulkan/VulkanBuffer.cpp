@@ -3,6 +3,7 @@
 #include "VulkanCommandBuffer.h"
 #include "VulkanContext.h"
 #include "src/core/logger/Logger.h"
+#include <vulkan/vulkan_core.h>
 
 namespace Froth {
 
@@ -114,6 +115,45 @@ bool VulkanBuffer::copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest,
     FROTH_WARN("Failed to wait for queue idle");
     return false;
   }
+  return true;
+}
+
+bool VulkanBuffer::copyBufferToImage(VulkanCommandBuffer &commandBuffer, const VulkanBuffer &src, const VulkanImage &dst) {
+  if (!commandBuffer.beginSingleTime())
+    return false;
+
+  VkBufferImageCopy copyInfo{};
+  copyInfo.bufferOffset = 0;
+  copyInfo.bufferRowLength = 0;
+  copyInfo.bufferImageHeight = 0;
+  copyInfo.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+  copyInfo.imageSubresource.mipLevel = 0;
+  copyInfo.imageSubresource.baseArrayLayer = 0;
+  copyInfo.imageSubresource.layerCount = 1;
+  copyInfo.imageOffset = {0, 0, 0};
+  copyInfo.imageExtent = dst.extent();
+  vkCmdCopyBufferToImage(commandBuffer, src, dst, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copyInfo);
+
+  if (!commandBuffer.end())
+    return false;
+
+  VulkanContext &vctx = VulkanContext::get();
+  VkSubmitInfo submitInfo{};
+  VkCommandBuffer b = commandBuffer;
+  submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers = &b;
+  if (vkQueueSubmit(vctx.device().getQueueFamilies().graphics.queue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
+    FROTH_WARN("Failed to submit to queue");
+    return false;
+  }
+
+  // FIXME: Requires copies are done sequentially
+  if (vkQueueWaitIdle(vctx.device().getQueueFamilies().graphics.queue) != VK_SUCCESS) {
+    FROTH_WARN("Failed to wait for queue idle");
+    return false;
+  }
+
   return true;
 }
 

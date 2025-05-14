@@ -1,5 +1,9 @@
+#include "src/renderer/vulkan/VulkanBuffer.h"
+#include "src/renderer/vulkan/VulkanImage.h"
+#include "src/renderer/vulkan/VulkanIndexBuffer.h"
 #include "src/renderer/vulkan/VulkanShaderModule.h"
 #include <cstdio>
+#include <vulkan/vulkan_core.h>
 #define GLFW_INCLUDE_VULKAN
 #define STB_IMAGE_IMPLEMENTATION
 #define GLM_FORCE_RADIANS
@@ -1396,9 +1400,6 @@ private:
       throw std::runtime_error("Unsupported layout transition");
     }
 
-    barrier.srcAccessMask = 0;
-    barrier.dstAccessMask = 0;
-
     vkCmdPipelineBarrier(commandBuffer, sourceStage, destinationStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
     endSingleTimeCommands(deviceCfg, commandPool, commandBuffer);
@@ -1606,31 +1607,24 @@ private:
 };
 
 std::vector<Vertex> vData = {
-    {glm::vec3(0.0, 0.0, -0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(1.0, 0.0)},
-    {glm::vec3(0.5, 0.0, 0.5), glm::vec3(0.0, 1.0, 0.0), glm::vec2(1.0, 0.0)},
+    {glm::vec3(-0.5, 0.0, -0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(1.0, 0.0)},
+    {glm::vec3(0.5, 0.0, -0.5), glm::vec3(0.0, 1.0, 0.0), glm::vec2(1.0, 0.0)},
+    {glm::vec3(0.5, 0.0, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
     {glm::vec3(-0.5, 0.0, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)}};
 class TestLayer : public Froth::Layer {
 public:
   TestLayer(Froth::VulkanRenderer &renderer)
       : m_Renderer(renderer),
-        m_VertexBuffer(sizeof(Vertex) * vData.size()),
-        m_IndexBuffer(3) {
+        m_VertexBuffer(sizeof(Vertex) * vData.size()) {
     Froth::VulkanCommandPool &commandPool = m_Renderer.getCurrentCommandPool();
     Froth::VulkanCommandBuffer commandBuffer = commandPool.AllocateCommandBuffer();
     m_VertexBuffer.write(commandBuffer, sizeof(Vertex) * vData.size(), vData.data());
     commandBuffer.reset();
 
-    std::vector<Vertex> vData2 = {
-        {glm::vec3(1, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
-        {glm::vec3(0.5, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
-        {glm::vec3(0.0, 0.5, -0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)}};
-    m_VertexBuffer1 = Froth::VulkanVertexBuffer(sizeof(Vertex) * vData.size());
-    m_VertexBuffer1.write(commandBuffer, sizeof(Vertex) * vData.size(), vData2.data());
-    commandBuffer.reset();
-
-    std::vector<uint32_t> iData = {0, 1, 2};
+    std::vector<uint32_t> iData = {0, 1, 2, 2, 3, 0};
+    m_IndexBuffer = Froth::VulkanIndexBuffer(iData.size());
     m_IndexBuffer.write(commandBuffer, iData.size(), iData.data());
-    commandBuffer.cleanup(commandPool);
+    commandBuffer.reset();
 
     std::vector<char> vertShaderCode = Froth::Filesystem::readFile("../playground/shaders/vert.spv");
     std::vector<char> fragShaderCode = Froth::Filesystem::readFile("../playground/shaders/frag.spv");
@@ -1639,6 +1633,34 @@ public:
     std::shared_ptr<Froth::VulkanShaderModule> fragShaderModule = std::make_shared<Froth::VulkanShaderModule>(fragShaderCode, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     m_Material = Froth::Material(vertShaderModule, fragShaderModule);
+
+    // Texture
+    int imageWidth, imageHeight;
+    size_t imageSize;
+    void *pixels = Froth::Filesystem::loadImage(TEXTURE_PATH.c_str(), imageWidth, imageHeight);
+    imageSize = imageHeight * imageWidth * 4;
+
+    Froth::VulkanBuffer textureStagingBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    void *data = textureStagingBuffer.map();
+    memcpy(data, pixels, imageSize);
+    textureStagingBuffer.unmap();
+
+    Froth::Filesystem::freeImage(pixels);
+
+    m_Texture = Froth::VulkanImage(Froth::VulkanImage::CreateInfo{
+        .extent = {static_cast<uint32_t>(imageWidth), static_cast<uint32_t>(imageHeight), 1},
+        .format = VK_FORMAT_R8G8B8A8_SRGB,
+        .tiling = VK_IMAGE_TILING_OPTIMAL,
+        .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        .memPropFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+    });
+    m_Texture.transitionLayout(commandBuffer, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+    commandBuffer.reset();
+    Froth::VulkanBuffer::copyBufferToImage(commandBuffer, textureStagingBuffer, m_Texture);
+    commandBuffer.reset();
+    m_Texture.transitionLayout(commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    commandBuffer.cleanup(commandPool);
   }
 
   void onUpdate(double ts) override {
@@ -1652,8 +1674,6 @@ public:
     m_Renderer.bindMaterial(m_Material);
     m_Renderer.pushConstants(mvp);
     m_Renderer.bindVertexBuffer(m_VertexBuffer);
-    m_Renderer.bindIndexBuffer(m_IndexBuffer);
-    m_Renderer.bindVertexBuffer(m_VertexBuffer1);
     m_Renderer.bindIndexBuffer(m_IndexBuffer);
   }
 
@@ -1696,8 +1716,8 @@ private:
   Froth::VulkanRenderer &m_Renderer;
   Froth::VulkanIndexBuffer m_IndexBuffer;
   Froth::VulkanVertexBuffer m_VertexBuffer;
-  Froth::VulkanVertexBuffer m_VertexBuffer1;
   Froth::Material m_Material;
+  Froth::VulkanImage m_Texture;
   uint32_t m_Width = 600;
   uint32_t m_Height = 400;
   float m_X = 0;

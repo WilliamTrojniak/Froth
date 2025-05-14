@@ -10,7 +10,7 @@ VulkanImageView::VulkanImageView(const VulkanImage &image, VkFormat format, VkIm
   // TODO: Make the rest of this config accessible
   VkImageViewCreateInfo createInfo{};
   createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-  createInfo.image = image.image();
+  createInfo.image = image;
   createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
   createInfo.format = format;
   createInfo.subresourceRange.aspectMask = aspect;

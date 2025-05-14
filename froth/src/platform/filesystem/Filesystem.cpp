@@ -4,6 +4,8 @@
 #include <exception>
 #include <fstream>
 
+#include <stb/stb_image.h>
+
 namespace Froth::Filesystem {
 
 std::vector<char> readFile(const std::filesystem::path &filename) {
@@ -24,6 +26,22 @@ std::vector<char> readFile(const std::filesystem::path &filename) {
   }
 
   return buffer;
+}
+
+void *loadImage(const char *path, int &width, int &height) {
+  int texChannels;
+  void *pixels = stbi_load(path, &width, &height, &texChannels, STBI_rgb_alpha);
+  if (!pixels) {
+    width = 0;
+    height = 0;
+    return nullptr;
+  }
+
+  return pixels;
+}
+
+void freeImage(void *data) {
+  stbi_image_free(data);
 }
 
 } // namespace Froth::Filesystem

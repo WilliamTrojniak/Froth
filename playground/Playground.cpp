@@ -1,3 +1,5 @@
+#include "src/renderer/vulkan/VulkanShaderModule.h"
+#include <cstdio>
 #define GLFW_INCLUDE_VULKAN
 #define STB_IMAGE_IMPLEMENTATION
 #define GLM_FORCE_RADIANS
@@ -1633,8 +1635,8 @@ public:
     std::vector<char> vertShaderCode = Froth::Filesystem::readFile("../playground/shaders/vert.spv");
     std::vector<char> fragShaderCode = Froth::Filesystem::readFile("../playground/shaders/frag.spv");
 
-    std::shared_ptr<Froth::Shader> vertShaderModule = std::make_shared<Froth::Shader>(vertShaderCode, Froth::Shader::Stage::VERTEX);
-    std::shared_ptr<Froth::Shader> fragShaderModule = std::make_shared<Froth::Shader>(fragShaderCode, Froth::Shader::Stage::FRAGMENT);
+    std::shared_ptr<Froth::VulkanShaderModule> vertShaderModule = std::make_shared<Froth::VulkanShaderModule>(vertShaderCode, VK_SHADER_STAGE_VERTEX_BIT);
+    std::shared_ptr<Froth::VulkanShaderModule> fragShaderModule = std::make_shared<Froth::VulkanShaderModule>(fragShaderCode, VK_SHADER_STAGE_FRAGMENT_BIT);
 
     m_Material = Froth::Material(vertShaderModule, fragShaderModule);
   }
@@ -1686,6 +1688,9 @@ public:
 
     return d.isHandled();
   }
+
+  virtual void onDetatch() override final {
+  };
 
 private:
   Froth::VulkanRenderer &m_Renderer;

@@ -13,8 +13,8 @@ class Application {
 private:
   bool m_Running = true;
   std::unique_ptr<Window> m_Window;
-  VulkanRenderer m_Renderer;
   LayerStack m_LayerStack;
+  VulkanRenderer m_Renderer;
 
 public:
   Application();

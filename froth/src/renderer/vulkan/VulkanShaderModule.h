@@ -16,12 +16,11 @@ public:
   operator VkShaderModule() const { return m_ShaderModule; }
 
   VkPipelineShaderStageCreateInfo pipelineStageInfo() const;
+  void cleanup();
 
 private:
   VkShaderModule m_ShaderModule;
   VkShaderStageFlagBits m_Stage;
-
-  void cleanup();
 };
 
 } // namespace Froth

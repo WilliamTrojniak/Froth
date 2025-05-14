@@ -8,6 +8,7 @@ namespace Froth {
 
 class VulkanContext {
 public:
+  ~VulkanContext() { cleanup(); }
   VulkanContext(const VulkanContext &) = delete;
   VulkanContext &operator=(const VulkanContext &) = delete;
 

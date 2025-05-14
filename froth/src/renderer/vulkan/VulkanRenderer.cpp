@@ -8,7 +8,6 @@
 #include "glm/ext/matrix_float4x4.hpp"
 #include "src/core/events/ApplicationEvent.h"
 #include "src/core/events/EventDispatcher.h"
-#include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
 #include "src/resources/materials/Material.h"
 #include <cstdint>
@@ -63,7 +62,6 @@ std::unique_ptr<VulkanRenderer> VulkanRenderer::create(const Window &window) {
 void VulkanRenderer::shutdown() {
   VulkanContext &vctx = VulkanContext::get();
   vkDeviceWaitIdle(vctx.device());
-  vctx.cleanup();
 }
 
 bool VulkanRenderer::onEvent(const Event &e) {
@@ -171,7 +169,7 @@ std::unique_ptr<VulkanPipeline> VulkanRenderer::buildPipeline(const Material &ma
 
   return VulkanPipelineBuilder()
       .setVertexInput(Vertex::getInputDescription().getInfo())
-      .setShaders(mat.frag().getVulkanShaderModule(), mat.vert().getVulkanShaderModule())
+      .setShaders(mat.frag(), mat.vert())
       .setViewport(viewport, scissor)
       .build(m_SwapchainManager.renderpass(), *m_PipelineLayout);
 }

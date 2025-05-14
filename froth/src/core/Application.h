@@ -4,7 +4,7 @@
 #include "events/ApplicationEvent.h"
 #include "events/Event.h"
 #include "src/platform/window/Window.h"
-#include "src/renderer/Renderer.h"
+#include "src/renderer/vulkan/VulkanRenderer.h"
 #include <memory>
 
 namespace Froth {
@@ -13,7 +13,7 @@ class Application {
 private:
   bool m_Running = true;
   std::unique_ptr<Window> m_Window;
-  std::unique_ptr<Renderer> m_Renderer;
+  VulkanRenderer m_Renderer;
   LayerStack m_LayerStack;
 
 public:
@@ -29,8 +29,8 @@ public:
   bool onWindowResize(WindowResizeEvent &e);
 
   // TODO: Remove
-  const Window &window() { return *m_Window.get(); }
-  Renderer &renderer() { return *m_Renderer.get(); }
+  const Window &window() { return *m_Window; }
+  VulkanRenderer &renderer() { return m_Renderer; }
 };
 Application *CreateApplication();
 } // namespace Froth

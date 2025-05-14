@@ -23,9 +23,48 @@ VulkanSwapchainManager::VulkanSwapchainManager(const Window &win)
   createFrameData();
 }
 
+VulkanSwapchainManager::VulkanSwapchainManager(VulkanSwapchainManager &&o) noexcept
+    : m_Surface(std::move(o.m_Surface)),
+      m_Swapchain(std::move(o.m_Swapchain)),
+      m_DepthImage(std::move(o.m_DepthImage)),
+      m_DepthImageView(std::move(o.m_DepthImageView)),
+      m_RenderPass(std::move(o.m_RenderPass)),
+      m_CurrentFrame(o.m_CurrentFrame),
+      m_CurrentImageIndex(o.m_CurrentImageIndex),
+      m_Framebuffers(std::move(o.m_Framebuffers)),
+      m_ImageAvailableSemaphores(std::move(o.m_ImageAvailableSemaphores)),
+      m_RenderCompleteSemaphores(std::move(o.m_RenderCompleteSemaphores)),
+      m_FrameInFlightFences(std::move(o.m_FrameInFlightFences)),
+      m_CommandPools(std::move(o.m_CommandPools)),
+      m_CommandBuffers(std::move(o.m_CommandBuffers)),
+      m_ShouldRebuild(o.m_ShouldRebuild) {
+  o.m_ShouldRebuild = false;
+}
+
+VulkanSwapchainManager &VulkanSwapchainManager::operator=(VulkanSwapchainManager &&o) noexcept {
+  m_Surface = std::move(o.m_Surface);
+  m_Swapchain = std::move(o.m_Swapchain);
+  m_DepthImage = std::move(o.m_DepthImage);
+  m_DepthImageView = std::move(o.m_DepthImageView);
+  m_RenderPass = std::move(o.m_RenderPass);
+  m_CurrentFrame = o.m_CurrentFrame;
+  m_CurrentImageIndex = o.m_CurrentImageIndex;
+  m_Framebuffers = std::move(o.m_Framebuffers);
+  m_ImageAvailableSemaphores = std::move(o.m_ImageAvailableSemaphores);
+  m_RenderCompleteSemaphores = std::move(o.m_RenderCompleteSemaphores);
+  m_FrameInFlightFences = std::move(o.m_FrameInFlightFences);
+  m_CommandPools = std::move(o.m_CommandPools);
+  m_CommandBuffers = std::move(o.m_CommandBuffers);
+  m_ShouldRebuild = o.m_ShouldRebuild;
+  o.m_ShouldRebuild = false;
+
+  return *this;
+}
+
 VulkanSwapchainManager::~VulkanSwapchainManager() {
-  for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+  for (uint32_t i = 0; i < MAX_FRAMES_IN_FLIGHT && i < m_CommandBuffers.size(); i++) {
     m_CommandBuffers[i].cleanup(m_CommandPools[i]);
+    FROTH_DEBUG("Cleaned up swapchain command buffer");
   }
 }
 

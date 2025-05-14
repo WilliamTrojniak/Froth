@@ -15,6 +15,9 @@ public:
 
   VulkanCommandBuffer(VulkanCommandBuffer &&);
   operator VkCommandBuffer() const { return m_Buffer; }
+
+  bool reset();
+
   void cleanup(VkCommandPool pool);
 
 protected:

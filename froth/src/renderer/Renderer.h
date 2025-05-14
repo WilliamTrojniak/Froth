@@ -2,8 +2,6 @@
 
 #include "glm/ext/matrix_float4x4.hpp"
 #include "src/platform/window/Window.h"
-#include "src/renderer/IndexBuffer.h"
-#include "src/renderer/VertexBuffer.h"
 #include "src/resources/materials/Material.h"
 #include <memory>
 
@@ -25,9 +23,6 @@ public:
 
   virtual void pushConstants(const glm::mat4 &data) const = 0;
   virtual void bindMaterial(const Material &mat) = 0;
-
-  virtual std::unique_ptr<VertexBuffer> createVertexBuffer(size_t sizeBytes) = 0;
-  virtual std::unique_ptr<IndexBuffer> createIndexBuffer(size_t numIndices) = 0;
 
   /* Creates an abstract Renderer backend
    *

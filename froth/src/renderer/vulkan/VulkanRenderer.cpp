@@ -8,9 +8,9 @@
 #include "glm/ext/matrix_float4x4.hpp"
 #include "src/core/events/ApplicationEvent.h"
 #include "src/core/events/EventDispatcher.h"
+#include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
 #include "src/resources/materials/Material.h"
-#include "vulkan/vulkan_core.h"
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -25,7 +25,7 @@ bool hasExtensions(const std::vector<const char *> &extensions) noexcept;
 bool getRequiredExtensions(std::vector<const char *> &extensions) noexcept;
 bool hasLayers(const std::vector<const char *> &layers) noexcept;
 
-VulkanRenderer::VulkanRenderer(const Window &window, _tag)
+VulkanRenderer::VulkanRenderer(const Window &window)
     : m_SwapchainManager(window),
       m_DescriptorSetLayout(),
       m_GraphicsCommandPool(VulkanContext::get().device().getQueueFamilies().graphics.index) {
@@ -38,8 +38,26 @@ VulkanRenderer::VulkanRenderer(const Window &window, _tag)
 VulkanRenderer::~VulkanRenderer() {
 }
 
+VulkanRenderer::VulkanRenderer(VulkanRenderer &&o)
+    : m_SwapchainManager(std::move(o.m_SwapchainManager)),
+      m_DescriptorSetLayout(std::move(o.m_DescriptorSetLayout)),
+      m_GraphicsCommandPool(std::move(o.m_GraphicsCommandPool)),
+      m_PipelineLayout(std::move(o.m_PipelineLayout)),
+      m_Pipeline(std::move(o.m_Pipeline)) {
+}
+
+VulkanRenderer &VulkanRenderer::operator=(VulkanRenderer &&o) {
+  m_SwapchainManager = std::move(o.m_SwapchainManager);
+  m_DescriptorSetLayout = std::move(o.m_DescriptorSetLayout);
+  m_GraphicsCommandPool = std::move(o.m_GraphicsCommandPool);
+  m_PipelineLayout = std::move(o.m_PipelineLayout);
+  m_Pipeline = std::move(o.m_Pipeline);
+
+  return *this;
+}
+
 std::unique_ptr<VulkanRenderer> VulkanRenderer::create(const Window &window) {
-  return std::make_unique<VulkanRenderer>(window, _tag{});
+  return std::make_unique<VulkanRenderer>(window);
 }
 
 void VulkanRenderer::shutdown() {
@@ -88,14 +106,6 @@ void VulkanRenderer::endFrame() {
   m_SwapchainManager.endFrame();
 }
 
-std::unique_ptr<VertexBuffer> VulkanRenderer::createVertexBuffer(size_t sizeBytes) {
-  return std::make_unique<VulkanVertexBuffer>(*this, sizeBytes, m_GraphicsCommandPool);
-}
-
-std::unique_ptr<IndexBuffer> VulkanRenderer::createIndexBuffer(size_t numIndices) {
-  return std::make_unique<VulkanIndexBuffer>(*this, numIndices * sizeof(uint32_t), m_GraphicsCommandPool);
-}
-
 void VulkanRenderer::pushConstants(const glm::mat4 &mat) const {
   vkCmdPushConstants(m_SwapchainManager.currentCommandBuffer(), *m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mat);
 }
@@ -139,6 +149,11 @@ void VulkanRenderer::bindIndexBuffer(const VulkanIndexBuffer &indexBuffer) const
 
   // TODO: Seperate into another call?
   vkCmdDrawIndexed(m_SwapchainManager.currentCommandBuffer(), indexBuffer.indexCount(), 1, 0, 0, 0);
+}
+
+// TODO: Remove temporary
+VulkanCommandPool &VulkanRenderer::getCurrentCommandPool() {
+  return m_SwapchainManager.currentCommandPool();
 }
 
 std::unique_ptr<VulkanPipeline> VulkanRenderer::buildPipeline(const Material &mat) {

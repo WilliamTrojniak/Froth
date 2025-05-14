@@ -1,16 +1,18 @@
 #pragma once
 
-#include "VulkanCommandPool.h"
+#include "VulkanCommandBuffer.h"
 
 namespace Froth {
 class VulkanBuffer {
 public:
+  VulkanBuffer() = default;
   VulkanBuffer(const VkDeviceSize &size, VkBufferUsageFlags usage, VkMemoryPropertyFlags memProperties);
-  VulkanBuffer(VulkanBuffer &&) noexcept;
   ~VulkanBuffer();
 
   VulkanBuffer(VulkanBuffer const &) = delete;
   VulkanBuffer &operator=(VulkanBuffer const &) = delete;
+  VulkanBuffer(VulkanBuffer &&) noexcept;
+  VulkanBuffer &operator=(VulkanBuffer &&) noexcept;
 
   VkDeviceSize size() const { return m_Size; }
   operator VkBuffer() const { return m_Buffer; }
@@ -18,13 +20,14 @@ public:
   void *map() const;
   void unmap() const;
 
-  static void copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest, const VulkanCommandPool &pool);
+  static bool copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest, const VulkanCommandBuffer &commandBuffer);
+
+  virtual void cleanup();
 
 private:
-  VkDeviceMemory m_Memory;
-  VkBuffer m_Buffer;
-  VkDeviceSize m_Size;
-  void cleanup();
+  VkDeviceMemory m_Memory = nullptr;
+  VkBuffer m_Buffer = nullptr;
+  VkDeviceSize m_Size = 0;
 };
 
 } // namespace Froth

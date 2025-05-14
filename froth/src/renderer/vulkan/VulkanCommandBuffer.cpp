@@ -15,6 +15,14 @@ VulkanCommandBuffer::VulkanCommandBuffer(VulkanCommandBuffer &&o)
   o.m_Buffer = nullptr;
 }
 
+bool VulkanCommandBuffer::reset() {
+  if (vkResetCommandBuffer(m_Buffer, 0) != VK_SUCCESS) {
+    FROTH_WARN("Failed to reset command buffer");
+    return false;
+  }
+  return true;
+}
+
 void VulkanCommandBuffer::cleanup(VkCommandPool pool) {
   if (m_Buffer) {
     vkFreeCommandBuffers(VulkanContext::get().device(), pool, 1, &m_Buffer);

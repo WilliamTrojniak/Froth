@@ -13,8 +13,9 @@ public:
   VulkanSurface(VkSurfaceKHR surface, const VkExtent2D &extent)
       : m_Surface(surface), m_Extent(extent) {}
   VulkanSurface(const VulkanSurface &) = delete;
-  VulkanSurface(VulkanSurface &&);
   VulkanSurface &operator=(const VulkanSurface &) = delete;
+  VulkanSurface(VulkanSurface &&) noexcept;
+  VulkanSurface &operator=(VulkanSurface &&) noexcept;
   ~VulkanSurface();
 
   operator VkSurfaceKHR() const { return m_Surface; }

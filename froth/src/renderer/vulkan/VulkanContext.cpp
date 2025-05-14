@@ -7,10 +7,6 @@
 
 namespace Froth {
 
-VulkanContext::VulkanContext()
-    : m_Instance(nullptr) {
-}
-
 void VulkanContext::cleanup() {
   m_Device.cleanup();
   m_Instance.cleanup(m_Allocator);
@@ -54,7 +50,7 @@ void VulkanContext::init(const Window &window) {
     // Logical Device Creation
     VulkanDevice::QueueFamilies queueFamilies = VulkanDevice::getPhysicalDeviceQueueFamilies(m_PhysicalDevice, surface);
     m_Device = VulkanDevice(m_Allocator, m_PhysicalDevice, queueFamilies, requirements);
-    FROTH_DEBUG("Initialized Vulkan Context")
+    FROTH_INFO("Initialized Vulkan Context")
   }
 }
 

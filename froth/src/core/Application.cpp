@@ -1,3 +1,4 @@
+#include "src/renderer/vulkan/VulkanRenderer.h"
 #define GLFW_INCLUDE_VULKAN
 
 #include "Application.h"
@@ -25,7 +26,10 @@ Application::Application() {
   m_Window->setEventCallbackFunction(BIND_FUNC(onEvent));
 
   Renderer::init(*m_Window);
-  m_Renderer = Renderer::create(*m_Window);
+  FROTH_INFO("RENDERER INITIALIZED")
+
+  m_Renderer = VulkanRenderer(*m_Window);
+  FROTH_INFO("RENDERER INSTANTIATED")
 }
 Application::~Application() {
   Renderer::shutdown();
@@ -35,14 +39,14 @@ void Application::Run() {
   while (m_Running) {
     Window::pollEvents();
 
-    m_Renderer->beginFrame();
-    m_Renderer->beginRenderPass();
+    m_Renderer.beginFrame();
+    m_Renderer.beginRenderPass();
     // TODO: Seperate onUpdate into onUpdate and onDraw for example
     for (std::shared_ptr<Layer> layer : m_LayerStack) {
       layer->onUpdate(0);
     }
-    m_Renderer->endRenderPass();
-    m_Renderer->endFrame();
+    m_Renderer.endRenderPass();
+    m_Renderer.endFrame();
   }
 }
 

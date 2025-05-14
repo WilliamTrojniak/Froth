@@ -2,29 +2,28 @@
 
 #include "VulkanBuffer.h"
 #include "VulkanCommandPool.h"
-#include "src/renderer/IndexBuffer.h"
 
 namespace Froth {
 class VulkanRenderer;
 
-class VulkanIndexBuffer : public VulkanBuffer, public IndexBuffer {
+class VulkanIndexBuffer : public VulkanBuffer {
 public:
-  VulkanIndexBuffer(const VulkanRenderer &renderer,
-                    const VkDeviceSize &size,
-                    const VulkanCommandPool &commandPool);
+  VulkanIndexBuffer() = default;
+  VulkanIndexBuffer(const VkDeviceSize &size);
 
   VulkanIndexBuffer(VulkanIndexBuffer const &) = delete;
   VulkanIndexBuffer &operator=(VulkanIndexBuffer const &) = delete;
+  VulkanIndexBuffer(VulkanIndexBuffer &&) noexcept;
+  VulkanIndexBuffer &operator=(VulkanIndexBuffer &&) noexcept;
 
-  virtual void bind() override;
-  virtual void write(size_t numIndices, const uint32_t *indexData) override;
+  bool write(const VulkanCommandBuffer &commandBuffer, size_t numIndices, const uint32_t *indexData);
 
   size_t indexCount() const { return m_NumIndices; }
 
+  virtual void cleanup() override final;
+
 private:
-  const VulkanRenderer &m_Renderer;
-  const VulkanCommandPool &m_CommandPool;
-  const VulkanBuffer m_StagingBuffer;
+  VulkanBuffer m_StagingBuffer;
   size_t m_NumIndices = 0;
 };
 

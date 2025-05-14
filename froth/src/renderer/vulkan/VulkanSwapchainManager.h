@@ -19,6 +19,8 @@ public:
   VulkanSwapchainManager(const Window &window);
   VulkanSwapchainManager(const VulkanSwapchainManager &) = delete;
   VulkanSwapchainManager &operator=(const VulkanSwapchainManager &) = delete;
+  VulkanSwapchainManager(VulkanSwapchainManager &&) noexcept;
+  VulkanSwapchainManager &operator=(VulkanSwapchainManager &&) noexcept;
   ~VulkanSwapchainManager();
 
   void setShouldRebuild() { m_ShouldRebuild = true; }
@@ -33,6 +35,7 @@ public:
   bool beginFrame();
   void endFrame();
 
+  VulkanCommandPool &currentCommandPool() { return m_CommandPools[m_CurrentFrame]; }
   const VulkanCommandBuffer &currentCommandBuffer() const { return m_CommandBuffers[m_CurrentFrame]; }
   const VulkanFramebuffer &currentFramebuffer() const { return m_Framebuffers[m_CurrentImageIndex]; }
 

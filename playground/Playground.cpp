@@ -1,4 +1,3 @@
-#include <cstdio>
 #define GLFW_INCLUDE_VULKAN
 #define STB_IMAGE_IMPLEMENTATION
 #define GLM_FORCE_RADIANS
@@ -22,8 +21,6 @@
 #include "src/platform/filesystem/Filesystem.h"
 #include "src/platform/keys/Keycodes.h"
 #include "src/platform/window/Window.h"
-#include "src/renderer/IndexBuffer.h"
-#include "src/renderer/Renderer.h"
 #include "src/resources/materials/Material.h"
 #include <algorithm>
 #include <array>
@@ -1606,26 +1603,32 @@ private:
   }
 };
 
+std::vector<Vertex> vData = {
+    {glm::vec3(0.0, 0.0, -0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(1.0, 0.0)},
+    {glm::vec3(0.5, 0.0, 0.5), glm::vec3(0.0, 1.0, 0.0), glm::vec2(1.0, 0.0)},
+    {glm::vec3(-0.5, 0.0, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)}};
 class TestLayer : public Froth::Layer {
 public:
-  TestLayer(Froth::Renderer &renderer) : m_Renderer(renderer) {
-    std::vector<Vertex> vData = {
-        {glm::vec3(0.0, 0.0, -0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(1.0, 0.0)},
-        {glm::vec3(0.5, 0.0, 0.5), glm::vec3(0.0, 1.0, 0.0), glm::vec2(1.0, 0.0)},
-        {glm::vec3(-0.5, 0.0, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)}};
-    m_VertexBuffer = m_Renderer.createVertexBuffer(sizeof(Vertex) * vData.size());
-    m_VertexBuffer->write(sizeof(Vertex) * vData.size(), vData.data());
+  TestLayer(Froth::VulkanRenderer &renderer)
+      : m_Renderer(renderer),
+        m_VertexBuffer(sizeof(Vertex) * vData.size()),
+        m_IndexBuffer(3) {
+    Froth::VulkanCommandPool &commandPool = m_Renderer.getCurrentCommandPool();
+    Froth::VulkanCommandBuffer commandBuffer = commandPool.AllocateCommandBuffer();
+    m_VertexBuffer.write(commandBuffer, sizeof(Vertex) * vData.size(), vData.data());
+    commandBuffer.reset();
 
     std::vector<Vertex> vData2 = {
         {glm::vec3(1, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
         {glm::vec3(0.5, 0.5, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
         {glm::vec3(0.0, 0.5, -0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)}};
-    m_VertexBuffer1 = m_Renderer.createVertexBuffer(sizeof(Vertex) * vData.size());
-    m_VertexBuffer1->write(sizeof(Vertex) * vData.size(), vData2.data());
+    m_VertexBuffer1 = Froth::VulkanVertexBuffer(sizeof(Vertex) * vData.size());
+    m_VertexBuffer1.write(commandBuffer, sizeof(Vertex) * vData.size(), vData2.data());
+    commandBuffer.reset();
 
     std::vector<uint32_t> iData = {0, 1, 2};
-    m_IndexBuffer = m_Renderer.createIndexBuffer(iData.size());
-    m_IndexBuffer->write(iData.size(), iData.data());
+    m_IndexBuffer.write(commandBuffer, iData.size(), iData.data());
+    commandBuffer.cleanup(commandPool);
 
     std::vector<char> vertShaderCode = Froth::Filesystem::readFile("../playground/shaders/vert.spv");
     std::vector<char> fragShaderCode = Froth::Filesystem::readFile("../playground/shaders/frag.spv");
@@ -1646,10 +1649,10 @@ public:
     glm::mat4 mvp = proj * view * model;
     m_Renderer.bindMaterial(m_Material);
     m_Renderer.pushConstants(mvp);
-    m_VertexBuffer->bind();
-    m_IndexBuffer->bind();
-    m_VertexBuffer1->bind();
-    m_IndexBuffer->bind();
+    m_Renderer.bindVertexBuffer(m_VertexBuffer);
+    m_Renderer.bindIndexBuffer(m_IndexBuffer);
+    m_Renderer.bindVertexBuffer(m_VertexBuffer1);
+    m_Renderer.bindIndexBuffer(m_IndexBuffer);
   }
 
   bool onWindowResize(Froth::WindowResizeEvent &e) {
@@ -1685,10 +1688,10 @@ public:
   }
 
 private:
-  Froth::Renderer &m_Renderer;
-  std::unique_ptr<Froth::VertexBuffer> m_VertexBuffer;
-  std::unique_ptr<Froth::IndexBuffer> m_IndexBuffer;
-  std::unique_ptr<Froth::VertexBuffer> m_VertexBuffer1;
+  Froth::VulkanRenderer &m_Renderer;
+  Froth::VulkanIndexBuffer m_IndexBuffer;
+  Froth::VulkanVertexBuffer m_VertexBuffer;
+  Froth::VulkanVertexBuffer m_VertexBuffer1;
   Froth::Material m_Material;
   uint32_t m_Width = 600;
   uint32_t m_Height = 400;

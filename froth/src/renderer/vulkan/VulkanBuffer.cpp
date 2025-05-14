@@ -1,9 +1,8 @@
 
 #include "VulkanBuffer.h"
 #include "VulkanCommandBuffer.h"
+#include "VulkanContext.h"
 #include "src/core/logger/Logger.h"
-#include "src/renderer/vulkan/VulkanCommandPool.h"
-#include "src/renderer/vulkan/VulkanContext.h"
 
 namespace Froth {
 
@@ -38,6 +37,17 @@ VulkanBuffer::VulkanBuffer(VulkanBuffer &&other) noexcept
   other.m_Memory = nullptr;
 }
 
+VulkanBuffer &VulkanBuffer::operator=(VulkanBuffer &&other) noexcept {
+  m_Buffer = other.m_Buffer;
+  m_Size = other.m_Size;
+  m_Memory = other.m_Memory;
+  other.m_Buffer = nullptr;
+  other.m_Size = 0;
+  other.m_Memory = nullptr;
+  return *this;
+}
+
+// FIXME: ERROR CHECK
 void *VulkanBuffer::map() const {
   void *data;
   vkMapMemory(VulkanContext::get().device(), m_Memory, 0, m_Size, 0, &data);
@@ -67,16 +77,15 @@ void VulkanBuffer::cleanup() {
   }
 }
 
-void VulkanBuffer::copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest, const VulkanCommandPool &pool) {
+bool VulkanBuffer::copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest, const VulkanCommandBuffer &commandBuffer) {
   VulkanContext &vctx = VulkanContext::get();
-  VulkanCommandBuffer commandBuffer = pool.AllocateCommandBuffer();
 
   VkCommandBufferBeginInfo beginInfo{};
   beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
   beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
   if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-    commandBuffer.cleanup(pool);
-    FROTH_ERROR("Failed to begin command buffer");
+    FROTH_WARN("Failed to begin command buffer");
+    return false;
   }
 
   VkBufferCopy copyRegion{};
@@ -86,8 +95,8 @@ void VulkanBuffer::copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest,
   vkCmdCopyBuffer(commandBuffer, src, dest, 1, &copyRegion);
 
   if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-    commandBuffer.cleanup(pool);
-    FROTH_ERROR("Failed to end command buffer");
+    FROTH_WARN("Failed to end command buffer");
+    return false;
   }
 
   VkSubmitInfo submitInfo{};
@@ -96,13 +105,16 @@ void VulkanBuffer::copyBuffer(const VulkanBuffer &src, const VulkanBuffer &dest,
   submitInfo.commandBufferCount = 1;
   submitInfo.pCommandBuffers = &b;
   if (vkQueueSubmit(vctx.device().getQueueFamilies().graphics.queue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
-    FROTH_ERROR("Failed to submit to queue");
+    FROTH_WARN("Failed to submit to queue");
+    return false;
   }
 
+  // FIXME: Requires copies are done sequentially
   if (vkQueueWaitIdle(vctx.device().getQueueFamilies().graphics.queue) != VK_SUCCESS) {
-    FROTH_ERROR("Failed to wait for queue idle");
+    FROTH_WARN("Failed to wait for queue idle");
+    return false;
   }
-  commandBuffer.cleanup(pool);
+  return true;
 }
 
 } // namespace Froth

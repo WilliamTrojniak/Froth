@@ -25,7 +25,7 @@ public:
   void cleanup();
 
 private:
-  VulkanContext();
+  VulkanContext() = default;
 
   VkAllocationCallbacks *m_Allocator = nullptr;
   VulkanInstance m_Instance;

@@ -11,7 +11,9 @@ public:
   VulkanRenderPass(VkFormat swapchainFormat, VkFormat depthImageViewFormat);
   ~VulkanRenderPass();
   VulkanRenderPass(VulkanRenderPass const &) = delete;
-  void operator=(VulkanImageView const &) = delete;
+  void operator=(VulkanRenderPass const &) = delete;
+  VulkanRenderPass(VulkanRenderPass &&) noexcept;
+  VulkanRenderPass &operator=(VulkanRenderPass &&) noexcept;
 
   operator VkRenderPass() const { return m_RenderPass; }
 

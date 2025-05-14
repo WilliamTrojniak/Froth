@@ -1,28 +1,27 @@
 #pragma once
 
-#include "src/renderer/VertexBuffer.h"
-#include "src/renderer/vulkan/VulkanBuffer.h"
-#include "src/renderer/vulkan/VulkanCommandPool.h"
+#include "VulkanBuffer.h"
+#include "VulkanCommandBuffer.h"
 
 namespace Froth {
 class VulkanRenderer;
 
-class VulkanVertexBuffer : public VulkanBuffer, public VertexBuffer {
+class VulkanVertexBuffer : public VulkanBuffer {
 public:
-  VulkanVertexBuffer(const VulkanRenderer &renderer,
-                     const VkDeviceSize &size,
-                     const VulkanCommandPool &commandPool);
+  VulkanVertexBuffer() = default;
+  VulkanVertexBuffer(const VkDeviceSize &size);
 
-  virtual void write(size_t sizeBytes, const void *vertexData) override;
-  virtual void bind() override;
+  bool write(const VulkanCommandBuffer &commandBuffer, size_t sizeBytes, const void *vertexData);
 
   VulkanVertexBuffer(VulkanVertexBuffer const &) = delete;
   VulkanVertexBuffer &operator=(VulkanVertexBuffer const &) = delete;
+  VulkanVertexBuffer(VulkanVertexBuffer &&) noexcept;
+  VulkanVertexBuffer &operator=(VulkanVertexBuffer &&) noexcept;
+
+  virtual void cleanup() override final;
 
 private:
-  const VulkanRenderer &m_Renderer;
-  const VulkanCommandPool &m_CommandPool;
-  const VulkanBuffer m_StagingBuffer;
+  VulkanBuffer m_StagingBuffer;
 };
 
 } // namespace Froth

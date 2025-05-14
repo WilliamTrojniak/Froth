@@ -5,9 +5,16 @@
 
 namespace Froth {
 
-VulkanSurface::VulkanSurface(VulkanSurface &&o)
+VulkanSurface::VulkanSurface(VulkanSurface &&o) noexcept
     : m_Surface(o.m_Surface) {
   o.m_Surface = nullptr;
+}
+
+VulkanSurface &VulkanSurface::operator=(VulkanSurface &&o) noexcept {
+  m_Surface = o.m_Surface;
+  o.m_Surface = nullptr;
+
+  return *this;
 }
 
 void VulkanSurface::resize(uint32_t width, uint32_t height) {

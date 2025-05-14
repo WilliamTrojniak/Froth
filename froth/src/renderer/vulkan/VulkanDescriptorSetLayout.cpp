@@ -2,10 +2,11 @@
 #include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
 #include <array>
+#include <vector>
 
 namespace Froth {
 
-VulkanDescriptorSetLayout::VulkanDescriptorSetLayout() {
+VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(const std::vector<VkDescriptorSetLayoutCreateInfo> &data) {
   // TODO: Customizable descriptor set layout
   VkDescriptorSetLayoutBinding uboLayoutBinding{};
   uboLayoutBinding.binding = 0;
@@ -37,6 +38,13 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout() {
 VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(VulkanDescriptorSetLayout &&o) noexcept
     : m_DescriptorSetLayout(o.m_DescriptorSetLayout) {
   o.m_DescriptorSetLayout = nullptr;
+}
+
+VulkanDescriptorSetLayout &VulkanDescriptorSetLayout::operator=(VulkanDescriptorSetLayout &&o) noexcept {
+  m_DescriptorSetLayout = o.m_DescriptorSetLayout;
+  o.m_DescriptorSetLayout = nullptr;
+
+  return *this;
 }
 
 VulkanDescriptorSetLayout::~VulkanDescriptorSetLayout() {

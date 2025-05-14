@@ -1,16 +1,13 @@
 #include "VulkanVertexBuffer.h"
-#include "VulkanRenderer.h"
+#include "VulkanBuffer.h"
 #include <algorithm>
 #include <string.h>
+#include <utility>
 
 namespace Froth {
 
-VulkanVertexBuffer::VulkanVertexBuffer(const VulkanRenderer &renderer,
-                                       const VkDeviceSize &size,
-                                       const VulkanCommandPool &commandPool)
-    : m_Renderer(renderer),
-      m_CommandPool(commandPool),
-      VulkanBuffer(size,
+VulkanVertexBuffer::VulkanVertexBuffer(const VkDeviceSize &size)
+    : VulkanBuffer(size,
                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
                    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
       m_StagingBuffer(size,
@@ -18,18 +15,30 @@ VulkanVertexBuffer::VulkanVertexBuffer(const VulkanRenderer &renderer,
                       VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) {
 }
 
-void VulkanVertexBuffer::write(size_t vertexDataSize, const void *vertexData) {
+VulkanVertexBuffer::VulkanVertexBuffer(VulkanVertexBuffer &&o) noexcept
+    : VulkanBuffer(std::forward<VulkanVertexBuffer>(o)),
+      m_StagingBuffer(std::forward<VulkanBuffer>(o.m_StagingBuffer)) {
+}
+VulkanVertexBuffer &VulkanVertexBuffer::operator=(VulkanVertexBuffer &&o) noexcept {
+  VulkanBuffer::operator=(std::forward<VulkanVertexBuffer>(o));
+  m_StagingBuffer = std::forward<VulkanBuffer>(o.m_StagingBuffer);
+
+  return *this;
+}
+
+bool VulkanVertexBuffer::write(const VulkanCommandBuffer &commandBuffer, size_t vertexDataSize, const void *vertexData) {
   vertexDataSize = std::min(vertexDataSize, static_cast<size_t>(size()));
 
   void *data = m_StagingBuffer.map();
   memcpy(data, vertexData, vertexDataSize);
   m_StagingBuffer.unmap();
 
-  VulkanBuffer::copyBuffer(m_StagingBuffer, *this, m_CommandPool);
+  return VulkanBuffer::copyBuffer(m_StagingBuffer, *this, commandBuffer);
 }
 
-void VulkanVertexBuffer::bind() {
-  m_Renderer.bindVertexBuffer(*this);
+void VulkanVertexBuffer::cleanup() {
+  m_StagingBuffer.cleanup();
+  VulkanBuffer::cleanup();
 }
 
 } // namespace Froth

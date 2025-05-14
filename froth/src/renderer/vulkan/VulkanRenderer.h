@@ -9,33 +9,30 @@
 #include "src/renderer/vulkan/VulkanContext.h"
 #include "src/renderer/vulkan/VulkanDescriptorSetLayout.h"
 #include "src/renderer/vulkan/VulkanDevice.h"
-#include "src/renderer/vulkan/VulkanFence.h"
 #include "src/renderer/vulkan/VulkanImage.h"
 #include "src/renderer/vulkan/VulkanIndexBuffer.h"
 #include "src/renderer/vulkan/VulkanPipeline.h"
 #include "src/renderer/vulkan/VulkanPipelineLayout.h"
-#include "src/renderer/vulkan/VulkanSemaphore.h"
 #include "src/renderer/vulkan/VulkanSurface.h"
 #include "src/renderer/vulkan/VulkanSwapchainManager.h"
 #include "src/renderer/vulkan/VulkanVertexBuffer.h"
 #include "src/resources/materials/Material.h"
 #include <memory>
-#include <vector>
 
 namespace Froth {
 class VulkanRenderer : public Renderer {
   friend class Renderer;
-  struct _tag {
-    explicit _tag() = default;
-  };
 
 public:
-  VulkanRenderer(const Window &window, _tag);
+  VulkanRenderer() = default;
+  VulkanRenderer(const Window &window);
   static void shutdown();
 
   ~VulkanRenderer() override;
   VulkanRenderer(VulkanRenderer const &) = delete;
   void operator=(VulkanRenderer const &) = delete;
+  VulkanRenderer(VulkanRenderer &&);
+  VulkanRenderer &operator=(VulkanRenderer &&);
 
   virtual bool onEvent(const Event &e) override;
   bool onFramebufferResize(FramebufferResizeEvent &e);
@@ -45,11 +42,11 @@ public:
   virtual void endRenderPass() override;
   virtual void endFrame() override;
 
-  virtual std::unique_ptr<VertexBuffer> createVertexBuffer(size_t sizeBytes) override;
-  virtual std::unique_ptr<IndexBuffer> createIndexBuffer(size_t sizeBytes) override;
-
   virtual void pushConstants(const glm::mat4 &data) const override;
   virtual void bindMaterial(const Material &mat) override;
+
+  VulkanCommandPool &getCurrentCommandPool();
+  VulkanCommandPool &getGraphicsCommandPool() { return m_GraphicsCommandPool; };
 
   void bindVertexBuffer(const VulkanVertexBuffer &buffer) const;
   void bindIndexBuffer(const VulkanIndexBuffer &buffer) const;
@@ -67,9 +64,8 @@ private:
   VulkanDescriptorSetLayout m_DescriptorSetLayout;
   VulkanCommandPool m_GraphicsCommandPool;
   VulkanSwapchainManager m_SwapchainManager;
-  std::unique_ptr<VulkanPipelineLayout> m_PipelineLayout;
-  std::unique_ptr<VulkanPipeline> m_Pipeline;
-  Material m_Mat;
+  std::unique_ptr<VulkanPipelineLayout> m_PipelineLayout = nullptr;
+  std::unique_ptr<VulkanPipeline> m_Pipeline = nullptr;
 
   std::unique_ptr<VulkanPipeline> buildPipeline(const Material &mat);
 };

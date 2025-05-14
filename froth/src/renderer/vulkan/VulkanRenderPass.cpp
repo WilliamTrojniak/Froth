@@ -1,6 +1,7 @@
 #include "VulkanRenderPass.h"
 #include "VulkanContext.h"
 #include "src/core/logger/Logger.h"
+#include <cstddef>
 
 namespace Froth {
 
@@ -61,6 +62,17 @@ VulkanRenderPass::VulkanRenderPass(VkFormat swapchainFormat, VkFormat depthImage
   if (vkCreateRenderPass(vctx.device(), &renderPassInfo, vctx.allocator(), &m_RenderPass) != VK_SUCCESS) {
     FROTH_ERROR("Failed to create Render Pass")
   }
+}
+
+VulkanRenderPass::VulkanRenderPass(VulkanRenderPass &&o) noexcept
+    : m_RenderPass(o.m_RenderPass) {
+  o.m_RenderPass = nullptr;
+}
+VulkanRenderPass &VulkanRenderPass::operator=(VulkanRenderPass &&o) noexcept {
+  m_RenderPass = o.m_RenderPass;
+  o.m_RenderPass = nullptr;
+
+  return *this;
 }
 
 VulkanRenderPass::~VulkanRenderPass() {

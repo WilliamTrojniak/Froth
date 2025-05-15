@@ -1,9 +1,11 @@
+#include "glm/ext/vector_float3.hpp"
+#include "src/modules/camera/Camera.h"
 #include "src/renderer/vulkan/VulkanBuffer.h"
-#include "src/renderer/vulkan/VulkanDescriptorSet.h"
 #include "src/renderer/vulkan/VulkanImage.h"
 #include "src/renderer/vulkan/VulkanIndexBuffer.h"
 #include "src/renderer/vulkan/VulkanSampler.h"
 #include "src/renderer/vulkan/VulkanShaderModule.h"
+#include "src/renderer/vulkan/VulkanVertexBuffer.h"
 #include <cstdio>
 #include <vulkan/vulkan_core.h>
 #define GLFW_INCLUDE_VULKAN
@@ -12,6 +14,7 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <GLFW/glfw3.h>
 
+#include "src/platform/filesystem/Filesystem.h"
 #include "src/renderer/vulkan/VulkanInstance.h"
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -26,7 +29,6 @@
 #include "src/core/events/Event.h"
 #include "src/core/events/EventDispatcher.h"
 #include "src/core/events/KeyEvent.h"
-#include "src/platform/filesystem/Filesystem.h"
 #include "src/platform/keys/Keycodes.h"
 #include "src/platform/window/Window.h"
 #include "src/resources/materials/Material.h"
@@ -54,12 +56,6 @@
 const std::string MODEL_PATH = "../playground/models/viking_room.obj";
 const std::string TEXTURE_PATH = "../playground/textures/viking_room.png";
 const std::string TEXTURE_JPG_PATH = "../playground/textures/texture.jpg";
-
-struct Vertex {
-  glm::vec3 pos;
-  glm::vec3 color;
-  glm::vec2 texCoord;
-};
 
 class VulkanTriangle : public Froth::Layer {
 public:
@@ -1609,24 +1605,24 @@ private:
   }
 };
 
-std::vector<Vertex> vData = {
-    {glm::vec3(-0.5, 0.0, -0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(0.0, 0.0)},
-    {glm::vec3(0.5, 0.0, -0.5), glm::vec3(0.0, 1.0, 0.0), glm::vec2(1.0, 0.0)},
-    {glm::vec3(0.5, 0.0, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 1.0)},
-    {glm::vec3(-0.5, 0.0, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(0.0, 1.0)}};
 class TestLayer : public Froth::Layer {
 public:
   TestLayer(Froth::VulkanRenderer &renderer)
-      : m_Renderer(renderer),
-        m_VertexBuffer(sizeof(Vertex) * vData.size()) {
+      : m_Renderer(renderer) {
+
+    std::vector<Froth::Vertex> vertices;
+    std::vector<uint32_t> indices;
+    if (!Froth::Filesystem::loadObj(MODEL_PATH.c_str(), vertices, indices)) {
+    }
     Froth::VulkanCommandPool &commandPool = m_Renderer.getCurrentCommandPool();
     Froth::VulkanCommandBuffer commandBuffer = commandPool.AllocateCommandBuffer();
-    m_VertexBuffer.write(commandBuffer, sizeof(Vertex) * vData.size(), vData.data());
+
+    m_VertexBuffer = Froth::VulkanVertexBuffer(sizeof(Froth::Vertex) * vertices.size());
+    m_VertexBuffer.write(commandBuffer, sizeof(Froth::Vertex) * vertices.size(), vertices.data());
     commandBuffer.reset();
 
-    std::vector<uint32_t> iData = {0, 1, 2, 2, 3, 0};
-    m_IndexBuffer = Froth::VulkanIndexBuffer(iData.size());
-    m_IndexBuffer.write(commandBuffer, iData.size(), iData.data());
+    m_IndexBuffer = Froth::VulkanIndexBuffer(indices.size());
+    m_IndexBuffer.write(commandBuffer, indices.size(), indices.data());
     commandBuffer.reset();
 
     std::vector<char> vertShaderCode = Froth::Filesystem::readFile("../playground/shaders/vert.spv");
@@ -1640,7 +1636,7 @@ public:
     // Texture
     int imageWidth, imageHeight;
     size_t imageSize;
-    void *pixels = Froth::Filesystem::loadImage(TEXTURE_JPG_PATH.c_str(), imageWidth, imageHeight);
+    void *pixels = Froth::Filesystem::loadImage(TEXTURE_PATH.c_str(), imageWidth, imageHeight);
     imageSize = imageHeight * imageWidth * 4;
 
     Froth::VulkanBuffer textureStagingBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -1668,16 +1664,17 @@ public:
     m_Renderer.setDescriptorTexture(m_Sampler, m_TextureView);
 
     commandBuffer.cleanup(commandPool);
+    m_Camera = Froth::Camera(glm::vec3(0.0f, -5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.f));
   }
 
   void onUpdate(double ts) override {
 
     glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, 0));
-    glm::mat4 view = glm::lookAt(glm::vec3(m_X, -5.0f, m_Z), glm::vec3(m_X, 0.0f, m_Z), glm::vec3(0.0f, 0.0f, 1.0f));
     glm::mat4 proj = glm::perspective(glm::radians(45.0f), m_Width / (float)m_Height, 0.1f, 100.0f);
     proj[1][1] *= -1;
 
-    glm::mat4 mvp = proj * view * model;
+    glm::mat4 mvp = proj * (glm::mat4)m_Camera * model;
+    // glm::mat4 mvp = proj * glm::lookAt(glm::vec3(0.f, -5.f, 0.f), glm::vec3(0., 0., 0.), glm::vec3(0.0, 0.0, 1.0f)) * model;
     m_Renderer.bindMaterial(m_Material);
     m_Renderer.pushConstants(mvp);
     m_Renderer.bindVertexBuffer(m_VertexBuffer);
@@ -1693,16 +1690,28 @@ public:
   bool onKeyPressed(Froth::KeyPressedEvent &e) {
     switch (e.keyCode()) {
     case Froth::Key::Right:
-      m_X += 0.1;
+      m_Camera.moveRight();
       return true;
     case Froth::Key::Left:
-      m_X -= 0.1;
+      m_Camera.moveLeft();
+      return true;
+    case Froth::Key::K:
+      m_Camera.moveUp();
+      return true;
+    case Froth::Key::J:
+      m_Camera.moveDown();
+      return true;
+    case Froth::Key::L:
+      m_Camera.rotate(-.5f, glm::vec3(0.f, 0.f, 1.f));
+      return true;
+    case Froth::Key::H:
+      m_Camera.rotate(.5f, glm::vec3(0.f, 0.f, 1.f));
       return true;
     case Froth::Key::Up:
-      m_Z += 0.1;
+      m_Camera.moveForward();
       return true;
     case Froth::Key::Down:
-      m_Z -= 0.1;
+      m_Camera.moveBack();
       return true;
     }
     return false;
@@ -1727,10 +1736,9 @@ private:
   Froth::VulkanImage m_Texture;
   Froth::VulkanImageView m_TextureView;
   Froth::VulkanSampler m_Sampler;
+  Froth::Camera m_Camera;
   uint32_t m_Width = 600;
   uint32_t m_Height = 400;
-  float m_X = 0;
-  float m_Z = 0;
 };
 
 class Playground : public Froth::Application {

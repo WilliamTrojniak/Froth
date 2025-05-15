@@ -1,10 +1,13 @@
 #pragma once
 
 #include <cstdint>
+#include <vector>
 #include <vulkan/vulkan.h>
 
 namespace Froth {
+
 class VulkanDescriptorPool {
+
 public:
   VulkanDescriptorPool() = default;
   VulkanDescriptorPool(uint32_t maxSets, uint32_t maxUniformBuffers, uint32_t maxImageSamplers);
@@ -15,6 +18,9 @@ public:
   ~VulkanDescriptorPool();
 
   operator VkDescriptorPool() const { return m_Pool; }
+
+  std::vector<VkDescriptorSet> allocateDescriptorSets(const std::vector<VkDescriptorSetLayout> &layouts);
+  void freeDescriptorSets(std::vector<VkDescriptorSet> &sets);
 
   void cleanup();
 

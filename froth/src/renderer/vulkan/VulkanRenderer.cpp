@@ -8,11 +8,15 @@
 #include "glm/ext/matrix_float4x4.hpp"
 #include "src/core/events/ApplicationEvent.h"
 #include "src/core/events/EventDispatcher.h"
+#include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
+#include "src/renderer/vulkan/VulkanDescriptorSet.h"
 #include "src/resources/materials/Material.h"
 #include <cstdint>
 #include <memory>
+#include <utility>
 #include <vector>
+#include <vulkan/vulkan_core.h>
 
 namespace Froth {
 
@@ -26,22 +30,26 @@ bool hasLayers(const std::vector<const char *> &layers) noexcept;
 
 VulkanRenderer::VulkanRenderer(const Window &window)
     : m_SwapchainManager(window),
-      m_DescriptorSetLayout(),
-      m_DescriptorPool(MAX_FRAMES_IN_FLIGHT, MAX_FRAMES_IN_FLIGHT, MAX_FRAMES_IN_FLIGHT),
+      m_DescriptorSetLayout(std::vector<VkDescriptorSetLayoutBinding>()),
+      m_DescriptorPool(MAX_FRAMES_IN_FLIGHT, 0, MAX_FRAMES_IN_FLIGHT),
       m_GraphicsCommandPool(VulkanContext::get().device().getQueueFamilies().graphics.index) {
 
-  std::vector<VkDescriptorSetLayout>
-      descSetLayouts = {m_DescriptorSetLayout.data()};
+  std::vector<VkDescriptorSetLayout> descSetLayouts(MAX_FRAMES_IN_FLIGHT, m_DescriptorSetLayout);
+  m_DescriptorSets = m_DescriptorPool.allocateDescriptorSets(descSetLayouts);
+
+  descSetLayouts = {m_DescriptorSetLayout};
   m_PipelineLayout = std::make_unique<VulkanPipelineLayout>(descSetLayouts);
 }
 
 VulkanRenderer::~VulkanRenderer() {
+  m_DescriptorPool.freeDescriptorSets(m_DescriptorSets);
 }
 
 VulkanRenderer::VulkanRenderer(VulkanRenderer &&o)
     : m_SwapchainManager(std::move(o.m_SwapchainManager)),
       m_DescriptorSetLayout(std::move(o.m_DescriptorSetLayout)),
       m_DescriptorPool(std::move(o.m_DescriptorPool)),
+      m_DescriptorSets(std::move(o.m_DescriptorSets)),
       m_GraphicsCommandPool(std::move(o.m_GraphicsCommandPool)),
       m_PipelineLayout(std::move(o.m_PipelineLayout)),
       m_Pipeline(std::move(o.m_Pipeline)) {
@@ -51,6 +59,7 @@ VulkanRenderer &VulkanRenderer::operator=(VulkanRenderer &&o) {
   m_SwapchainManager = std::move(o.m_SwapchainManager);
   m_DescriptorSetLayout = std::move(o.m_DescriptorSetLayout);
   m_DescriptorPool = std::move(o.m_DescriptorPool);
+  m_DescriptorSets = std::move(o.m_DescriptorSets);
   m_GraphicsCommandPool = std::move(o.m_GraphicsCommandPool);
   m_PipelineLayout = std::move(o.m_PipelineLayout);
   m_Pipeline = std::move(o.m_Pipeline);
@@ -135,6 +144,18 @@ void VulkanRenderer::bindMaterial(const Material &mat) {
   scissor.offset = {0, 0};
   scissor.extent = m_SwapchainManager.swapchain().extent();
   vkCmdSetScissor(m_SwapchainManager.currentCommandBuffer(), 0, 1, &scissor);
+
+  // TODO: Move
+  vkCmdBindDescriptorSets(m_SwapchainManager.currentCommandBuffer(), VK_PIPELINE_BIND_POINT_GRAPHICS, *m_PipelineLayout, 0, 1, &m_DescriptorSets[m_SwapchainManager.currentFrame()], 0, VK_NULL_HANDLE);
+}
+
+void VulkanRenderer::setDescriptorTexture(const VulkanSampler &sampler, const VulkanImageView &view) {
+  auto writer = VulkanDescriptorSet::Writer();
+  for (auto descriptorSet : m_DescriptorSets) {
+    writer.addImageSampler(descriptorSet, 0, view, sampler);
+  }
+
+  writer.Write();
 }
 
 void VulkanRenderer::bindVertexBuffer(const VulkanVertexBuffer &vertexBuffer) const {

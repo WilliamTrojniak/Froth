@@ -1,6 +1,8 @@
 #include "src/renderer/vulkan/VulkanBuffer.h"
+#include "src/renderer/vulkan/VulkanDescriptorSet.h"
 #include "src/renderer/vulkan/VulkanImage.h"
 #include "src/renderer/vulkan/VulkanIndexBuffer.h"
+#include "src/renderer/vulkan/VulkanSampler.h"
 #include "src/renderer/vulkan/VulkanShaderModule.h"
 #include <cstdio>
 #include <vulkan/vulkan_core.h>
@@ -51,6 +53,7 @@
 
 const std::string MODEL_PATH = "../playground/models/viking_room.obj";
 const std::string TEXTURE_PATH = "../playground/textures/viking_room.png";
+const std::string TEXTURE_JPG_PATH = "../playground/textures/texture.jpg";
 
 struct Vertex {
   glm::vec3 pos;
@@ -1607,10 +1610,10 @@ private:
 };
 
 std::vector<Vertex> vData = {
-    {glm::vec3(-0.5, 0.0, -0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(1.0, 0.0)},
+    {glm::vec3(-0.5, 0.0, -0.5), glm::vec3(0.0, 0.0, 1.0), glm::vec2(0.0, 0.0)},
     {glm::vec3(0.5, 0.0, -0.5), glm::vec3(0.0, 1.0, 0.0), glm::vec2(1.0, 0.0)},
-    {glm::vec3(0.5, 0.0, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)},
-    {glm::vec3(-0.5, 0.0, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 0.0)}};
+    {glm::vec3(0.5, 0.0, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(1.0, 1.0)},
+    {glm::vec3(-0.5, 0.0, 0.5), glm::vec3(1.0, 0.0, 0.0), glm::vec2(0.0, 1.0)}};
 class TestLayer : public Froth::Layer {
 public:
   TestLayer(Froth::VulkanRenderer &renderer)
@@ -1637,7 +1640,7 @@ public:
     // Texture
     int imageWidth, imageHeight;
     size_t imageSize;
-    void *pixels = Froth::Filesystem::loadImage(TEXTURE_PATH.c_str(), imageWidth, imageHeight);
+    void *pixels = Froth::Filesystem::loadImage(TEXTURE_JPG_PATH.c_str(), imageWidth, imageHeight);
     imageSize = imageHeight * imageWidth * 4;
 
     Froth::VulkanBuffer textureStagingBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -1659,6 +1662,10 @@ public:
     Froth::VulkanBuffer::copyBufferToImage(commandBuffer, textureStagingBuffer, m_Texture);
     commandBuffer.reset();
     m_Texture.transitionLayout(commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    m_TextureView = m_Texture.createView(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+    m_Sampler = Froth::VulkanSampler::Builder().build();
+    m_Renderer.setDescriptorTexture(m_Sampler, m_TextureView);
 
     commandBuffer.cleanup(commandPool);
   }
@@ -1718,6 +1725,8 @@ private:
   Froth::VulkanVertexBuffer m_VertexBuffer;
   Froth::Material m_Material;
   Froth::VulkanImage m_Texture;
+  Froth::VulkanImageView m_TextureView;
+  Froth::VulkanSampler m_Sampler;
   uint32_t m_Width = 600;
   uint32_t m_Height = 400;
   float m_X = 0;

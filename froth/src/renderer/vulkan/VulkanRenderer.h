@@ -11,14 +11,17 @@
 #include "src/renderer/vulkan/VulkanDescriptorSetLayout.h"
 #include "src/renderer/vulkan/VulkanDevice.h"
 #include "src/renderer/vulkan/VulkanImage.h"
+#include "src/renderer/vulkan/VulkanImageView.h"
 #include "src/renderer/vulkan/VulkanIndexBuffer.h"
 #include "src/renderer/vulkan/VulkanPipeline.h"
 #include "src/renderer/vulkan/VulkanPipelineLayout.h"
+#include "src/renderer/vulkan/VulkanSampler.h"
 #include "src/renderer/vulkan/VulkanSurface.h"
 #include "src/renderer/vulkan/VulkanSwapchainManager.h"
 #include "src/renderer/vulkan/VulkanVertexBuffer.h"
 #include "src/resources/materials/Material.h"
 #include <memory>
+#include <vector>
 
 namespace Froth {
 class VulkanRenderer : public Renderer {
@@ -49,6 +52,7 @@ public:
   VulkanCommandPool &getCurrentCommandPool();
   VulkanCommandPool &getGraphicsCommandPool() { return m_GraphicsCommandPool; };
   VulkanDescriptorPool &getDescriptorPool() { return m_DescriptorPool; }
+  void setDescriptorTexture(const VulkanSampler &sampler, const VulkanImageView &view);
 
   void bindVertexBuffer(const VulkanVertexBuffer &buffer) const;
   void bindIndexBuffer(const VulkanIndexBuffer &buffer) const;
@@ -67,6 +71,7 @@ private:
   VulkanCommandPool m_GraphicsCommandPool;
   VulkanSwapchainManager m_SwapchainManager;
   VulkanDescriptorPool m_DescriptorPool;
+  std::vector<VkDescriptorSet> m_DescriptorSets;
   std::unique_ptr<VulkanPipelineLayout> m_PipelineLayout = nullptr;
   std::unique_ptr<VulkanPipeline> m_Pipeline = nullptr;
 

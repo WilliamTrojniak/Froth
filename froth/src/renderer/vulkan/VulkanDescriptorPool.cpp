@@ -1,7 +1,9 @@
 #include "VulkanDescriptorPool.h"
 #include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
+#include "src/renderer/vulkan/VulkanDescriptorSetLayout.h"
 #include <array>
+#include <vector>
 #include <vulkan/vulkan_core.h>
 
 namespace Froth {
@@ -35,6 +37,31 @@ VulkanDescriptorPool &VulkanDescriptorPool::operator=(VulkanDescriptorPool &&o) 
   o.m_Pool = nullptr;
 
   return *this;
+}
+
+std::vector<VkDescriptorSet> VulkanDescriptorPool::allocateDescriptorSets(const std::vector<VkDescriptorSetLayout> &layouts) {
+  VkDescriptorSetAllocateInfo allocInfo{};
+  allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+  allocInfo.descriptorPool = m_Pool;
+  allocInfo.descriptorSetCount = layouts.size();
+  allocInfo.pSetLayouts = layouts.data();
+
+  VulkanContext &vctx = VulkanContext::get();
+  std::vector<VkDescriptorSet> sets(layouts.size());
+  if (vkAllocateDescriptorSets(vctx.device(), &allocInfo, sets.data()) != VK_SUCCESS) {
+    FROTH_ERROR("Failed to allocate descriptor sets")
+  }
+  return sets;
+}
+
+void VulkanDescriptorPool::freeDescriptorSets(std::vector<VkDescriptorSet> &sets) {
+  VulkanContext &vctx = VulkanContext::get();
+  if (vkFreeDescriptorSets(vctx.device(), m_Pool, sets.size(), sets.data()) != VK_SUCCESS) {
+    FROTH_WARN("Failed to free descriptor set");
+  }
+
+  FROTH_DEBUG("Freed Descriptor Sets");
+  sets.clear();
 }
 
 void VulkanDescriptorPool::cleanup() {

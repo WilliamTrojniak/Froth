@@ -35,6 +35,7 @@ public:
   bool beginFrame();
   void endFrame();
 
+  uint32_t currentFrame() const { return m_CurrentFrame; }
   VulkanCommandPool &currentCommandPool() { return m_CommandPools[m_CurrentFrame]; }
   const VulkanCommandBuffer &currentCommandBuffer() const { return m_CommandBuffers[m_CurrentFrame]; }
   const VulkanFramebuffer &currentFramebuffer() const { return m_Framebuffers[m_CurrentImageIndex]; }

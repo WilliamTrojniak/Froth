@@ -6,6 +6,7 @@
 #include "src/renderer/vulkan/VulkanSampler.h"
 #include "src/renderer/vulkan/VulkanShaderModule.h"
 #include "src/renderer/vulkan/VulkanVertexBuffer.h"
+#include <concepts>
 #include <cstdio>
 #include <vulkan/vulkan_core.h>
 #define GLFW_INCLUDE_VULKAN
@@ -1695,11 +1696,17 @@ public:
     case Froth::Key::Left:
       m_Camera.moveLeft();
       return true;
-    case Froth::Key::K:
+    case Froth::Key::E:
       m_Camera.moveUp();
       return true;
-    case Froth::Key::J:
+    case Froth::Key::Q:
       m_Camera.moveDown();
+      return true;
+    case Froth::Key::K:
+      m_Camera.lookUp();
+      return true;
+    case Froth::Key::J:
+      m_Camera.lookDown();
       return true;
     case Froth::Key::L:
       m_Camera.rotate(-.5f, glm::vec3(0.f, 0.f, 1.f));

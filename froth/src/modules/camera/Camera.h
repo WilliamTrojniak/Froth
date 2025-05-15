@@ -19,6 +19,9 @@ public:
   void moveBack();
   void moveForward();
 
+  void lookUp();
+  void lookDown();
+
 private:
   glm::vec3 m_Pos;
   glm::vec3 m_Dir;

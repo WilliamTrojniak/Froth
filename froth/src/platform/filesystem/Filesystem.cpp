@@ -71,12 +71,14 @@ bool loadObj(const char *path, std::vector<Vertex> &vertices, std::vector<uint32
       };
       vertex.color = {1.0f, 1.0f, 1.0f};
 
-      // if (std::find(vertices.begin(), vertices.end(), vertex) == vertices.end()) {
-      // indices.push_back(vertices.size());
-      // }
-
-      vertices.push_back(vertex);
-      indices.push_back(indices.size());
+      // FIXME: Use a more efficient data structure to find
+      auto it = std::find(vertices.begin(), vertices.end(), vertex);
+      if (it == vertices.end()) {
+        indices.push_back(vertices.size());
+        vertices.push_back(vertex);
+      } else {
+        indices.push_back(it - vertices.begin());
+      }
     }
   }
   return true;

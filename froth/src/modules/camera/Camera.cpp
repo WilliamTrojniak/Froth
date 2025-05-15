@@ -1,7 +1,10 @@
 #include "Camera.h"
 #include "glm/ext/matrix_float4x4.hpp"
 #include "glm/ext/matrix_transform.hpp"
+#include "glm/ext/quaternion_geometric.hpp"
 #include "glm/ext/vector_float3.hpp"
+#include "glm/geometric.hpp"
+#include "glm/trigonometric.hpp"
 #define GLM_ENABLE_EXPERIMENTAL
 #include "glm/gtx/rotate_vector.hpp"
 
@@ -23,13 +26,28 @@ void Camera::rotate(float deg, const glm::vec3 &axis) {
   m_View = glm::lookAt(m_Pos, m_Pos + m_Dir, glm::vec3(0.0f, 0.0f, 1.0f));
 }
 
+void Camera::lookUp() {
+  glm::vec3 axis = glm::normalize(glm::cross(m_Dir, glm::vec3(0.0f, 0.0f, 1.0f)));
+  m_Dir = glm::rotate(m_Dir, 0.1f, axis);
+
+  m_View = glm::lookAt(m_Pos, m_Pos + m_Dir, glm::vec3(0.0f, 0.0f, 1.0f));
+}
+void Camera::lookDown() {
+  glm::vec3 axis = glm::normalize(glm::cross(m_Dir, glm::vec3(0.0f, 0.0f, 1.0f)));
+  m_Dir = glm::rotate(m_Dir, -0.1f, axis);
+
+  m_View = glm::lookAt(m_Pos, m_Pos + m_Dir, glm::vec3(0.0f, 0.0f, 1.0f));
+}
+
 void Camera::moveUp() {
-  m_Pos += 0.1f * glm::vec3(0., 0., 1.f);
+  glm::vec3 right = glm::cross(m_Dir, glm::vec3(0.0, 0.0, 1.0));
+  m_Pos += 0.1f * glm::normalize(glm::cross(right, m_Dir));
   m_View = glm::lookAt(m_Pos, m_Pos + m_Dir, glm::vec3(0.0f, 0.0f, 1.0f));
 }
 
 void Camera::moveDown() {
-  m_Pos -= 0.1f * glm::vec3(0., 0., 1.f);
+  glm::vec3 right = glm::cross(m_Dir, glm::vec3(0.0, 0.0, 1.0));
+  m_Pos -= 0.1f * glm::normalize(glm::cross(right, m_Dir));
   m_View = glm::lookAt(m_Pos, m_Pos + m_Dir, glm::vec3(0.0f, 0.0f, 1.0f));
 }
 

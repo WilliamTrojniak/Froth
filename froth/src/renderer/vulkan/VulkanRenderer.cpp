@@ -27,6 +27,7 @@ bool hasLayers(const std::vector<const char *> &layers) noexcept;
 VulkanRenderer::VulkanRenderer(const Window &window)
     : m_SwapchainManager(window),
       m_DescriptorSetLayout(),
+      m_DescriptorPool(MAX_FRAMES_IN_FLIGHT, MAX_FRAMES_IN_FLIGHT, MAX_FRAMES_IN_FLIGHT),
       m_GraphicsCommandPool(VulkanContext::get().device().getQueueFamilies().graphics.index) {
 
   std::vector<VkDescriptorSetLayout>
@@ -40,6 +41,7 @@ VulkanRenderer::~VulkanRenderer() {
 VulkanRenderer::VulkanRenderer(VulkanRenderer &&o)
     : m_SwapchainManager(std::move(o.m_SwapchainManager)),
       m_DescriptorSetLayout(std::move(o.m_DescriptorSetLayout)),
+      m_DescriptorPool(std::move(o.m_DescriptorPool)),
       m_GraphicsCommandPool(std::move(o.m_GraphicsCommandPool)),
       m_PipelineLayout(std::move(o.m_PipelineLayout)),
       m_Pipeline(std::move(o.m_Pipeline)) {
@@ -48,6 +50,7 @@ VulkanRenderer::VulkanRenderer(VulkanRenderer &&o)
 VulkanRenderer &VulkanRenderer::operator=(VulkanRenderer &&o) {
   m_SwapchainManager = std::move(o.m_SwapchainManager);
   m_DescriptorSetLayout = std::move(o.m_DescriptorSetLayout);
+  m_DescriptorPool = std::move(o.m_DescriptorPool);
   m_GraphicsCommandPool = std::move(o.m_GraphicsCommandPool);
   m_PipelineLayout = std::move(o.m_PipelineLayout);
   m_Pipeline = std::move(o.m_Pipeline);

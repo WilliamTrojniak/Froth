@@ -7,6 +7,7 @@
 #include "src/renderer/vulkan/VulkanCommandBuffer.h"
 #include "src/renderer/vulkan/VulkanCommandPool.h"
 #include "src/renderer/vulkan/VulkanContext.h"
+#include "src/renderer/vulkan/VulkanDescriptorPool.h"
 #include "src/renderer/vulkan/VulkanDescriptorSetLayout.h"
 #include "src/renderer/vulkan/VulkanDevice.h"
 #include "src/renderer/vulkan/VulkanImage.h"
@@ -47,6 +48,7 @@ public:
 
   VulkanCommandPool &getCurrentCommandPool();
   VulkanCommandPool &getGraphicsCommandPool() { return m_GraphicsCommandPool; };
+  VulkanDescriptorPool &getDescriptorPool() { return m_DescriptorPool; }
 
   void bindVertexBuffer(const VulkanVertexBuffer &buffer) const;
   void bindIndexBuffer(const VulkanIndexBuffer &buffer) const;
@@ -64,6 +66,7 @@ private:
   VulkanDescriptorSetLayout m_DescriptorSetLayout;
   VulkanCommandPool m_GraphicsCommandPool;
   VulkanSwapchainManager m_SwapchainManager;
+  VulkanDescriptorPool m_DescriptorPool;
   std::unique_ptr<VulkanPipelineLayout> m_PipelineLayout = nullptr;
   std::unique_ptr<VulkanPipeline> m_Pipeline = nullptr;
 

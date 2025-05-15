@@ -1,6 +1,3 @@
-#include "src/renderer/vulkan/VulkanRenderer.h"
-#define GLFW_INCLUDE_VULKAN
-
 #include "Application.h"
 #include "Defines.h"
 #include "src/core/events/ApplicationEvent.h"
@@ -9,6 +6,7 @@
 #include "src/core/logger/Logger.h"
 #include "src/platform/window/Window.h"
 #include "src/renderer/Renderer.h"
+#include "src/renderer/vulkan/VulkanRenderer.h"
 #include <functional>
 #include <memory>
 

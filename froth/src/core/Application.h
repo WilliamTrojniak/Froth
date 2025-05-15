@@ -1,4 +1,6 @@
 #pragma once
+
+#include "Defines.h"
 #include "Layer.h"
 #include "LayerStack.h"
 #include "events/ApplicationEvent.h"

@@ -11,3 +11,5 @@
 #ifdef FROTH_DEBUG
 #endif // FROTH_DEBUG
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE

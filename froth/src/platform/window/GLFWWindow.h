@@ -4,11 +4,19 @@
 #include "src/renderer/vulkan/VulkanSurface.h"
 #include <GLFW/glfw3.h>
 #include <cstdint>
-#include <memory>
 
 namespace Froth {
 class GLFWWindow : public Window {
   friend class Window;
+
+public:
+  static void pollEvents();
+  virtual void getCursorPos(double &x, double &y) const override final;
+  virtual void getFramebufferSize(uint32_t &width, uint32_t &height) const override;
+  static const char **requiredVulkanExtensions(uint32_t &extensionCount) noexcept;
+  virtual VulkanSurface createVulkanSurface() const override final;
+  virtual void setCursorMode(Window::CursorMode mode) override final;
+  ~GLFWWindow() override;
 
 private:
   static uint16_t s_InstanceCount;
@@ -31,13 +39,5 @@ private:
 
 protected:
   GLFWWindow(int width, int height, const char *title);
-
-public:
-  static void pollEvents();
-  virtual void *nativeWindow() const override { return m_Window; }
-  virtual void getFramebufferSize(uint32_t &width, uint32_t &height) const override;
-  static const char **requiredVulkanExtensions(uint32_t &extensionCount) noexcept;
-  virtual VulkanSurface createVulkanSurface() const override;
-  ~GLFWWindow() override;
 };
 } // namespace Froth

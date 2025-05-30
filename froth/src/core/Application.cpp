@@ -22,6 +22,7 @@ Application::Application() {
     return;
   }
   m_Window->setEventCallbackFunction(BIND_FUNC(onEvent));
+  m_Window->setCursorMode(Window::CursorMode::DISABLED);
 
   Renderer::init(*m_Window);
   FROTH_INFO("RENDERER INITIALIZED")

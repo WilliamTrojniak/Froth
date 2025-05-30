@@ -1,13 +1,18 @@
+#include "glm/ext/vector_float3.hpp"
 #include "src/core/Entrypoint.h"
 
 #include "src/core/events/EventDispatcher.h"
 #include "src/core/events/KeyEvent.h"
+#include "src/core/events/MouseEvent.h"
 #include "src/modules/camera/Camera.h"
 #include "src/platform/filesystem/Filesystem.h"
 #include "src/platform/keys/Keycodes.h"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
+
+#include <functional>
+#include <iostream>
 #include <string.h>
 
 const std::string MODEL_PATH = "../playground/models/viking_room.obj";
@@ -73,7 +78,7 @@ public:
     m_Renderer.setDescriptorTexture(m_Sampler, m_TextureView);
 
     commandBuffer.cleanup(commandPool);
-    m_Camera = Froth::Camera(glm::vec3(0.0f, -5.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.f));
+    m_Camera = Froth::Camera(glm::vec3(0.0f, -5.0f, 1.0f), 90.f, 0.f);
   }
 
   void onUpdate(double ts) override {
@@ -82,8 +87,7 @@ public:
     glm::mat4 proj = glm::perspective(glm::radians(45.0f), m_Width / (float)m_Height, 0.1f, 100.0f);
     proj[1][1] *= -1;
 
-    glm::mat4 mvp = proj * (glm::mat4)m_Camera * model;
-    // glm::mat4 mvp = proj * glm::lookAt(glm::vec3(0.f, -5.f, 0.f), glm::vec3(0., 0., 0.), glm::vec3(0.0, 0.0, 1.0f)) * model;
+    glm::mat4 mvp = proj * m_Camera.view() * model;
     m_Renderer.bindMaterial(m_Material);
     m_Renderer.pushConstants(mvp);
     m_Renderer.bindVertexBuffer(m_VertexBuffer);
@@ -98,37 +102,27 @@ public:
 
   bool onKeyPressed(Froth::KeyPressedEvent &e) {
     switch (e.keyCode()) {
-    case Froth::Key::Right:
-      m_Camera.moveRight();
+    case Froth::Key::W:
+      m_Camera.moveForward(.5f);
       return true;
-    case Froth::Key::Left:
-      m_Camera.moveLeft();
+    case Froth::Key::A:
+      m_Camera.strafe(-.5f);
       return true;
-    case Froth::Key::E:
-      m_Camera.moveUp();
+    case Froth::Key::S:
+      m_Camera.moveForward(-.5f);
       return true;
-    case Froth::Key::Q:
-      m_Camera.moveDown();
-      return true;
-    case Froth::Key::K:
-      m_Camera.lookUp();
-      return true;
-    case Froth::Key::J:
-      m_Camera.lookDown();
-      return true;
-    case Froth::Key::L:
-      m_Camera.rotate(-.5f, glm::vec3(0.f, 0.f, 1.f));
-      return true;
-    case Froth::Key::H:
-      m_Camera.rotate(.5f, glm::vec3(0.f, 0.f, 1.f));
-      return true;
-    case Froth::Key::Up:
-      m_Camera.moveForward();
-      return true;
-    case Froth::Key::Down:
-      m_Camera.moveBack();
+    case Froth::Key::D:
+      m_Camera.strafe(.5f);
       return true;
     }
+    return false;
+  }
+
+  bool onMouseMove(const Froth::MouseMoveEvent &e) {
+    m_Camera.rotate((m_CursorX - e.x()) / 10, (m_CursorY - e.y()) / 10);
+    m_CursorX = e.x();
+    m_CursorY = e.y();
+
     return false;
   }
 
@@ -136,6 +130,7 @@ public:
     Froth::EventDispatcher d(e);
     d.dispatch<Froth::WindowResizeEvent>(std::bind(&TestLayer::onWindowResize, this, std::placeholders::_1));
     d.dispatch<Froth::KeyPressedEvent>(std::bind(&TestLayer::onKeyPressed, this, std::placeholders::_1));
+    d.dispatch<Froth::MouseMoveEvent>(std::bind(&TestLayer::onMouseMove, this, std::placeholders::_1));
 
     return d.isHandled();
   }
@@ -154,6 +149,8 @@ private:
   Froth::Camera m_Camera;
   uint32_t m_Width = 600;
   uint32_t m_Height = 400;
+  double m_CursorX;
+  double m_CursorY;
 };
 
 class Playground : public Froth::Application {

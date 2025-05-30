@@ -8,12 +8,9 @@
 #include "src/platform/keys/Keycodes.h"
 #include "src/platform/window/Window.h"
 #include "src/renderer/vulkan/VulkanContext.h"
-#include "src/renderer/vulkan/VulkanInstance.h"
-#include "src/renderer/vulkan/VulkanRenderer.h"
 #include "src/renderer/vulkan/VulkanSurface.h"
 #include "vulkan/vulkan_core.h"
 #include <cstdint>
-#include <memory>
 #include <stdexcept>
 
 namespace Froth {
@@ -74,6 +71,10 @@ GLFWWindow::~GLFWWindow() {
 
 void GLFWWindow::pollEvents() { glfwPollEvents(); }
 
+void GLFWWindow::getCursorPos(double &x, double &y) const {
+  glfwGetCursorPos(m_Window, &x, &y);
+}
+
 void GLFWWindow::getFramebufferSize(uint32_t &width, uint32_t &height) const {
   int w, h;
   glfwGetFramebufferSize(m_Window, &w, &h);
@@ -84,6 +85,24 @@ void GLFWWindow::getFramebufferSize(uint32_t &width, uint32_t &height) const {
 const char **GLFWWindow::requiredVulkanExtensions(uint32_t &extensionCount) noexcept {
   return glfwGetRequiredInstanceExtensions(&extensionCount);
 }
+
+void GLFWWindow::setCursorMode(Window::CursorMode mode) {
+  switch (mode) {
+  case Window::CursorMode::NORMAL:
+    glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    break;
+  case Window::CursorMode::CAPTURED:
+    glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_CAPTURED);
+    break;
+  case Window::CursorMode::DISABLED:
+    glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    break;
+  case Window::CursorMode::HIDDEN:
+    glfwSetInputMode(m_Window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+    break;
+  }
+}
+
 void GLFWWindow::windowCloseCallback(GLFWwindow *window) {
   auto handler = static_cast<GLFWWindow *>(glfwGetWindowUserPointer(window));
   handler->windowCloseCallback();

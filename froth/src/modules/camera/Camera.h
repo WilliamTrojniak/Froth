@@ -1,31 +1,26 @@
 #pragma once
 
 #include "glm/ext/matrix_float4x4.hpp"
+#include "glm/ext/vector_float3.hpp"
 namespace Froth {
 
 class Camera {
 public:
   Camera() = default;
-  Camera(const glm::vec3 &pos, const glm::vec3 &rot);
-  operator const glm::mat4 &() const { return m_View; }
+  Camera(const glm::vec3 &pos, float yaw, float pitch);
 
-  void translate(const glm::vec3 &trans);
-  void rotate(float deg, const glm::vec3 &axis);
+  glm::vec3 direction() const;
+  void rotate(float yaw, float pitch);
+  void strafe(float speed);
+  void moveForward(float speed);
 
-  void moveUp();
-  void moveDown();
-  void moveRight();
-  void moveLeft();
-  void moveBack();
-  void moveForward();
-
-  void lookUp();
-  void lookDown();
+  glm::mat4 view() const;
 
 private:
   glm::vec3 m_Pos;
-  glm::vec3 m_Dir;
-  glm::mat4 m_View;
+  glm::vec3 m_Up = glm::vec3(0.0f, 0.0f, 1.0f);
+  float m_Yaw = 0.0f;
+  float m_Pitch = 0.0f;
 };
 
 } // namespace Froth

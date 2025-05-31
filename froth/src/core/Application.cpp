@@ -9,7 +9,6 @@
 #include "src/renderer/vulkan/VulkanRenderer.h"
 #include <chrono>
 #include <functional>
-#include <iostream>
 #include <memory>
 
 namespace Froth {

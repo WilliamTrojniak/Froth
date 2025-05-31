@@ -8,7 +8,6 @@
 #include "glm/ext/matrix_float4x4.hpp"
 #include "src/core/events/ApplicationEvent.h"
 #include "src/core/events/EventDispatcher.h"
-#include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
 #include "src/renderer/vulkan/VulkanDescriptorSet.h"
 #include "src/resources/materials/Material.h"

@@ -2,11 +2,16 @@
 #include "glm/ext/vector_float3.hpp"
 #include "src/core/Entrypoint.h"
 
+#include "src/core/Types.h"
 #include "src/core/events/EventDispatcher.h"
 #include "src/core/events/MouseEvent.h"
 #include "src/modules/camera/Camera.h"
 #include "src/platform/filesystem/Filesystem.h"
 #include "src/platform/keys/Keycodes.h"
+#include "src/renderer/vulkan/VulkanImage.h"
+#include "src/renderer/vulkan/VulkanIndexBuffer.h"
+#include "src/renderer/vulkan/VulkanVertexBuffer.h"
+#include <vector>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
@@ -37,6 +42,21 @@ public:
 
     m_IndexBuffer = Froth::VulkanIndexBuffer(indices.size());
     m_IndexBuffer.write(commandBuffer, indices.size(), indices.data());
+    commandBuffer.reset();
+
+    const float groundSize = 4.0f;
+    std::vector<Froth::Vertex> plane_Vertices = {
+        {{-groundSize, -groundSize, 0.f}, {1.f, 1.f, 1.f}, {0.f, 0.f}},
+        {{groundSize, -groundSize, 0.f}, {1.f, 1.f, 1.f}, {0.f, 0.f}},
+        {{groundSize, groundSize, 0.f}, {1.f, 1.f, 1.f}, {0.f, 0.f}},
+        {{-groundSize, groundSize, 0.f}, {1.f, 1.f, 1.f}, {0.f, 0.f}},
+    };
+    std::vector<uint32_t> plane_indices = {0, 1, 2, 2, 3, 0};
+    m_VertexBuffer2 = Froth::VulkanVertexBuffer(sizeof(Froth::Vertex) * vertices.size());
+    m_VertexBuffer2.write(commandBuffer, sizeof(Froth::Vertex) * plane_Vertices.size(), plane_Vertices.data());
+    commandBuffer.reset();
+    m_IndexBuffer2 = Froth::VulkanIndexBuffer(plane_indices.size());
+    m_IndexBuffer2.write(commandBuffer, plane_indices.size(), plane_indices.data());
     commandBuffer.reset();
 
     std::vector<char> vertShaderCode = Froth::Filesystem::readFile("../playground/shaders/vert.spv");
@@ -103,15 +123,21 @@ public:
       m_Camera.moveUp(ts * moveSpeed);
     }
 
-    glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, 0));
+    glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0.f, 0.f, 0.107647f));
+    glm::mat4 view = m_Camera.view();
     glm::mat4 proj = glm::perspective(glm::radians(45.0f), m_Width / (float)m_Height, 0.1f, 100.0f);
     proj[1][1] *= -1;
 
-    glm::mat4 mvp = proj * m_Camera.view() * model;
+    glm::mat4 mvp = proj * view * model;
     m_Renderer.bindMaterial(m_Material);
     m_Renderer.pushConstants(mvp);
     m_Renderer.bindVertexBuffer(m_VertexBuffer);
     m_Renderer.bindIndexBuffer(m_IndexBuffer);
+
+    mvp = proj * view;
+    m_Renderer.pushConstants(mvp);
+    m_Renderer.bindVertexBuffer(m_VertexBuffer2);
+    m_Renderer.bindIndexBuffer(m_IndexBuffer2);
   }
 
   bool onWindowResize(Froth::WindowResizeEvent &e) {
@@ -145,6 +171,8 @@ private:
   Froth::VulkanRenderer &m_Renderer;
   Froth::VulkanIndexBuffer m_IndexBuffer;
   Froth::VulkanVertexBuffer m_VertexBuffer;
+  Froth::VulkanIndexBuffer m_IndexBuffer2;
+  Froth::VulkanVertexBuffer m_VertexBuffer2;
   Froth::Material m_Material;
   Froth::VulkanImage m_Texture;
   Froth::VulkanImageView m_TextureView;

@@ -7,7 +7,9 @@
 #include "src/platform/window/Window.h"
 #include "src/renderer/Renderer.h"
 #include "src/renderer/vulkan/VulkanRenderer.h"
+#include <chrono>
 #include <functional>
+#include <iostream>
 #include <memory>
 
 namespace Froth {
@@ -35,6 +37,10 @@ Application::~Application() {
 }
 
 void Application::Run() {
+  auto timer = std::chrono::high_resolution_clock();
+  auto tBegin = timer.now();
+  float deltaT = 1.f / 30.f;
+
   while (m_Running) {
     Window::pollEvents();
 
@@ -42,10 +48,15 @@ void Application::Run() {
     m_Renderer.beginRenderPass();
     // TODO: Seperate onUpdate into onUpdate and onDraw for example
     for (std::shared_ptr<Layer> layer : m_LayerStack) {
-      layer->onUpdate(0);
+      layer->onUpdate(deltaT);
     }
     m_Renderer.endRenderPass();
     m_Renderer.endFrame();
+
+    auto tEnd = timer.now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(tEnd - tBegin);
+    deltaT = elapsed.count() / 1000.f;
+    tBegin = tEnd;
   }
 }
 

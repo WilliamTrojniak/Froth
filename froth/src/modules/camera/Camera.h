@@ -10,9 +10,12 @@ public:
   Camera(const glm::vec3 &pos, float yaw, float pitch);
 
   glm::vec3 direction() const;
+
+  // TODO: Move controls to controller class
   void rotate(float yaw, float pitch);
   void strafe(float speed);
   void moveForward(float speed);
+  void moveUp(float speed);
 
   glm::mat4 view() const;
 

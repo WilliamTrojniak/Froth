@@ -47,6 +47,10 @@ void Camera::moveForward(float speed) {
   m_Pos += forward * speed;
 }
 
+void Camera::moveUp(float speed) {
+  m_Pos += m_Up * speed;
+}
+
 glm::mat4 Camera::view() const {
   return glm::lookAt(m_Pos, m_Pos + direction(), m_Up);
 }

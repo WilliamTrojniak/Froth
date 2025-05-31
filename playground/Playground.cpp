@@ -1,8 +1,8 @@
+#include "InputController.h"
 #include "glm/ext/vector_float3.hpp"
 #include "src/core/Entrypoint.h"
 
 #include "src/core/events/EventDispatcher.h"
-#include "src/core/events/KeyEvent.h"
 #include "src/core/events/MouseEvent.h"
 #include "src/modules/camera/Camera.h"
 #include "src/platform/filesystem/Filesystem.h"
@@ -12,7 +12,6 @@
 #include <glm/gtx/transform.hpp>
 
 #include <functional>
-#include <iostream>
 #include <string.h>
 
 const std::string MODEL_PATH = "../playground/models/viking_room.obj";
@@ -33,6 +32,7 @@ public:
 
     m_VertexBuffer = Froth::VulkanVertexBuffer(sizeof(Froth::Vertex) * vertices.size());
     m_VertexBuffer.write(commandBuffer, sizeof(Froth::Vertex) * vertices.size(), vertices.data());
+
     commandBuffer.reset();
 
     m_IndexBuffer = Froth::VulkanIndexBuffer(indices.size());
@@ -82,6 +82,26 @@ public:
   }
 
   void onUpdate(double ts) override {
+    const float moveSpeed = 2.f;
+
+    if (m_InputController.isPressed(Froth::Key::W)) {
+      m_Camera.moveForward(ts * moveSpeed);
+    }
+    if (m_InputController.isPressed(Froth::Key::S)) {
+      m_Camera.moveForward(ts * -moveSpeed);
+    }
+    if (m_InputController.isPressed(Froth::Key::A)) {
+      m_Camera.strafe(ts * -moveSpeed);
+    }
+    if (m_InputController.isPressed(Froth::Key::D)) {
+      m_Camera.strafe(ts * moveSpeed);
+    }
+    if (m_InputController.isPressed(Froth::Key::Q)) {
+      m_Camera.moveUp(ts * -moveSpeed);
+    }
+    if (m_InputController.isPressed(Froth::Key::E)) {
+      m_Camera.moveUp(ts * moveSpeed);
+    }
 
     glm::mat4 model = glm::translate(glm::mat4(1.0), glm::vec3(0, 0, 0));
     glm::mat4 proj = glm::perspective(glm::radians(45.0f), m_Width / (float)m_Height, 0.1f, 100.0f);
@@ -100,24 +120,6 @@ public:
     return false;
   }
 
-  bool onKeyPressed(Froth::KeyPressedEvent &e) {
-    switch (e.keyCode()) {
-    case Froth::Key::W:
-      m_Camera.moveForward(.5f);
-      return true;
-    case Froth::Key::A:
-      m_Camera.strafe(-.5f);
-      return true;
-    case Froth::Key::S:
-      m_Camera.moveForward(-.5f);
-      return true;
-    case Froth::Key::D:
-      m_Camera.strafe(.5f);
-      return true;
-    }
-    return false;
-  }
-
   bool onMouseMove(const Froth::MouseMoveEvent &e) {
     m_Camera.rotate((m_CursorX - e.x()) / 10, (m_CursorY - e.y()) / 10);
     m_CursorX = e.x();
@@ -129,8 +131,9 @@ public:
   virtual bool onEvent(const Froth::Event &e) override {
     Froth::EventDispatcher d(e);
     d.dispatch<Froth::WindowResizeEvent>(std::bind(&TestLayer::onWindowResize, this, std::placeholders::_1));
-    d.dispatch<Froth::KeyPressedEvent>(std::bind(&TestLayer::onKeyPressed, this, std::placeholders::_1));
     d.dispatch<Froth::MouseMoveEvent>(std::bind(&TestLayer::onMouseMove, this, std::placeholders::_1));
+
+    m_InputController.onEvent(e);
 
     return d.isHandled();
   }
@@ -147,6 +150,7 @@ private:
   Froth::VulkanImageView m_TextureView;
   Froth::VulkanSampler m_Sampler;
   Froth::Camera m_Camera;
+  InputController m_InputController;
   uint32_t m_Width = 600;
   uint32_t m_Height = 400;
   double m_CursorX;

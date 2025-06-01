@@ -1,10 +1,8 @@
 #include "VulkanDescriptorPool.h"
 #include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
-#include "src/renderer/vulkan/VulkanDescriptorSetLayout.h"
 #include <array>
 #include <vector>
-#include <vulkan/vulkan_core.h>
 
 namespace Froth {
 

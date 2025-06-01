@@ -1,13 +1,15 @@
 #include "VulkanDevice.h"
 #include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
+#include "vulkan/vulkan_core.h"
 #include <set>
 #include <string>
 #include <vector>
 
 namespace Froth {
 
-VulkanDevice::VulkanDevice(const VkAllocationCallbacks *allocator, VkPhysicalDevice physicalDevice, const QueueFamilies &queueFamilies, const PhysicalDeviceProperties &requirements) {
+VulkanDevice::VulkanDevice(const VkAllocationCallbacks *allocator, VkPhysicalDevice physicalDevice, const QueueFamilies &queueFamilies, const PhysicalDeviceProperties &requirements)
+    : m_PhysicalDevice(physicalDevice) {
   std::set<uint32_t> uniqueQueueFamilyIndices;
   if (queueFamilies.graphics.valid) {
     uniqueQueueFamilyIndices.emplace(queueFamilies.graphics.index);
@@ -63,20 +65,25 @@ VulkanDevice::VulkanDevice(const VkAllocationCallbacks *allocator, VkPhysicalDev
   }
 }
 
-VulkanDevice::VulkanDevice(VulkanDevice &&other)
-    : m_LogicalDevice(other.m_LogicalDevice),
-      m_QueueFamilies(std::move(other.m_QueueFamilies)) {
-  other.m_LogicalDevice = nullptr;
-  other.m_QueueFamilies.graphics.valid = false;
-  other.m_QueueFamilies.present.valid = false;
-  other.m_QueueFamilies.compute.valid = false;
-  other.m_QueueFamilies.transfer.valid = false;
+VulkanDevice::VulkanDevice(VulkanDevice &&o)
+    : m_PhysicalDevice(o.m_PhysicalDevice),
+      m_LogicalDevice(o.m_LogicalDevice),
+      m_QueueFamilies(std::move(o.m_QueueFamilies)) {
+
+  o.m_PhysicalDevice = nullptr;
+  o.m_LogicalDevice = nullptr;
+  o.m_QueueFamilies.graphics.valid = false;
+  o.m_QueueFamilies.present.valid = false;
+  o.m_QueueFamilies.compute.valid = false;
+  o.m_QueueFamilies.transfer.valid = false;
 }
 
 VulkanDevice &VulkanDevice::operator=(VulkanDevice &&o) {
+  m_PhysicalDevice = o.m_PhysicalDevice;
   m_LogicalDevice = o.m_LogicalDevice;
   m_QueueFamilies = o.m_QueueFamilies;
 
+  o.m_PhysicalDevice = nullptr;
   o.m_LogicalDevice = nullptr;
   o.m_QueueFamilies.graphics.valid = false;
   o.m_QueueFamilies.present.valid = false;
@@ -110,6 +117,12 @@ VkDeviceMemory VulkanDevice::allocateMemory(const VkMemoryRequirements &requirem
     throw std::runtime_error("failed to allocate buffer memory");
   }
   return memory;
+}
+
+VkPhysicalDeviceProperties VulkanDevice::props() const {
+  VkPhysicalDeviceProperties props;
+  vkGetPhysicalDeviceProperties(m_PhysicalDevice, &props);
+  return props;
 }
 
 uint32_t VulkanDevice::findMemoryTypeIndex(const VkMemoryRequirements &requirements, VkMemoryPropertyFlags properties) const {

@@ -13,12 +13,14 @@ public:
 
   VulkanDevice(VulkanDevice &&);
   VulkanDevice &operator=(VulkanDevice &&);
+  VkPhysicalDevice physicalDevice() const { return m_PhysicalDevice; }
 
   ~VulkanDevice();
   void cleanup();
 
   operator VkDevice() const noexcept { return m_LogicalDevice; }
   VkDeviceMemory allocateMemory(const VkMemoryRequirements &requirements, VkMemoryPropertyFlags properties) const;
+  VkPhysicalDeviceProperties props() const;
 
   struct PhysicalDeviceProperties {
     bool graphics;
@@ -58,6 +60,7 @@ protected:
   VulkanDevice(const VkAllocationCallbacks *allocator, VkPhysicalDevice physicalDevice, const QueueFamilies &queueFamilies, const PhysicalDeviceProperties &requirements);
 
 private:
+  VkPhysicalDevice m_PhysicalDevice = nullptr;
   VkDevice m_LogicalDevice = nullptr;
   QueueFamilies m_QueueFamilies;
 

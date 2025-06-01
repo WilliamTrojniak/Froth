@@ -15,11 +15,13 @@ VulkanDescriptorSetLayout::VulkanDescriptorSetLayout(const std::vector<VkDescrip
   // uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   // uboLayoutBinding.pImmutableSamplers = nullptr;
 
+  auto props = VulkanContext::get().device().props();
+  FROTH_INFO("Max descriptor count: %u", props.limits.maxDescriptorSetSampledImages);
   VkDescriptorSetLayoutBinding samplerLayoutBinding{};
   samplerLayoutBinding.binding = 0;
-  samplerLayoutBinding.descriptorCount = 1;
+  samplerLayoutBinding.descriptorCount = 4;
   samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-  samplerLayoutBinding.pImmutableSamplers = nullptr;
+  samplerLayoutBinding.pImmutableSamplers = VK_NULL_HANDLE;
   samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
   // std::array<VkDescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};

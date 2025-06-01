@@ -3,24 +3,28 @@
 #include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
 #include "vulkan/vulkan_core.h"
-#include <vector>
+#include <array>
 
 namespace Froth {
 
 VulkanPipelineLayout::VulkanPipelineLayout(const std::vector<VkDescriptorSetLayout> &descSetLayouts) {
 
   // TODO: Configurable push constants?
-  VkPushConstantRange pushConstantInfo{};
-  pushConstantInfo.offset = 0;
-  pushConstantInfo.size = sizeof(glm::mat4);
-  pushConstantInfo.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  FROTH_INFO("Maximum push constant size: %u bytes", VulkanContext::get().device().props().limits.maxPushConstantsSize);
+  std::array<VkPushConstantRange, 2> pushConstantRanges;
+  pushConstantRanges[0].offset = 0;
+  pushConstantRanges[0].size = sizeof(glm::mat4);
+  pushConstantRanges[0].stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  pushConstantRanges[1].offset = sizeof(glm::mat4);
+  pushConstantRanges[1].size = sizeof(uint32_t);
+  pushConstantRanges[1].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
   VkPipelineLayoutCreateInfo layoutInfo{};
   layoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
   layoutInfo.setLayoutCount = static_cast<uint32_t>(descSetLayouts.size());
   layoutInfo.pSetLayouts = descSetLayouts.data();
-  layoutInfo.pushConstantRangeCount = 1;
-  layoutInfo.pPushConstantRanges = &pushConstantInfo;
+  layoutInfo.pushConstantRangeCount = pushConstantRanges.size();
+  layoutInfo.pPushConstantRanges = pushConstantRanges.data();
 
   VulkanContext &vctx = VulkanContext::get();
   if (vkCreatePipelineLayout(vctx.device(), &layoutInfo, vctx.allocator(), &m_Layout) != VK_SUCCESS) {

@@ -5,17 +5,18 @@
 #include "VulkanPipelineLayout.h"
 #include "VulkanVertex.h"
 #include "VulkanVertexBuffer.h"
-#include "glm/ext/matrix_float4x4.hpp"
 #include "src/core/events/ApplicationEvent.h"
 #include "src/core/events/EventDispatcher.h"
+#include "src/renderer/vulkan/VulkanBuffer.h"
 #include "src/renderer/vulkan/VulkanContext.h"
 #include "src/renderer/vulkan/VulkanDescriptorSet.h"
+#include "src/renderer/vulkan/VulkanImage.h"
+#include "src/renderer/vulkan/VulkanSampler.h"
 #include "src/resources/materials/Material.h"
 #include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
-#include <vulkan/vulkan_core.h>
 
 namespace Froth {
 
@@ -30,7 +31,7 @@ bool hasLayers(const std::vector<const char *> &layers) noexcept;
 VulkanRenderer::VulkanRenderer(const Window &window)
     : m_SwapchainManager(window),
       m_DescriptorSetLayout(std::vector<VkDescriptorSetLayoutBinding>()),
-      m_DescriptorPool(MAX_FRAMES_IN_FLIGHT, 0, MAX_FRAMES_IN_FLIGHT),
+      m_DescriptorPool(MAX_FRAMES_IN_FLIGHT, 0, MAX_FRAMES_IN_FLIGHT * 4),
       m_GraphicsCommandPool(VulkanContext::get().device().getQueueFamilies().graphics.index) {
 
   std::vector<VkDescriptorSetLayout> descSetLayouts(MAX_FRAMES_IN_FLIGHT, m_DescriptorSetLayout);
@@ -38,6 +39,39 @@ VulkanRenderer::VulkanRenderer(const Window &window)
 
   descSetLayouts = {m_DescriptorSetLayout};
   m_PipelineLayout = std::make_unique<VulkanPipelineLayout>(descSetLayouts);
+
+  const size_t blankImageSize = 4;
+  VulkanBuffer textureStagingBuffer(blankImageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+  uint32_t blankImageData = 0xFFFFFFFF;
+  void *dataPtr = textureStagingBuffer.map();
+  memcpy(dataPtr, &blankImageData, blankImageSize);
+  textureStagingBuffer.unmap();
+
+  VulkanCommandPool &commandPool = m_SwapchainManager.currentCommandPool();
+  VulkanCommandBuffer commandBuffer = commandPool.AllocateCommandBuffer();
+
+  m_BlankImage = VulkanImage(VulkanImage::CreateInfo{
+      .extent = {1, 1},
+      .format = VK_FORMAT_R8G8B8A8_SRGB,
+      .tiling = VK_IMAGE_TILING_OPTIMAL,
+      .usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+      .memPropFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+  });
+  m_BlankImage.transitionLayout(commandBuffer, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+  commandBuffer.reset();
+  VulkanBuffer::copyBufferToImage(commandBuffer, textureStagingBuffer, m_BlankImage);
+  commandBuffer.reset();
+  m_BlankImage.transitionLayout(commandBuffer, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+  commandBuffer.cleanup(commandPool);
+
+  m_BlankImageView = m_BlankImage.createView(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT);
+  m_Sampler = VulkanSampler::Builder().build();
+
+  auto writer = VulkanDescriptorSet::Writer();
+  for (auto descriptorSet : m_DescriptorSets) {
+    writer.addImageSampler(descriptorSet, 0, m_BlankImageView, m_Sampler, 0);
+  }
+  writer.Write();
 }
 
 VulkanRenderer::~VulkanRenderer() {
@@ -115,8 +149,8 @@ void VulkanRenderer::endFrame() {
   m_SwapchainManager.endFrame();
 }
 
-void VulkanRenderer::pushConstants(const glm::mat4 &mat) const {
-  vkCmdPushConstants(m_SwapchainManager.currentCommandBuffer(), *m_PipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &mat);
+void VulkanRenderer::pushConstants(VkShaderStageFlags stage, uint32_t offset, uint32_t size, const void *pData) const {
+  vkCmdPushConstants(m_SwapchainManager.currentCommandBuffer(), *m_PipelineLayout, stage, offset, size, pData);
 }
 
 void VulkanRenderer::bindMaterial(const Material &mat) {
@@ -151,7 +185,7 @@ void VulkanRenderer::bindMaterial(const Material &mat) {
 void VulkanRenderer::setDescriptorTexture(const VulkanSampler &sampler, const VulkanImageView &view) {
   auto writer = VulkanDescriptorSet::Writer();
   for (auto descriptorSet : m_DescriptorSets) {
-    writer.addImageSampler(descriptorSet, 0, view, sampler);
+    writer.addImageSampler(descriptorSet, 0, view, sampler, 1);
   }
 
   writer.Write();

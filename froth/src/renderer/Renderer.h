@@ -1,6 +1,5 @@
 #pragma once
 
-#include "glm/ext/matrix_float4x4.hpp"
 #include "src/platform/window/Window.h"
 #include "src/resources/materials/Material.h"
 #include <memory>
@@ -21,7 +20,6 @@ public:
   virtual void endRenderPass() = 0;
   virtual void endFrame() = 0;
 
-  virtual void pushConstants(const glm::mat4 &data) const = 0;
   virtual void bindMaterial(const Material &mat) = 0;
 
   /* Creates an abstract Renderer backend

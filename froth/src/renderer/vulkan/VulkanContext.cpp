@@ -10,7 +10,6 @@ namespace Froth {
 void VulkanContext::cleanup() {
   m_Device.cleanup();
   m_Instance.cleanup(m_Allocator);
-  m_PhysicalDevice = nullptr;
   m_Allocator = nullptr;
 }
 
@@ -42,14 +41,14 @@ void VulkanContext::init(const Window &window) {
     requirements.samplerAnisotropy = true; // TODO: This can probably be made optional?
     // Device Requirements
 
-    m_PhysicalDevice = VulkanDevice::pickPhysicalDevice(m_Instance, surface, requirements);
-    if (m_PhysicalDevice == nullptr) {
+    VkPhysicalDevice physicalDevice = VulkanDevice::pickPhysicalDevice(m_Instance, surface, requirements);
+    if (physicalDevice == nullptr) {
       FROTH_ERROR("Failed to find suitable Vulkan phyiscal device")
     }
 
     // Logical Device Creation
-    VulkanDevice::QueueFamilies queueFamilies = VulkanDevice::getPhysicalDeviceQueueFamilies(m_PhysicalDevice, surface);
-    m_Device = VulkanDevice(m_Allocator, m_PhysicalDevice, queueFamilies, requirements);
+    VulkanDevice::QueueFamilies queueFamilies = VulkanDevice::getPhysicalDeviceQueueFamilies(physicalDevice, surface);
+    m_Device = VulkanDevice(m_Allocator, physicalDevice, queueFamilies, requirements);
     FROTH_INFO("Initialized Vulkan Context")
   }
 }

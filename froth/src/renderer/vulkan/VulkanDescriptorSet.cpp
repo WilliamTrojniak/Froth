@@ -10,13 +10,13 @@ namespace Froth {
 VulkanDescriptorSet::Writer::Writer()
     : m_BuffInfos(4), m_ImageInfos(4) {}
 
-VulkanDescriptorSet::Writer &VulkanDescriptorSet::Writer::addWrite(const VkDescriptorSet dstSet, uint32_t dstBinding, VkDescriptorType type, VkDescriptorBufferInfo *bufferInfo, VkDescriptorImageInfo *imageInfo) {
+VulkanDescriptorSet::Writer &VulkanDescriptorSet::Writer::addWrite(const VkDescriptorSet dstSet, uint32_t dstBinding, VkDescriptorType type, VkDescriptorBufferInfo *bufferInfo, VkDescriptorImageInfo *imageInfo, uint32_t arrayElement) {
   m_Writes.emplace_back(VkWriteDescriptorSet{
       .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
       .dstSet = dstSet,
       .dstBinding = dstBinding,
-      .dstArrayElement = 0, // TODO: Configurable
-      .descriptorCount = 1, // TODO: Configurable
+      .dstArrayElement = arrayElement, // TODO: Configurable
+      .descriptorCount = 1,            // TODO: Configurable
       .descriptorType = type,
       .pImageInfo = imageInfo,
       .pBufferInfo = bufferInfo,
@@ -25,7 +25,7 @@ VulkanDescriptorSet::Writer &VulkanDescriptorSet::Writer::addWrite(const VkDescr
   return *this;
 }
 
-VulkanDescriptorSet::Writer &VulkanDescriptorSet::Writer::addUniform(const VkDescriptorSet dstSet, uint32_t dstBinding, const VulkanBuffer &buffer) {
+VulkanDescriptorSet::Writer &VulkanDescriptorSet::Writer::addUniform(const VkDescriptorSet dstSet, uint32_t dstBinding, const VulkanBuffer &buffer, uint32_t arrayElement) {
   // TODO: Configurable
   m_BuffInfos.emplace_back(VkDescriptorBufferInfo{
       .buffer = buffer,
@@ -33,9 +33,9 @@ VulkanDescriptorSet::Writer &VulkanDescriptorSet::Writer::addUniform(const VkDes
       .range = buffer.size(),
   });
 
-  return addWrite(dstSet, dstBinding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &m_BuffInfos[m_BuffInfos.size() - 1], VK_NULL_HANDLE);
+  return addWrite(dstSet, dstBinding, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, &m_BuffInfos[m_BuffInfos.size() - 1], VK_NULL_HANDLE, arrayElement);
 }
-VulkanDescriptorSet::Writer &VulkanDescriptorSet::Writer::addImageSampler(const VkDescriptorSet dstSet, uint32_t dstBinding, const VulkanImageView &imageView, const VulkanSampler &sampler) {
+VulkanDescriptorSet::Writer &VulkanDescriptorSet::Writer::addImageSampler(const VkDescriptorSet dstSet, uint32_t dstBinding, const VulkanImageView &imageView, const VulkanSampler &sampler, uint32_t arrayElement) {
   // TODO: Configurable
   m_ImageInfos.emplace_back(VkDescriptorImageInfo{
       .sampler = sampler,
@@ -43,7 +43,7 @@ VulkanDescriptorSet::Writer &VulkanDescriptorSet::Writer::addImageSampler(const 
       .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, // TODO: Ensure
   });
 
-  return addWrite(dstSet, dstBinding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_NULL_HANDLE, &m_ImageInfos[m_ImageInfos.size() - 1]);
+  return addWrite(dstSet, dstBinding, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_NULL_HANDLE, &m_ImageInfos[m_ImageInfos.size() - 1], arrayElement);
 }
 
 void VulkanDescriptorSet::Writer::Write() {

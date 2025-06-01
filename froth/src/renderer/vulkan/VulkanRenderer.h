@@ -46,7 +46,7 @@ public:
   virtual void endRenderPass() override;
   virtual void endFrame() override;
 
-  virtual void pushConstants(const glm::mat4 &data) const override;
+  void pushConstants(VkShaderStageFlags stage, uint32_t offset, uint32_t size, const void *pData) const;
   virtual void bindMaterial(const Material &mat) override;
 
   VulkanCommandPool &getCurrentCommandPool();
@@ -72,6 +72,9 @@ private:
   VulkanSwapchainManager m_SwapchainManager;
   VulkanDescriptorPool m_DescriptorPool;
   std::vector<VkDescriptorSet> m_DescriptorSets;
+  VulkanImage m_BlankImage;
+  VulkanImageView m_BlankImageView;
+  VulkanSampler m_Sampler;
   std::unique_ptr<VulkanPipelineLayout> m_PipelineLayout = nullptr;
   std::unique_ptr<VulkanPipeline> m_Pipeline = nullptr;
 

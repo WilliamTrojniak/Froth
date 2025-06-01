@@ -19,7 +19,7 @@ public:
 
   const VkAllocationCallbacks *allocator() const { return m_Allocator; }
   const VulkanInstance &instance() const { return m_Instance; }
-  const VkPhysicalDevice &physicalDevice() const { return m_PhysicalDevice; }
+  const VkPhysicalDevice physicalDevice() const { return m_Device.physicalDevice(); }
   const VulkanDevice &device() const { return m_Device; }
 
   void init(const Window &w);
@@ -30,7 +30,6 @@ private:
 
   VkAllocationCallbacks *m_Allocator = nullptr;
   VulkanInstance m_Instance;
-  VkPhysicalDevice m_PhysicalDevice;
   VulkanDevice m_Device;
 };
 

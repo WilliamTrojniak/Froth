@@ -11,6 +11,7 @@
 #include "src/renderer/vulkan/VulkanImage.h"
 #include "src/renderer/vulkan/VulkanIndexBuffer.h"
 #include "src/renderer/vulkan/VulkanVertexBuffer.h"
+#include "vulkan/vulkan_core.h"
 #include <vector>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -46,10 +47,10 @@ public:
 
     const float groundSize = 4.0f;
     std::vector<Froth::Vertex> plane_Vertices = {
-        {{-groundSize, -groundSize, 0.f}, {1.f, 1.f, 1.f}, {0.f, 0.f}},
-        {{groundSize, -groundSize, 0.f}, {1.f, 1.f, 1.f}, {0.f, 0.f}},
-        {{groundSize, groundSize, 0.f}, {1.f, 1.f, 1.f}, {0.f, 0.f}},
-        {{-groundSize, groundSize, 0.f}, {1.f, 1.f, 1.f}, {0.f, 0.f}},
+        {{-groundSize, -groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f}},
+        {{groundSize, -groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f}},
+        {{groundSize, groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f}},
+        {{-groundSize, groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f}},
     };
     std::vector<uint32_t> plane_indices = {0, 1, 2, 2, 3, 0};
     m_VertexBuffer2 = Froth::VulkanVertexBuffer(sizeof(Froth::Vertex) * vertices.size());
@@ -129,13 +130,19 @@ public:
     proj[1][1] *= -1;
 
     glm::mat4 mvp = proj * view * model;
+    uint32_t texIndex = 1;
+
     m_Renderer.bindMaterial(m_Material);
-    m_Renderer.pushConstants(mvp);
+
+    m_Renderer.pushConstants(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(mvp), &mvp);
+    m_Renderer.pushConstants(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(mvp), sizeof(texIndex), &texIndex);
     m_Renderer.bindVertexBuffer(m_VertexBuffer);
     m_Renderer.bindIndexBuffer(m_IndexBuffer);
 
     mvp = proj * view;
-    m_Renderer.pushConstants(mvp);
+    texIndex = 0;
+    m_Renderer.pushConstants(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(mvp), &mvp);
+    m_Renderer.pushConstants(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(mvp), sizeof(texIndex), &texIndex);
     m_Renderer.bindVertexBuffer(m_VertexBuffer2);
     m_Renderer.bindIndexBuffer(m_IndexBuffer2);
   }

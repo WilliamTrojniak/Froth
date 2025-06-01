@@ -2,9 +2,9 @@
 #include "glm/ext/vector_float3.hpp"
 #include "src/core/Entrypoint.h"
 
-#include "src/core/Types.h"
 #include "src/core/events/EventDispatcher.h"
 #include "src/core/events/MouseEvent.h"
+#include "src/core/logger/Logger.h"
 #include "src/modules/camera/Camera.h"
 #include "src/platform/filesystem/Filesystem.h"
 #include "src/platform/keys/Keycodes.h"
@@ -21,6 +21,7 @@
 #include <string.h>
 
 const std::string MODEL_PATH = "../playground/models/viking_room.obj";
+const std::string CUBE_MODEL_PATH = "../playground/models/cube.obj";
 const std::string TEXTURE_PATH = "../playground/textures/viking_room.png";
 const std::string TEXTURE_JPG_PATH = "../playground/textures/texture.jpg";
 
@@ -46,15 +47,18 @@ public:
     commandBuffer.reset();
 
     const float groundSize = 4.0f;
-    std::vector<Froth::Vertex> plane_Vertices = {
+    std::vector<Froth::Vertex> plane_vertices = {
         {{-groundSize, -groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f, 1.f}, {0.f, 0.f}},
         {{groundSize, -groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f, 1.f}, {0.f, 0.f}},
         {{groundSize, groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f, 1.f}, {0.f, 0.f}},
         {{-groundSize, groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f, 1.f}, {0.f, 0.f}},
     };
     std::vector<uint32_t> plane_indices = {0, 1, 2, 2, 3, 0};
-    m_VertexBuffer2 = Froth::VulkanVertexBuffer(sizeof(Froth::Vertex) * vertices.size());
-    m_VertexBuffer2.write(commandBuffer, sizeof(Froth::Vertex) * plane_Vertices.size(), plane_Vertices.data());
+    if (!Froth::Filesystem::loadObj(CUBE_MODEL_PATH.c_str(), plane_vertices, plane_indices)) {
+    }
+
+    m_VertexBuffer2 = Froth::VulkanVertexBuffer(sizeof(Froth::Vertex) * plane_vertices.size());
+    m_VertexBuffer2.write(commandBuffer, sizeof(Froth::Vertex) * plane_vertices.size(), plane_vertices.data());
     commandBuffer.reset();
     m_IndexBuffer2 = Froth::VulkanIndexBuffer(plane_indices.size());
     m_IndexBuffer2.write(commandBuffer, plane_indices.size(), plane_indices.data());
@@ -139,7 +143,7 @@ public:
     m_Renderer.bindVertexBuffer(m_VertexBuffer);
     m_Renderer.bindIndexBuffer(m_IndexBuffer);
 
-    mvp = proj * view;
+    mvp = proj * view * glm::translate(glm::vec3(2.f, 1.f, -0.01f));
     texIndex = 0;
     m_Renderer.pushConstants(VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(mvp), &mvp);
     m_Renderer.pushConstants(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(mvp), sizeof(texIndex), &texIndex);

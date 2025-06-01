@@ -66,9 +66,9 @@ bool loadObj(const char *path, std::vector<Vertex> &vertices, std::vector<uint32
           attrib.vertices[3 * index.vertex_index + 2],
       };
       vertex.norm = {
-          attrib.normals[3 * index.vertex_index + 0],
-          attrib.normals[3 * index.vertex_index + 1],
-          attrib.normals[3 * index.vertex_index + 2],
+          attrib.normals[3 * index.normal_index + 0],
+          attrib.normals[3 * index.normal_index + 1],
+          attrib.normals[3 * index.normal_index + 2],
       };
       vertex.color = {
           attrib.colors[3 * index.vertex_index + 0],
@@ -76,10 +76,14 @@ bool loadObj(const char *path, std::vector<Vertex> &vertices, std::vector<uint32
           attrib.colors[3 * index.vertex_index + 2],
       };
 
-      vertex.uv = {
-          attrib.texcoords[2 * index.texcoord_index + 0],
-          1.0f - attrib.texcoords[2 * index.texcoord_index + 1],
-      };
+      if (!attrib.texcoords.empty()) {
+        vertex.uv = {
+            attrib.texcoords[2 * index.texcoord_index + 0],
+            1.0f - attrib.texcoords[2 * index.texcoord_index + 1],
+        };
+      } else {
+        vertex.uv = {0.f, 0.f};
+      }
 
       // FIXME: Use a more efficient data structure to find
       auto it = std::find(vertices.begin(), vertices.end(), vertex);

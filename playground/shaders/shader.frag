@@ -13,6 +13,9 @@ layout(push_constant) uniform constants {
     uint texIndex;
 } pcs;
 
+const vec3 lightDir = vec3(0.4, 0.8, 1.0);
+const vec4 lightCol = vec4(1.0, 1.0, 1.0, 1.0);
+
 void main() {
-    outColor = vec4(fragColor, 1.0) * texture(texSampler[pcs.texIndex], texCoord);
+    outColor = max(0.001, dot(normalize(lightDir), normalize(fragNorm))) * lightCol * vec4(fragColor, 1.0) * texture(texSampler[pcs.texIndex], texCoord);
 }

@@ -47,10 +47,10 @@ public:
 
     const float groundSize = 4.0f;
     std::vector<Froth::Vertex> plane_Vertices = {
-        {{-groundSize, -groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f}},
-        {{groundSize, -groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f}},
-        {{groundSize, groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f}},
-        {{-groundSize, groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f}},
+        {{-groundSize, -groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f, 1.f}, {0.f, 0.f}},
+        {{groundSize, -groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f, 1.f}, {0.f, 0.f}},
+        {{groundSize, groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f, 1.f}, {0.f, 0.f}},
+        {{-groundSize, groundSize, 0.f}, {.3f, .3f, .3f}, {0.f, 0.f, 1.f}, {0.f, 0.f}},
     };
     std::vector<uint32_t> plane_indices = {0, 1, 2, 2, 3, 0};
     m_VertexBuffer2 = Froth::VulkanVertexBuffer(sizeof(Froth::Vertex) * vertices.size());

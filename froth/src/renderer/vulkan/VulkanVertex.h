@@ -51,7 +51,15 @@ struct VertexInputDescription {
 struct Vertex {
   glm::vec3 pos;
   glm::vec3 color;
-  glm::vec2 texCoord;
+  glm::vec3 norm;
+  glm::vec2 uv;
+
+  bool operator==(const Vertex o) {
+    return pos == o.pos &&
+           color == o.color &&
+           norm == o.norm &&
+           uv == o.uv;
+  }
 
   static VertexInputDescription getInputDescription(uint32_t binding = 0) {
     VertexInputDescription desc;
@@ -62,7 +70,7 @@ struct Vertex {
     bindingDesc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
     desc.bindings.push_back(bindingDesc);
 
-    desc.attributes.resize(3);
+    desc.attributes.resize(4);
     desc.attributes[0].binding = 0;
     desc.attributes[0].location = 0;
     desc.attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
@@ -75,8 +83,13 @@ struct Vertex {
 
     desc.attributes[2].binding = 0;
     desc.attributes[2].location = 2;
-    desc.attributes[2].format = VK_FORMAT_R32G32_SFLOAT;
-    desc.attributes[2].offset = offsetof(Vertex, texCoord);
+    desc.attributes[2].format = VK_FORMAT_R32G32B32_SFLOAT;
+    desc.attributes[2].offset = offsetof(Vertex, norm);
+
+    desc.attributes[3].binding = 0;
+    desc.attributes[3].location = 3;
+    desc.attributes[3].format = VK_FORMAT_R32G32_SFLOAT;
+    desc.attributes[3].offset = offsetof(Vertex, uv);
 
     return desc;
   }

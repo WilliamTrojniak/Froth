@@ -25,7 +25,7 @@ VulkanPipelineBuilder::VulkanPipelineBuilder() noexcept {
   m_RasterizerInfo.depthClampEnable = VK_FALSE;
   m_RasterizerInfo.rasterizerDiscardEnable = VK_FALSE;
   m_RasterizerInfo.polygonMode = VK_POLYGON_MODE_FILL;
-  m_RasterizerInfo.cullMode = VK_CULL_MODE_NONE;
+  m_RasterizerInfo.cullMode = VK_CULL_MODE_BACK_BIT;
   m_RasterizerInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
   m_RasterizerInfo.depthBiasEnable = VK_FALSE;
   m_RasterizerInfo.depthBiasConstantFactor = 0.0f;

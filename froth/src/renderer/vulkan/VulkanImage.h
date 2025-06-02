@@ -1,6 +1,6 @@
 #pragma once
-#include "src/renderer/vulkan/VulkanCommandBuffer.h"
-#include "vulkan/vulkan_core.h"
+
+#include "VulkanCommandBuffer.h"
 
 namespace Froth {
 class VulkanImageView;

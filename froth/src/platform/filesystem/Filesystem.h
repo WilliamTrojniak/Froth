@@ -10,7 +10,7 @@ namespace Froth::Filesystem {
 
 std::vector<char> readFile(const std::filesystem::path &filename);
 
-void *loadImage(const char *path, int &width, int &height);
+void *loadImage(const char *path, int &width, int &height, int &channels);
 void freeImage(void *data);
 
 bool loadObj(const char *path, std::vector<Vertex> &vertices, std::vector<uint32_t> &indices);

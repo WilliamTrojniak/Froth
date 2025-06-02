@@ -30,15 +30,18 @@ std::vector<char> readFile(const std::filesystem::path &filename) {
   return buffer;
 }
 
-void *loadImage(const char *path, int &width, int &height) {
+void *loadImage(const char *path, int &width, int &height, int &channels) {
   int texChannels;
-  void *pixels = stbi_load(path, &width, &height, &texChannels, STBI_rgb_alpha);
+  int forcedChannels = STBI_rgb_alpha;
+  void *pixels = stbi_load(path, &width, &height, &texChannels, forcedChannels);
   if (!pixels) {
     width = 0;
     height = 0;
+    channels = 0;
     return nullptr;
   }
 
+  channels = forcedChannels;
   return pixels;
 }
 

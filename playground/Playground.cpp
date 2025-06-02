@@ -73,10 +73,10 @@ public:
     m_Material = Froth::Material(vertShaderModule, fragShaderModule);
 
     // Texture
-    int imageWidth, imageHeight;
+    int imageWidth, imageHeight, imageChannels;
     size_t imageSize;
-    void *pixels = Froth::Filesystem::loadImage(TEXTURE_PATH.c_str(), imageWidth, imageHeight);
-    imageSize = imageHeight * imageWidth * 4;
+    void *pixels = Froth::Filesystem::loadImage(TEXTURE_PATH.c_str(), imageWidth, imageHeight, imageChannels);
+    imageSize = imageHeight * imageWidth * imageChannels;
 
     Froth::VulkanBuffer textureStagingBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     void *data = textureStagingBuffer.map();

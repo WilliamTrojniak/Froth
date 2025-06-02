@@ -1,7 +1,6 @@
 #include "VulkanCommandBuffer.h"
 #include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
-#include <vulkan/vulkan_core.h>
 
 namespace Froth {
 

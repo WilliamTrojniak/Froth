@@ -1,7 +1,8 @@
 #pragma once
+
 #include "VulkanDevice.h"
 #include "VulkanSurface.h"
-#include "vulkan/vulkan_core.h"
+
 #include <vector>
 
 namespace Froth {

@@ -4,14 +4,12 @@
 
 #include "src/core/events/EventDispatcher.h"
 #include "src/core/events/MouseEvent.h"
-#include "src/core/logger/Logger.h"
 #include "src/modules/camera/Camera.h"
 #include "src/platform/filesystem/Filesystem.h"
 #include "src/platform/keys/Keycodes.h"
 #include "src/renderer/vulkan/VulkanImage.h"
 #include "src/renderer/vulkan/VulkanIndexBuffer.h"
 #include "src/renderer/vulkan/VulkanVertexBuffer.h"
-#include "vulkan/vulkan_core.h"
 #include <vector>
 
 #define GLM_ENABLE_EXPERIMENTAL

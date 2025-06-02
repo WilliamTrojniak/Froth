@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vulkan/vulkan_core.h"
+
 #include <cstdint>
 
 namespace Froth {

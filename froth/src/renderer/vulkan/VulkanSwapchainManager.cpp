@@ -2,7 +2,7 @@
 #include "src/core/logger/Logger.h"
 #include "src/platform/window/Window.h"
 #include "src/renderer/vulkan/VulkanContext.h"
-#include "vulkan/vulkan_core.h"
+
 #include <cstdint>
 
 namespace Froth {

@@ -1,7 +1,6 @@
 #include "VulkanDescriptorSet.h"
 #include "src/renderer/vulkan/VulkanContext.h"
 #include "src/renderer/vulkan/VulkanImageView.h"
-#include <vulkan/vulkan_core.h>
 
 namespace Froth {
 

@@ -2,7 +2,7 @@
 #include "Defines.h"
 #include "src/core/logger/Logger.h"
 #include "src/platform/window/Window.h"
-#include "vulkan/vulkan_core.h"
+
 #include <set>
 #include <vector>
 

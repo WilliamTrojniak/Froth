@@ -2,7 +2,7 @@
 #include "glm/ext/matrix_float4x4.hpp"
 #include "src/core/logger/Logger.h"
 #include "src/renderer/vulkan/VulkanContext.h"
-#include "vulkan/vulkan_core.h"
+
 #include <array>
 
 namespace Froth {

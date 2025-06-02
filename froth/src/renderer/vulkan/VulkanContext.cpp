@@ -3,7 +3,6 @@
 #include "src/renderer/vulkan/VulkanDevice.h"
 #include "src/renderer/vulkan/VulkanInstance.h"
 #include "src/renderer/vulkan/VulkanSurface.h"
-#include "vulkan/vulkan_core.h"
 
 namespace Froth {
 
